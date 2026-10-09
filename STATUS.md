@@ -15,16 +15,20 @@
 - [x] Analysis implementation (`041e443`) and review repairs (`eddcee4`) committed; 12 analysis tests and crate-local strict Clippy pass.
 - [x] Z3 implementation (`45cfab6`) committed; 24 workspace tests passed; independent review found no backend soundness defect.
 - [x] Native statistics and broad finite-oracle checks committed (`89685b6` through `dd437da`); 13 Z3 tests and crate-local Clippy pass.
-- [ ] Differential follow-up: align finite date domains exactly and add generated fixed-assignment expression comparisons (running).
+- [x] Differential follow-up committed (`8f79b9a`): exact finite date domains, forward DAG and generated fixed-assignment typed expressions; integrated by engineer.
 - [x] CLI/persistent worker committed (`98ea437`); 9 CLI/process tests and worker Clippy pass.
-- [ ] Worker review fixes (`fix/worker-review`): clamp omitted timeout defaults, reject null budgets, capacity precheck, compile timing and active-job/truncation process tests (running).
+- [x] Worker review fixes (`b2a2260`): default timeout clamping/null rejection/capacity precheck/compile timing/active-job kill-reap and truncation tests; 12 worker tests and Clippy pass.
 - [x] External CLI/worker acceptance scripts strengthened (`de86460`), 5 helper tests pass; initial integrated executable was still stub, so no application acceptance pass claimed.
 - [x] Enhanced external acceptance against integrated revision `758d32d`: 20 CLI groups, worker protocol/lifecycle suite, and 8 Python regression tests pass (`a254f0e`).
 - [x] Benchmark generator/harness and workload families committed/integrated (`3a8a9ed`); generator checks pass.
-- [ ] Benchmark agent recording real five-run release measurements across all families and semantic/cache/metadata/assumption probes; draft evidence available, final commit pending.
+- [x] Five-run release benchmark/caching/edit/assumption evidence committed (`ac4021f`, `5d43973`); 1000 thresholds CLI p95 ~1.16s; near-limit run safely partial.
+- [ ] Benchmark follow-up: record native solver statistics, engine compile timing and measurable Linux peak RSS on latest integrated source.
 - [ ] Integration engineer (`integration/v0`) integrating component commits, root manifests/lock, README and full check evidence.
 - [ ] Require passing cargo-nextest, formatting, strict Clippy/MSRV, external acceptance, worker recovery and differential tests.
-- [ ] Independent spec/quality review and repair; final feature-completeness evidence.
+- [x] Independent final spec/API reviews completed; semantics audit found no new solver blocker, but two library invariants and coverage provenance gaps need fixes.
+- [ ] Library invariant agent (`fix/compiled-invariants`): opaque immutable compiled models and opt-in namespaced backend caching, with regression/doc tests.
+- [ ] Coverage provenance follow-up: include source-linked rule IDs/sources on coverage and metadata-cache reports.
+- [ ] Final integrated nextest/doc-tests/MSRV/format/Clippy/external acceptance and delivery evidence.
 
 ## Unknowns
 - Full initial engine/CLI/worker is integrated on main (`d1509f8`); latest quality/test/review follow-ups still need final integration.
@@ -39,5 +43,8 @@
 - Initial analysis caching/vacuity/provenance/order/pruning defects repaired in `eddcee4`; integration validation still required.
 - Independent Z3 review found narrow differential coverage and missing native statistics; broader validation/statistics work delegated.
 - Stub acceptance failure is resolved: real integrated CLI/worker acceptance now passes.
-- Worker independent review reproduced omitted-budget defaults bypassing configured timeout caps and late capacity checking; fixes delegated.
+- Worker timeout-cap/capacity review defects repaired in `b2a2260`, final integration retest required.
+- Public CompiledModel mutation could retain stale cache identity and produce false UNSAT claims in Rust library use; independent reproducer confirmed. Opaque accessors and compiler-only construction delegated.
+- Process-global cache could mix custom Backend implementations sharing default identity strings; opt-in namespaced caching delegated.
+- Coverage results omit source-linked rule provenance; focused repair delegated.
 - Deterministic external CLI backend-fault exit-code-3 injection is unavailable; backend error mapping is tested through analysis seams, final evidence docs note boundary.
