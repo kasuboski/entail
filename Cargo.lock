@@ -35,6 +35,7 @@ dependencies = [
  "author_analysis",
  "author_model",
  "author_z3",
+ "serde_json",
 ]
 
 [[package]]
