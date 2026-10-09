@@ -1,0 +1,96 @@
+{
+  "language_version": "author-model/0.1",
+  "model_id": "ExactInteger",
+  "sources": [],
+  "enums": [],
+  "inputs": [
+    {
+      "id": "amount",
+      "type": {
+        "kind": "int",
+        "unit": "count"
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed"
+      }
+    }
+  ],
+  "derived": [],
+  "outcomes": [
+    {
+      "id": "Value",
+      "fields": [
+        {
+          "id": "amount",
+          "type": {
+            "kind": "int",
+            "unit": "count"
+          }
+        }
+      ],
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed"
+      }
+    }
+  ],
+  "domain": [],
+  "assumptions": [],
+  "rules": [
+    {
+      "id": "Double",
+      "when": {
+        "kind": "bool",
+        "value": true
+      },
+      "then": {
+        "outcome": "Value",
+        "fields": {
+          "amount": {
+            "kind": "scale",
+            "factor": "2",
+            "arg": {
+              "kind": "ref",
+              "path": "input.amount"
+            }
+          }
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed"
+      }
+    }
+  ],
+  "constraints": [
+    {
+      "id": "ExactDouble",
+      "for_outcome": "Value",
+      "must": {
+        "kind": "eq",
+        "left": {
+          "kind": "ref",
+          "path": "outcome.amount"
+        },
+        "right": {
+          "kind": "scale",
+          "factor": "2",
+          "arg": {
+            "kind": "ref",
+            "path": "input.amount"
+          }
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed"
+      }
+    }
+  ],
+  "open_items": []
+}

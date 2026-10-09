@@ -1,0 +1,18 @@
+{
+  "inputs": {
+    "sponsor_approval": {
+      "kind": "enum",
+      "enum": "ApprovalStatus",
+      "variant": "Approved"
+    },
+    "contract_end": {
+      "kind": "date",
+      "value": "2026-12-31"
+    },
+    "requested_expiry": {
+      "kind": "date",
+      "value": "2027-01-01"
+    }
+  },
+  "assumption_ids": []
+}

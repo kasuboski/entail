@@ -1,0 +1,242 @@
+{
+  "language_version": "author-model/0.1",
+  "model_id": "ContractorAccess",
+  "sources": [
+    {
+      "id": "S1",
+      "text": "A contractor must have sponsor approval before access is granted.",
+      "locator": "policy.section_2"
+    },
+    {
+      "id": "S2",
+      "text": "Access must expire by the contract end date.",
+      "locator": "policy.section_3"
+    }
+  ],
+  "enums": [
+    {
+      "id": "ApprovalStatus",
+      "variants": [
+        "Approved",
+        "NotApproved",
+        "Unknown"
+      ],
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed"
+      }
+    },
+    {
+      "id": "DenialReason",
+      "variants": [
+        "PolicyDenied"
+      ],
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "Fixture-only proposed reason vocabulary; real reasons require elicitation."
+      }
+    }
+  ],
+  "inputs": [
+    {
+      "id": "sponsor_approval",
+      "type": {
+        "kind": "enum",
+        "name": "ApprovalStatus"
+      },
+      "origin": {
+        "kind": "source",
+        "source_ids": [
+          "S1"
+        ],
+        "review": "proposed"
+      }
+    },
+    {
+      "id": "contract_end",
+      "type": {
+        "kind": "date"
+      },
+      "origin": {
+        "kind": "source",
+        "source_ids": [
+          "S2"
+        ],
+        "review": "proposed"
+      }
+    },
+    {
+      "id": "requested_expiry",
+      "type": {
+        "kind": "date"
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed"
+      }
+    }
+  ],
+  "derived": [],
+  "outcomes": [
+    {
+      "id": "Grant",
+      "fields": [
+        {
+          "id": "expiry",
+          "type": {
+            "kind": "date"
+          }
+        }
+      ],
+      "origin": {
+        "kind": "source",
+        "source_ids": [
+          "S2"
+        ],
+        "review": "proposed"
+      }
+    },
+    {
+      "id": "Deny",
+      "fields": [
+        {
+          "id": "reason",
+          "type": {
+            "kind": "enum",
+            "name": "DenialReason"
+          }
+        }
+      ],
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "Candidate output; denial policy is not in the source."
+      }
+    }
+  ],
+  "domain": [],
+  "assumptions": [
+    {
+      "id": "SponsorsAlreadyApproved",
+      "expr": {
+        "kind": "eq",
+        "left": {
+          "kind": "ref",
+          "path": "input.sponsor_approval"
+        },
+        "right": {
+          "kind": "enum",
+          "enum": "ApprovalStatus",
+          "variant": "Approved"
+        }
+      },
+      "origin": {
+        "kind": "assumption",
+        "source_ids": [],
+        "review": "proposed"
+      }
+    }
+  ],
+  "rules": [
+    {
+      "id": "GrantApprovedRequest",
+      "when": {
+        "kind": "python",
+        "code": "True"
+      },
+      "then": {
+        "outcome": "Grant",
+        "fields": {
+          "expiry": {
+            "kind": "ref",
+            "path": "input.requested_expiry"
+          }
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "Proposed sufficient conditions; not established by S1 and S2."
+      }
+    }
+  ],
+  "constraints": [
+    {
+      "id": "ApprovalRequired",
+      "for_outcome": "Grant",
+      "must": {
+        "kind": "eq",
+        "left": {
+          "kind": "ref",
+          "path": "input.sponsor_approval"
+        },
+        "right": {
+          "kind": "enum",
+          "enum": "ApprovalStatus",
+          "variant": "Approved"
+        }
+      },
+      "origin": {
+        "kind": "source",
+        "source_ids": [
+          "S1"
+        ],
+        "review": "proposed"
+      }
+    },
+    {
+      "id": "ExpiryWithinContract",
+      "for_outcome": "Grant",
+      "must": {
+        "kind": "le",
+        "left": {
+          "kind": "ref",
+          "path": "outcome.expiry"
+        },
+        "right": {
+          "kind": "ref",
+          "path": "input.contract_end"
+        }
+      },
+      "origin": {
+        "kind": "source",
+        "source_ids": [
+          "S2"
+        ],
+        "review": "proposed",
+        "note": "Snapshot expiry constraint; actual expiry enforcement is not modeled."
+      }
+    }
+  ],
+  "open_items": [
+    {
+      "id": "OtherPrerequisites",
+      "text": "Are approval and a valid expiry sufficient to grant access?",
+      "source_ids": [
+        "S1",
+        "S2"
+      ],
+      "affects": "rule_policy"
+    },
+    {
+      "id": "DenialPolicy",
+      "text": "What should happen to cases not covered by the grant proposal?",
+      "source_ids": [],
+      "affects": "rule_policy"
+    },
+    {
+      "id": "ExpiryEnforcement",
+      "text": "How is access actually stopped by the expiry deadline?",
+      "source_ids": [
+        "S2"
+      ],
+      "affects": "lifecycle"
+    }
+  ]
+}

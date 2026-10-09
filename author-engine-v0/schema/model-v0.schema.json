@@ -1,0 +1,826 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:author-engine:model:0.1",
+  "title": "Author model 0.1",
+  "description": "Structural contract. Semantic validation is additionally required.",
+  "type": "object",
+  "properties": {
+    "language_version": {
+      "const": "author-model/0.1"
+    },
+    "model_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_]*$"
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/source"
+      },
+      "minItems": 0
+    },
+    "enums": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/enumDecl"
+      },
+      "minItems": 0
+    },
+    "inputs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/input"
+      },
+      "minItems": 0
+    },
+    "derived": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/derived"
+      },
+      "minItems": 0
+    },
+    "outcomes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/outcome"
+      },
+      "minItems": 0
+    },
+    "domain": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/predicate"
+      },
+      "minItems": 0
+    },
+    "assumptions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/predicate"
+      },
+      "minItems": 0
+    },
+    "rules": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/rule"
+      },
+      "minItems": 0
+    },
+    "constraints": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/constraint"
+      },
+      "minItems": 0
+    },
+    "open_items": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/openItem"
+      },
+      "minItems": 0
+    }
+  },
+  "required": [
+    "language_version",
+    "model_id",
+    "sources",
+    "enums",
+    "inputs",
+    "derived",
+    "outcomes",
+    "domain",
+    "assumptions",
+    "rules",
+    "constraints",
+    "open_items"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "origin": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "enum": [
+            "source",
+            "proposal",
+            "assumption"
+          ]
+        },
+        "source_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z][A-Za-z0-9_]*$"
+          },
+          "minItems": 0
+        },
+        "review": {
+          "enum": [
+            "proposed",
+            "confirmed"
+          ]
+        },
+        "note": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "source_ids",
+        "review"
+      ],
+      "additionalProperties": false
+    },
+    "type": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "bool"
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "enum"
+            },
+            "name": {
+              "type": "string",
+              "pattern": "^[A-Za-z][A-Za-z0-9_]*$"
+            }
+          },
+          "required": [
+            "kind",
+            "name"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "int"
+            },
+            "unit": {
+              "type": "string",
+              "pattern": "^[A-Za-z][A-Za-z0-9_]*$"
+            }
+          },
+          "required": [
+            "kind",
+            "unit"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "date"
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "expr": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "bool"
+            },
+            "value": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "kind",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "int"
+            },
+            "value": {
+              "type": "string",
+              "pattern": "^(0|-?[1-9][0-9]*)$"
+            },
+            "unit": {
+              "type": "string",
+              "pattern": "^[A-Za-z][A-Za-z0-9_]*$"
+            }
+          },
+          "required": [
+            "kind",
+            "value",
+            "unit"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "date"
+            },
+            "value": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+            }
+          },
+          "required": [
+            "kind",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "enum"
+            },
+            "enum": {
+              "type": "string",
+              "pattern": "^[A-Za-z][A-Za-z0-9_]*$"
+            },
+            "variant": {
+              "type": "string",
+              "pattern": "^[A-Za-z][A-Za-z0-9_]*$"
+            }
+          },
+          "required": [
+            "kind",
+            "enum",
+            "variant"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "ref"
+            },
+            "path": {
+              "type": "string",
+              "pattern": "^(input|derived|outcome)\\.[A-Za-z][A-Za-z0-9_]*$"
+            }
+          },
+          "required": [
+            "kind",
+            "path"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "not"
+            },
+            "arg": {
+              "$ref": "#/$defs/expr"
+            }
+          },
+          "required": [
+            "kind",
+            "arg"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "scale"
+            },
+            "factor": {
+              "type": "string",
+              "pattern": "^(0|-?[1-9][0-9]*)$"
+            },
+            "arg": {
+              "$ref": "#/$defs/expr"
+            }
+          },
+          "required": [
+            "kind",
+            "factor",
+            "arg"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "if"
+            },
+            "condition": {
+              "$ref": "#/$defs/expr"
+            },
+            "then": {
+              "$ref": "#/$defs/expr"
+            },
+            "else": {
+              "$ref": "#/$defs/expr"
+            }
+          },
+          "required": [
+            "kind",
+            "condition",
+            "then",
+            "else"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "and"
+            },
+            "args": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/expr"
+              },
+              "minItems": 1
+            }
+          },
+          "required": [
+            "kind",
+            "args"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "or"
+            },
+            "args": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/expr"
+              },
+              "minItems": 1
+            }
+          },
+          "required": [
+            "kind",
+            "args"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "eq"
+            },
+            "left": {
+              "$ref": "#/$defs/expr"
+            },
+            "right": {
+              "$ref": "#/$defs/expr"
+            }
+          },
+          "required": [
+            "kind",
+            "left",
+            "right"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "ne"
+            },
+            "left": {
+              "$ref": "#/$defs/expr"
+            },
+            "right": {
+              "$ref": "#/$defs/expr"
+            }
+          },
+          "required": [
+            "kind",
+            "left",
+            "right"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "lt"
+            },
+            "left": {
+              "$ref": "#/$defs/expr"
+            },
+            "right": {
+              "$ref": "#/$defs/expr"
+            }
+          },
+          "required": [
+            "kind",
+            "left",
+            "right"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "le"
+            },
+            "left": {
+              "$ref": "#/$defs/expr"
+            },
+            "right": {
+              "$ref": "#/$defs/expr"
+            }
+          },
+          "required": [
+            "kind",
+            "left",
+            "right"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "gt"
+            },
+            "left": {
+              "$ref": "#/$defs/expr"
+            },
+            "right": {
+              "$ref": "#/$defs/expr"
+            }
+          },
+          "required": [
+            "kind",
+            "left",
+            "right"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "ge"
+            },
+            "left": {
+              "$ref": "#/$defs/expr"
+            },
+            "right": {
+              "$ref": "#/$defs/expr"
+            }
+          },
+          "required": [
+            "kind",
+            "left",
+            "right"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "add"
+            },
+            "left": {
+              "$ref": "#/$defs/expr"
+            },
+            "right": {
+              "$ref": "#/$defs/expr"
+            }
+          },
+          "required": [
+            "kind",
+            "left",
+            "right"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "sub"
+            },
+            "left": {
+              "$ref": "#/$defs/expr"
+            },
+            "right": {
+              "$ref": "#/$defs/expr"
+            }
+          },
+          "required": [
+            "kind",
+            "left",
+            "right"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "source": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9_]*$"
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "locator": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "text"
+      ],
+      "additionalProperties": false
+    },
+    "enumDecl": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9_]*$"
+        },
+        "variants": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z][A-Za-z0-9_]*$"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "origin": {
+          "$ref": "#/$defs/origin"
+        }
+      },
+      "required": [
+        "id",
+        "variants",
+        "origin"
+      ],
+      "additionalProperties": false
+    },
+    "input": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9_]*$"
+        },
+        "type": {
+          "$ref": "#/$defs/type"
+        },
+        "origin": {
+          "$ref": "#/$defs/origin"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "origin"
+      ],
+      "additionalProperties": false
+    },
+    "derived": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9_]*$"
+        },
+        "type": {
+          "$ref": "#/$defs/type"
+        },
+        "expr": {
+          "$ref": "#/$defs/expr"
+        },
+        "origin": {
+          "$ref": "#/$defs/origin"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "expr",
+        "origin"
+      ],
+      "additionalProperties": false
+    },
+    "field": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9_]*$"
+        },
+        "type": {
+          "$ref": "#/$defs/type"
+        }
+      },
+      "required": [
+        "id",
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "outcome": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9_]*$"
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/field"
+          },
+          "minItems": 0
+        },
+        "origin": {
+          "$ref": "#/$defs/origin"
+        }
+      },
+      "required": [
+        "id",
+        "fields",
+        "origin"
+      ],
+      "additionalProperties": false
+    },
+    "predicate": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9_]*$"
+        },
+        "expr": {
+          "$ref": "#/$defs/expr"
+        },
+        "origin": {
+          "$ref": "#/$defs/origin"
+        }
+      },
+      "required": [
+        "id",
+        "expr",
+        "origin"
+      ],
+      "additionalProperties": false
+    },
+    "rule": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9_]*$"
+        },
+        "when": {
+          "$ref": "#/$defs/expr"
+        },
+        "then": {
+          "type": "object",
+          "properties": {
+            "outcome": {
+              "type": "string",
+              "pattern": "^[A-Za-z][A-Za-z0-9_]*$"
+            },
+            "fields": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_]*$"
+              },
+              "additionalProperties": {
+                "$ref": "#/$defs/expr"
+              }
+            }
+          },
+          "required": [
+            "outcome",
+            "fields"
+          ],
+          "additionalProperties": false
+        },
+        "origin": {
+          "$ref": "#/$defs/origin"
+        }
+      },
+      "required": [
+        "id",
+        "when",
+        "then",
+        "origin"
+      ],
+      "additionalProperties": false
+    },
+    "constraint": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9_]*$"
+        },
+        "for_outcome": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9_]*$"
+        },
+        "must": {
+          "$ref": "#/$defs/expr"
+        },
+        "origin": {
+          "$ref": "#/$defs/origin"
+        }
+      },
+      "required": [
+        "id",
+        "for_outcome",
+        "must",
+        "origin"
+      ],
+      "additionalProperties": false
+    },
+    "openItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9_]*$"
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z][A-Za-z0-9_]*$"
+          },
+          "minItems": 0
+        },
+        "affects": {
+          "enum": [
+            "input_domain",
+            "outcome_schema",
+            "rule_policy",
+            "constraint",
+            "lifecycle",
+            "interpretation"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "text",
+        "source_ids",
+        "affects"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

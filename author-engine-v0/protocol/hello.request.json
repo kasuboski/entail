@@ -1,0 +1,6 @@
+{
+  "protocol_version": "author-worker/0.1",
+  "request_id": "hello1",
+  "op": "hello",
+  "params": {}
+}

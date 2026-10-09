@@ -1,0 +1,19 @@
+{
+  "protocol_version": "author-worker/0.1",
+  "request_id": "analysis1",
+  "op": "analyze",
+  "params": {
+    "handle": "REPLACE_WITH_COMPILE_RESULT_HANDLE",
+    "checks": [
+      "coverage",
+      "outcome_conflict",
+      "constraint_compliance"
+    ],
+    "assumption_ids": [],
+    "budget": {
+      "total_timeout_ms": 5000,
+      "per_obligation_timeout_ms": 1000,
+      "max_obligations": 10000
+    }
+  }
+}

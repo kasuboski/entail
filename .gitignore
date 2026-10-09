@@ -1,0 +1,10 @@
+# Rust build output
+/target/
+
+# Generated logs and local runtime output
+*.log
+/logs/
+
+# Editor and OS artifacts
+.DS_Store
+*.swp

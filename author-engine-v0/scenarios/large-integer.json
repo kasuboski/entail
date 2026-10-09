@@ -1,0 +1,10 @@
+{
+  "inputs": {
+    "amount": {
+      "kind": "int",
+      "value": "9223372036854775808",
+      "unit": "count"
+    }
+  },
+  "assumption_ids": []
+}

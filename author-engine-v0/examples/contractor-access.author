@@ -1,0 +1,27 @@
+decision ContractorAccess
+
+input sponsor_approval: ApprovalStatus
+input contract_end: Date
+input requested_expiry: Date
+
+outcome Grant(expiry: Date)
+outcome Deny(reason: DenialReason)
+
+constraint ApprovalRequired
+  when outcome is Grant(expiry)
+  require sponsor_approval == Approved
+  source policy.section_2
+
+constraint ExpiryWithinContract
+  when outcome is Grant(expiry)
+  require expiry <= contract_end
+  source policy.section_3
+
+rule GrantApprovedRequest
+  when sponsor_approval == Approved
+   and requested_expiry <= contract_end
+  conclude Grant(requested_expiry)
+  status proposed
+
+unresolved OtherPrerequisites
+  "Are approval and a valid expiry sufficient to grant access?"

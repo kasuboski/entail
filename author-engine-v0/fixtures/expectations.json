@@ -1,0 +1,76 @@
+{
+  "description": "Semantic acceptance expectations, not engine execution results.",
+  "valid": {
+    "partial": {
+      "coverage": "behavior_unspecified"
+    },
+    "unsafe-grant": {
+      "coverage": "uncovered",
+      "compliance": {
+        "ApprovalRequired": "compliant",
+        "ExpiryWithinContract": "violation"
+      }
+    },
+    "repaired-partial": {
+      "coverage": "uncovered",
+      "compliance": {
+        "ApprovalRequired": "compliant",
+        "ExpiryWithinContract": "compliant"
+      }
+    },
+    "complete-proposed": {
+      "coverage": "covered",
+      "outcome_conflict": "compatible",
+      "business_policy_confirmed": false
+    },
+    "conflict-tag": {
+      "coverage": "covered",
+      "outcome_conflict": "conflict"
+    },
+    "duplicate-output": {
+      "coverage": "covered",
+      "outcome_conflict": "compatible"
+    },
+    "conflict-payload": {
+      "coverage": "covered",
+      "outcome_conflict": "conflict",
+      "conflict_constructor": "Grant"
+    },
+    "conditional-assumption": {
+      "assumption_ids": [
+        "SponsorsAlreadyApproved"
+      ],
+      "coverage": "uncovered",
+      "conditional": true,
+      "note": "Approved but excessive expiry remains uncovered. Approval assumption does not make this policy complete."
+    },
+    "empty-domain": {
+      "domain_feasibility": "empty_domain",
+      "dependent_checks": "skipped"
+    },
+    "big-integer": {
+      "coverage": "covered",
+      "compliance": {
+        "ExactDouble": "compliant"
+      },
+      "large_scenario_output": "18446744073709551616"
+    }
+  },
+  "invalid": {
+    "unknown-reference": {
+      "expected_diagnostic": "unknown_reference"
+    },
+    "unit-mismatch": {
+      "expected_diagnostic": "unit_mismatch"
+    },
+    "invalid-date": {
+      "expected_diagnostic": "invalid_date"
+    },
+    "derived-cycle": {
+      "expected_diagnostic": "derived_cycle"
+    },
+    "unsupported-node": {
+      "expected_diagnostic": "schema_error"
+    }
+  }
+}
