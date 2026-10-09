@@ -295,16 +295,70 @@ fn finite_integer_solver_answers_match_exhaustive_model_evaluation() {
     );
 }
 
-#[test]
-fn all_five_obligations_match_finite_enum_and_date_evaluation_with_assumptions() {
+#[allow(clippy::expect_used, clippy::indexing_slicing)] // Fixture mutations assert the fixture schema.
+fn finite_multitype_model() -> Option<CompiledModel> {
     let mut value = fixture("unsafe-grant.json");
-    value["rules"].as_array_mut().expect("rules array").push(json!({
-        "id": "AlwaysDifferentExpiry",
-        "when": {"kind": "bool", "value": true},
-        "then": {"outcome": "Grant", "fields": {"expiry": {"kind": "date", "value": "9999-12-31"}}},
+    value["inputs"].as_array_mut().expect("inputs array").extend([
+        json!({"id": "enabled", "type": {"kind": "bool"}, "origin": {"kind": "proposal", "source_ids": [], "review": "proposed"}}),
+        json!({"id": "amount", "type": {"kind": "int", "unit": "count"}, "origin": {"kind": "proposal", "source_ids": [], "review": "proposed"}}),
+    ]);
+    value["derived"] = json!([
+        {"id": "double_amount", "type": {"kind": "int", "unit": "count"}, "expr": {"kind": "scale", "factor": "2", "arg": {"kind": "ref", "path": "input.amount"}}, "origin": {"kind": "proposal", "source_ids": [], "review": "proposed"}},
+        {"id": "total_amount", "type": {"kind": "int", "unit": "count"}, "expr": {"kind": "add", "left": {"kind": "ref", "path": "derived.double_amount"}, "right": {"kind": "ref", "path": "input.amount"}}, "origin": {"kind": "proposal", "source_ids": [], "review": "proposed"}}
+    ]);
+    value["domain"].as_array_mut().expect("domain array").push(json!({
+        "id": "BoundedAmount",
+        "expr": {"kind": "and", "args": [
+            {"kind": "ge", "left": {"kind": "ref", "path": "input.amount"}, "right": {"kind": "int", "value": "-2", "unit": "count"}},
+            {"kind": "le", "left": {"kind": "ref", "path": "input.amount"}, "right": {"kind": "int", "value": "2", "unit": "count"}}
+        ]},
         "origin": {"kind": "proposal", "source_ids": [], "review": "proposed"}
     }));
-    let Some(model) = compile(&value) else {
+    value["outcomes"]
+        .as_array_mut()
+        .expect("outcomes array")
+        .iter_mut()
+        .find(|outcome| outcome["id"] == "Grant")
+        .expect("Grant outcome")["fields"] = json!([
+        {"id": "expiry", "type": {"kind": "date"}},
+        {"id": "enabled", "type": {"kind": "bool"}},
+        {"id": "amount", "type": {"kind": "int", "unit": "count"}},
+        {"id": "status", "type": {"kind": "enum", "name": "ApprovalStatus"}}
+    ]);
+    let first_rule = value["rules"]
+        .as_array_mut()
+        .expect("rules array")
+        .iter_mut()
+        .find(|rule| rule["id"] == "GrantApprovedRequest")
+        .expect("approval rule");
+    first_rule["when"] = json!({"kind": "and", "args": [
+        first_rule["when"].clone(),
+        {"kind": "ref", "path": "input.enabled"}
+    ]});
+    first_rule["then"]["fields"]["enabled"] = json!({"kind": "ref", "path": "input.enabled"});
+    first_rule["then"]["fields"]["amount"] = json!({"kind": "ref", "path": "derived.total_amount"});
+    first_rule["then"]["fields"]["status"] =
+        json!({"kind": "ref", "path": "input.sponsor_approval"});
+    value["rules"]
+        .as_array_mut()
+        .expect("rules array")
+        .push(json!({
+            "id": "AlwaysDifferentExpiry",
+            "when": {"kind": "bool", "value": true},
+            "then": {"outcome": "Grant", "fields": {
+                "expiry": {"kind": "date", "value": "9999-12-31"},
+                "enabled": {"kind": "bool", "value": false},
+                "amount": {"kind": "int", "value": "0", "unit": "count"},
+                "status": {"kind": "enum", "enum": "ApprovalStatus", "variant": "Unknown"}
+            }},
+            "origin": {"kind": "proposal", "source_ids": [], "review": "proposed"}
+        }));
+    compile(&value)
+}
+
+#[test]
+fn all_five_obligations_match_finite_enum_and_date_evaluation_with_assumptions() {
+    let Some(model) = finite_multitype_model() else {
         return;
     };
     let approvals = ["Approved", "NotApproved", "Unknown"];
@@ -324,46 +378,58 @@ fn all_five_obligations_match_finite_enum_and_date_evaluation_with_assumptions()
         for approval in approvals {
             for contract_end in dates {
                 for requested_expiry in dates {
-                    let inputs = InputValues::from([
-                        (
-                            "sponsor_approval".to_owned(),
-                            Value::Enum {
-                                enum_name: "ApprovalStatus".to_owned(),
-                                variant: approval.to_owned(),
-                            },
-                        ),
-                        (
-                            "contract_end".to_owned(),
-                            Value::Date {
-                                value: contract_end.to_owned(),
-                            },
-                        ),
-                        (
-                            "requested_expiry".to_owned(),
-                            Value::Date {
-                                value: requested_expiry.to_owned(),
-                            },
-                        ),
-                    ]);
-                    let result = evaluate(&model, &inputs, &assumptions, None);
-                    assert!(result.is_ok(), "oracle failed: {result:?}");
-                    if let Ok(result) = result {
-                        expected[0] |= result.classification != "outside_domain";
-                        expected[1] |= result
-                            .matched_rule_ids
-                            .iter()
-                            .any(|id| id == "GrantApprovedRequest");
-                        expected[2] |= result.classification != "outside_domain"
-                            && result.matched_rule_ids.is_empty();
-                        expected[3] |= result.classification == "conflicting";
-                        expected[4] |= result
-                            .matched_rule_ids
-                            .iter()
-                            .any(|id| id == "GrantApprovedRequest")
-                            && result
-                                .violated_constraint_ids
-                                .iter()
-                                .any(|id| id == "ExpiryWithinContract");
+                    for enabled in [false, true] {
+                        for amount in -2..=2 {
+                            let inputs = InputValues::from([
+                                (
+                                    "sponsor_approval".to_owned(),
+                                    Value::Enum {
+                                        enum_name: "ApprovalStatus".to_owned(),
+                                        variant: approval.to_owned(),
+                                    },
+                                ),
+                                (
+                                    "contract_end".to_owned(),
+                                    Value::Date {
+                                        value: contract_end.to_owned(),
+                                    },
+                                ),
+                                (
+                                    "requested_expiry".to_owned(),
+                                    Value::Date {
+                                        value: requested_expiry.to_owned(),
+                                    },
+                                ),
+                                ("enabled".to_owned(), Value::Bool { value: enabled }),
+                                (
+                                    "amount".to_owned(),
+                                    Value::Int {
+                                        value: amount.to_string(),
+                                        unit: "count".to_owned(),
+                                    },
+                                ),
+                            ]);
+                            let result = evaluate(&model, &inputs, &assumptions, None);
+                            assert!(result.is_ok(), "oracle failed: {result:?}");
+                            if let Ok(result) = result {
+                                expected[0] |= result.classification != "outside_domain";
+                                expected[1] |= result
+                                    .matched_rule_ids
+                                    .iter()
+                                    .any(|id| id == "GrantApprovedRequest");
+                                expected[2] |= result.classification != "outside_domain"
+                                    && result.matched_rule_ids.is_empty();
+                                expected[3] |= result.classification == "conflicting";
+                                expected[4] |= result
+                                    .matched_rule_ids
+                                    .iter()
+                                    .any(|id| id == "GrantApprovedRequest")
+                                    && result
+                                        .violated_constraint_ids
+                                        .iter()
+                                        .any(|id| id == "ExpiryWithinContract");
+                            }
+                        }
                     }
                 }
             }
@@ -526,6 +592,29 @@ fn analysis_replays_z3_compliance_counterexamples() {
             .and_then(|count| count.parse::<usize>().ok())
             .is_some_and(|count| count > 0),
         "expected actual assertion count, got {statistics:?}"
+    );
+    let cached_report = analyze(
+        &model,
+        &AnalysisOptions {
+            checks: vec![Check::ConstraintCompliance],
+            assumption_ids: Vec::new(),
+            budget: author_analysis::AnalysisBudget::default(),
+        },
+        &mut backend,
+    );
+    assert!(
+        cached_report.is_ok(),
+        "cached analysis failed: {cached_report:?}"
+    );
+    let Ok(cached_report) = cached_report else {
+        return;
+    };
+    assert!(cached_report.cache_hits > 0);
+    assert!(
+        cached_report
+            .results
+            .iter()
+            .all(|result| result.statistics.is_none())
     );
 }
 
