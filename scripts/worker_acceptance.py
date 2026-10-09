@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import select
 import struct
 import subprocess
 import sys
@@ -20,6 +21,7 @@ ROOT = Path(__file__).resolve().parents[1]
 BUNDLE = ROOT / "author-engine-v0"
 PROTOCOL = "author-worker/0.1"
 MAX_DEFAULT = 8 * 1024 * 1024
+IO_TIMEOUT_SECONDS = 10
 
 
 class AcceptanceFailure(AssertionError):
@@ -35,10 +37,23 @@ def decode_payload(payload: bytes) -> Any:
     return json.loads(payload.decode("utf-8"))
 
 
-def read_exact(stream: Any, length: int) -> bytes:
+def read_exact(stream: Any, length: int, timeout: float = IO_TIMEOUT_SECONDS) -> bytes:
     chunks = bytearray()
+    deadline = time.monotonic() + timeout
+    try:
+        fd = stream.fileno()
+    except (AttributeError, OSError):
+        fd = None
     while len(chunks) < length:
-        part = stream.read(length - len(chunks))
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise AcceptanceFailure(f"timed out reading worker frame ({len(chunks)} of {length} bytes)")
+        if fd is None:
+            part = stream.read(length - len(chunks))
+        else:
+            if not select.select([fd], [], [], remaining)[0]:
+                raise AcceptanceFailure(f"timed out reading worker frame ({len(chunks)} of {length} bytes)")
+            part = os.read(fd, length - len(chunks))
         if not part:
             raise EOFError(f"worker closed stream after {len(chunks)} of {length} bytes")
         chunks.extend(part)
@@ -66,7 +81,7 @@ def write_fragmented(stream: Any, frame: bytes, fragment_size: int = 4096) -> No
 class Worker:
     def __init__(self, binary: Path):
         self.binary = binary
-        self.process = subprocess.Popen([str(binary), "worker"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=0)
+        self.process = subprocess.Popen([str(binary), "worker"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, bufsize=0)
         assert self.process.stdin is not None and self.process.stdout is not None
         self.next_id = 1
 
@@ -88,13 +103,11 @@ class Worker:
 
     def close(self, timeout: float = 5.0) -> int:
         if self.process.poll() is None:
-            self.process.terminate()
+            self.process.kill()
         try:
             return self.process.wait(timeout=timeout)
         except subprocess.TimeoutExpired as exc:
-            self.process.kill()
-            self.process.wait(timeout=timeout)
-            raise AcceptanceFailure("worker did not exit after terminate; killed as cleanup") from exc
+            raise AcceptanceFailure("worker did not exit after kill") from exc
 
 
 def _objects(value: Any):
@@ -137,7 +150,11 @@ def run_worker_acceptance(binary: Path) -> None:
     try:
         hello_response = worker.request("hello", fragmented=True)
         hello = result(hello_response, "hello")
-        max_frame = int(hello.get("limits", {}).get("max_frame_bytes", hello.get("configured_limits", {}).get("max_frame_bytes", MAX_DEFAULT)))
+        limits = hello.get("limits", {})
+        max_frame = int(limits.get("max_frame_bytes", hello.get("configured_limits", {}).get("max_frame_bytes", MAX_DEFAULT)))
+        max_handles = int(limits.get("max_handles", 64))
+        if max_handles < 1:
+            raise AcceptanceFailure(f"hello advertised invalid max_handles: {max_handles}")
 
         compiled = compile_model(worker, "unsafe-grant")
         handle = compiled["handle"]
@@ -171,11 +188,13 @@ def run_worker_acceptance(binary: Path) -> None:
             raise AcceptanceFailure(f"release of absent handle should report false: {missing_release!r}")
 
         # Capacity must be observable and must not evict a still-live compiled model.
-        # At most 128 live models are attempted so a misconfigured worker cannot exhaust the test host.
+        # Fill the advertised bound exactly; keep host resource use capped at 128.
         first = compile_model(worker, "partial")
         live = [first["handle"]]
         capacity_seen = False
-        for _ in range(127):
+        if max_handles > 128:
+            raise AcceptanceFailure(f"advertised capacity {max_handles} exceeds safe acceptance bound 128")
+        for _ in range(max_handles):
             response = worker.request("compile", {"model": json.loads((BUNDLE / "fixtures/valid/partial.json").read_text(encoding="utf-8"))})
             if "error" in response:
                 code = response["error"].get("code")
@@ -188,9 +207,7 @@ def run_worker_acceptance(binary: Path) -> None:
                 raise AcceptanceFailure(f"capacity compile returned no handle and no capacity error: {value!r}")
             live.append(value["handle"])
         if not capacity_seen:
-            # A high configurable capacity may exceed our safe probe; release everything and report honestly.
-            if len(live) >= 128:
-                print("NOTE: capacity bound exceeds safe probe (128); explicit capacity rejection not observed")
+            raise AcceptanceFailure(f"worker accepted {len(live)} live models despite advertised capacity {max_handles}")
         # Prove full capacity didn't invalidate an existing handle when it is reached.
         if capacity_seen:
             response = worker.request("analyze", {"handle": live[0], "checks": [], "assumption_ids": [], "budget": {}})
@@ -201,8 +218,7 @@ def run_worker_acceptance(binary: Path) -> None:
 
         # Unknown operation and protocol version are stable protocol errors with request IDs preserved.
         unknown = worker.request("not-an-operation")
-        if not isinstance(unknown.get("error"), dict):
-            raise AcceptanceFailure(f"unknown operation was not returned as a protocol error: {unknown!r}")
+        expect_error(unknown, "unknown_operation", "unknown operation")
         bad_version = worker.request("hello")
         # Send a manually versioned request because Worker.request uses the valid version.
         bad_request = {"protocol_version": "author-worker/999", "request_id": "bad-version", "op": "hello", "params": {}}
@@ -210,16 +226,16 @@ def run_worker_acceptance(binary: Path) -> None:
         bad_reply = read_frame(worker.process.stdout)
         if bad_reply.get("request_id") != "bad-version":
             raise AcceptanceFailure(f"protocol error lost recoverable request ID: {bad_reply!r}")
-        if not isinstance(bad_reply.get("error"), dict):
-            raise AcceptanceFailure(f"unsupported protocol version was not rejected: {bad_reply!r}")
+        expect_error(bad_reply, "version_mismatch", "unsupported protocol version")
         del bad_version
 
         # Malformed JSON frame is an error response when its ID can be recovered, otherwise worker may close.
         malformed = b'{"protocol_version":"author-worker/0.1","request_id":"malformed","op":'
         write_fragmented(worker.process.stdin, struct.pack(">I", len(malformed)) + malformed)
         malformed_reply = read_frame(worker.process.stdout)
-        if malformed_reply.get("request_id") not in ("malformed", None) or "error" not in malformed_reply:
-            raise AcceptanceFailure(f"malformed frame not reported as protocol error: {malformed_reply!r}")
+        if malformed_reply.get("request_id") not in ("malformed", None):
+            raise AcceptanceFailure(f"malformed frame request ID was not null or recoverable: {malformed_reply!r}")
+        expect_error(malformed_reply, "malformed_json", "malformed JSON frame")
 
         # Invalid unsigned frame length is fatal/nonzero, unlike a request-level error.
         rc = worker.close()
