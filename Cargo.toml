@@ -1,7 +1,26 @@
-[lints.clippy]
-pedantic = { level = "deny", priority = -1 }   # UM, ACTUALLY
-nursery = { level = "deny", priority = -1 }    # BETA LINTS
-# DENY PANICS
+[workspace]
+resolver = "3"
+members = [
+    "crates/author_model",
+    "crates/author_analysis",
+    "crates/author_z3",
+    "crates/author_worker",
+]
+
+[workspace.package]
+edition = "2024"
+license = "MIT"
+rust-version = "1.85"
+
+[workspace.dependencies]
+author_model = { path = "crates/author_model" }
+author_analysis = { path = "crates/author_analysis" }
+author_z3 = { path = "crates/author_z3" }
+z3 = "=0.19.4"
+
+[workspace.lints.clippy]
+pedantic = { level = "deny", priority = -1 }
+nursery = { level = "deny", priority = -1 }
 unwrap_used = "deny"
 expect_used = "deny"
 indexing_slicing = "deny"
@@ -15,3 +34,6 @@ panic_in_result_fn = "deny"
 panic = "deny"
 exit = "deny"
 as_conversions = "deny"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
