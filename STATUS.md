@@ -9,7 +9,7 @@
 - [x] Establish four-crate workspace and pinned Rust/Nix/native Z3 build with SAT/UNSAT smoke evidence.
 - [x] Implement strict model ingestion, semantic compiler, exact values, scopes, derived DAG, provenance/hashes and concrete evaluation.
 - [x] Repair model date/schema/outcome-scope/resource defects; add precise diagnostics, metadata roundtrips and early borrowed preflight guards. Follow-ups 1d1c761/c450b3e resolve gaps in delayed checkpoint 6ecf58e; final model suite has 25 passing tests.
-- [x] Implement feasibility, reachability, coverage, conflicts and independent compliance; prerequisite/vacuity/conditional/proposed/open-item reporting.
+- [x] Implement feasibility, reachability, coverage, conflicts and independent compliance; prerequisite/vacuity/conditional/proposed/open-item reporting. Coverage provenance repair cc81705 is already integrated and included in final main validation.
 - [x] Implement exact Z3 lowering/decoding, solver limits, typed witness replay and detached native statistics.
 - [x] Implement budgets, bounded lazy planning, completed-result caching and current-content metadata reconstruction.
 - [x] Protect compiler-only immutable models and opt-in, namespaced/type-separated backend caches; prove external mutation/construction fail with E0596/E0451.
