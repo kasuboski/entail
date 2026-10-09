@@ -73,8 +73,16 @@
         "outcome": "Grant",
         "fields": {
           "value": {
-            "kind": "ref",
-            "path": "input.payload"
+            "kind": "add",
+            "left": {
+              "kind": "ref",
+              "path": "input.payload"
+            },
+            "right": {
+              "kind": "int",
+              "value": "0",
+              "unit": "Count"
+            }
           }
         }
       },
@@ -103,8 +111,16 @@
         "outcome": "Grant",
         "fields": {
           "value": {
-            "kind": "ref",
-            "path": "input.payload"
+            "kind": "add",
+            "left": {
+              "kind": "ref",
+              "path": "input.payload"
+            },
+            "right": {
+              "kind": "int",
+              "value": "1",
+              "unit": "Count"
+            }
           }
         }
       },
@@ -133,8 +149,16 @@
         "outcome": "Grant",
         "fields": {
           "value": {
-            "kind": "ref",
-            "path": "input.payload"
+            "kind": "add",
+            "left": {
+              "kind": "ref",
+              "path": "input.payload"
+            },
+            "right": {
+              "kind": "int",
+              "value": "2",
+              "unit": "Count"
+            }
           }
         }
       },
@@ -163,8 +187,16 @@
         "outcome": "Grant",
         "fields": {
           "value": {
-            "kind": "ref",
-            "path": "input.payload"
+            "kind": "add",
+            "left": {
+              "kind": "ref",
+              "path": "input.payload"
+            },
+            "right": {
+              "kind": "int",
+              "value": "3",
+              "unit": "Count"
+            }
           }
         }
       },
@@ -193,8 +225,16 @@
         "outcome": "Grant",
         "fields": {
           "value": {
-            "kind": "ref",
-            "path": "input.payload"
+            "kind": "add",
+            "left": {
+              "kind": "ref",
+              "path": "input.payload"
+            },
+            "right": {
+              "kind": "int",
+              "value": "4",
+              "unit": "Count"
+            }
           }
         }
       },
@@ -223,8 +263,16 @@
         "outcome": "Grant",
         "fields": {
           "value": {
-            "kind": "ref",
-            "path": "input.payload"
+            "kind": "add",
+            "left": {
+              "kind": "ref",
+              "path": "input.payload"
+            },
+            "right": {
+              "kind": "int",
+              "value": "5",
+              "unit": "Count"
+            }
           }
         }
       },
@@ -253,8 +301,16 @@
         "outcome": "Grant",
         "fields": {
           "value": {
-            "kind": "ref",
-            "path": "input.payload"
+            "kind": "add",
+            "left": {
+              "kind": "ref",
+              "path": "input.payload"
+            },
+            "right": {
+              "kind": "int",
+              "value": "6",
+              "unit": "Count"
+            }
           }
         }
       },
@@ -283,8 +339,16 @@
         "outcome": "Grant",
         "fields": {
           "value": {
-            "kind": "ref",
-            "path": "input.payload"
+            "kind": "add",
+            "left": {
+              "kind": "ref",
+              "path": "input.payload"
+            },
+            "right": {
+              "kind": "int",
+              "value": "7",
+              "unit": "Count"
+            }
           }
         }
       },
@@ -313,8 +377,16 @@
         "outcome": "Grant",
         "fields": {
           "value": {
-            "kind": "ref",
-            "path": "input.payload"
+            "kind": "add",
+            "left": {
+              "kind": "ref",
+              "path": "input.payload"
+            },
+            "right": {
+              "kind": "int",
+              "value": "8",
+              "unit": "Count"
+            }
           }
         }
       },
@@ -343,8 +415,16 @@
         "outcome": "Grant",
         "fields": {
           "value": {
-            "kind": "ref",
-            "path": "input.payload"
+            "kind": "add",
+            "left": {
+              "kind": "ref",
+              "path": "input.payload"
+            },
+            "right": {
+              "kind": "int",
+              "value": "9",
+              "unit": "Count"
+            }
           }
         }
       },
@@ -373,8 +453,16 @@
         "outcome": "Grant",
         "fields": {
           "value": {
-            "kind": "ref",
-            "path": "input.payload"
+            "kind": "add",
+            "left": {
+              "kind": "ref",
+              "path": "input.payload"
+            },
+            "right": {
+              "kind": "int",
+              "value": "10",
+              "unit": "Count"
+            }
           }
         }
       },
@@ -403,8 +491,16 @@
         "outcome": "Grant",
         "fields": {
           "value": {
-            "kind": "ref",
-            "path": "input.payload"
+            "kind": "add",
+            "left": {
+              "kind": "ref",
+              "path": "input.payload"
+            },
+            "right": {
+              "kind": "int",
+              "value": "11",
+              "unit": "Count"
+            }
           }
         }
       },
@@ -433,8 +529,16 @@
         "outcome": "Grant",
         "fields": {
           "value": {
-            "kind": "ref",
-            "path": "input.payload"
+            "kind": "add",
+            "left": {
+              "kind": "ref",
+              "path": "input.payload"
+            },
+            "right": {
+              "kind": "int",
+              "value": "12",
+              "unit": "Count"
+            }
           }
         }
       },
@@ -463,8 +567,16 @@
         "outcome": "Grant",
         "fields": {
           "value": {
-            "kind": "ref",
-            "path": "input.payload"
+            "kind": "add",
+            "left": {
+              "kind": "ref",
+              "path": "input.payload"
+            },
+            "right": {
+              "kind": "int",
+              "value": "13",
+              "unit": "Count"
+            }
           }
         }
       },
@@ -493,8 +605,16 @@
         "outcome": "Grant",
         "fields": {
           "value": {
-            "kind": "ref",
-            "path": "input.payload"
+            "kind": "add",
+            "left": {
+              "kind": "ref",
+              "path": "input.payload"
+            },
+            "right": {
+              "kind": "int",
+              "value": "14",
+              "unit": "Count"
+            }
           }
         }
       },
@@ -523,8 +643,16 @@
         "outcome": "Grant",
         "fields": {
           "value": {
-            "kind": "ref",
-            "path": "input.payload"
+            "kind": "add",
+            "left": {
+              "kind": "ref",
+              "path": "input.payload"
+            },
+            "right": {
+              "kind": "int",
+              "value": "15",
+              "unit": "Count"
+            }
           }
         }
       },
@@ -553,8 +681,16 @@
         "outcome": "Grant",
         "fields": {
           "value": {
-            "kind": "ref",
-            "path": "input.payload"
+            "kind": "add",
+            "left": {
+              "kind": "ref",
+              "path": "input.payload"
+            },
+            "right": {
+              "kind": "int",
+              "value": "16",
+              "unit": "Count"
+            }
           }
         }
       },
@@ -583,8 +719,16 @@
         "outcome": "Grant",
         "fields": {
           "value": {
-            "kind": "ref",
-            "path": "input.payload"
+            "kind": "add",
+            "left": {
+              "kind": "ref",
+              "path": "input.payload"
+            },
+            "right": {
+              "kind": "int",
+              "value": "17",
+              "unit": "Count"
+            }
           }
         }
       },
@@ -613,8 +757,16 @@
         "outcome": "Grant",
         "fields": {
           "value": {
-            "kind": "ref",
-            "path": "input.payload"
+            "kind": "add",
+            "left": {
+              "kind": "ref",
+              "path": "input.payload"
+            },
+            "right": {
+              "kind": "int",
+              "value": "18",
+              "unit": "Count"
+            }
           }
         }
       },
@@ -643,8 +795,16 @@
         "outcome": "Grant",
         "fields": {
           "value": {
-            "kind": "ref",
-            "path": "input.payload"
+            "kind": "add",
+            "left": {
+              "kind": "ref",
+              "path": "input.payload"
+            },
+            "right": {
+              "kind": "int",
+              "value": "19",
+              "unit": "Count"
+            }
           }
         }
       },
@@ -673,8 +833,16 @@
         "outcome": "Grant",
         "fields": {
           "value": {
-            "kind": "ref",
-            "path": "input.payload"
+            "kind": "add",
+            "left": {
+              "kind": "ref",
+              "path": "input.payload"
+            },
+            "right": {
+              "kind": "int",
+              "value": "20",
+              "unit": "Count"
+            }
           }
         }
       },
@@ -703,8 +871,16 @@
         "outcome": "Grant",
         "fields": {
           "value": {
-            "kind": "ref",
-            "path": "input.payload"
+            "kind": "add",
+            "left": {
+              "kind": "ref",
+              "path": "input.payload"
+            },
+            "right": {
+              "kind": "int",
+              "value": "21",
+              "unit": "Count"
+            }
           }
         }
       },
@@ -733,8 +909,16 @@
         "outcome": "Grant",
         "fields": {
           "value": {
-            "kind": "ref",
-            "path": "input.payload"
+            "kind": "add",
+            "left": {
+              "kind": "ref",
+              "path": "input.payload"
+            },
+            "right": {
+              "kind": "int",
+              "value": "22",
+              "unit": "Count"
+            }
           }
         }
       },
@@ -763,8 +947,16 @@
         "outcome": "Grant",
         "fields": {
           "value": {
-            "kind": "ref",
-            "path": "input.payload"
+            "kind": "add",
+            "left": {
+              "kind": "ref",
+              "path": "input.payload"
+            },
+            "right": {
+              "kind": "int",
+              "value": "23",
+              "unit": "Count"
+            }
           }
         }
       },
@@ -793,8 +985,16 @@
         "outcome": "Grant",
         "fields": {
           "value": {
-            "kind": "ref",
-            "path": "input.payload"
+            "kind": "add",
+            "left": {
+              "kind": "ref",
+              "path": "input.payload"
+            },
+            "right": {
+              "kind": "int",
+              "value": "24",
+              "unit": "Count"
+            }
           }
         }
       },
@@ -823,8 +1023,16 @@
         "outcome": "Grant",
         "fields": {
           "value": {
-            "kind": "ref",
-            "path": "input.payload"
+            "kind": "add",
+            "left": {
+              "kind": "ref",
+              "path": "input.payload"
+            },
+            "right": {
+              "kind": "int",
+              "value": "25",
+              "unit": "Count"
+            }
           }
         }
       },
@@ -853,8 +1061,16 @@
         "outcome": "Grant",
         "fields": {
           "value": {
-            "kind": "ref",
-            "path": "input.payload"
+            "kind": "add",
+            "left": {
+              "kind": "ref",
+              "path": "input.payload"
+            },
+            "right": {
+              "kind": "int",
+              "value": "26",
+              "unit": "Count"
+            }
           }
         }
       },
@@ -883,8 +1099,16 @@
         "outcome": "Grant",
         "fields": {
           "value": {
-            "kind": "ref",
-            "path": "input.payload"
+            "kind": "add",
+            "left": {
+              "kind": "ref",
+              "path": "input.payload"
+            },
+            "right": {
+              "kind": "int",
+              "value": "27",
+              "unit": "Count"
+            }
           }
         }
       },
@@ -913,8 +1137,16 @@
         "outcome": "Grant",
         "fields": {
           "value": {
-            "kind": "ref",
-            "path": "input.payload"
+            "kind": "add",
+            "left": {
+              "kind": "ref",
+              "path": "input.payload"
+            },
+            "right": {
+              "kind": "int",
+              "value": "28",
+              "unit": "Count"
+            }
           }
         }
       },
@@ -943,8 +1175,16 @@
         "outcome": "Grant",
         "fields": {
           "value": {
-            "kind": "ref",
-            "path": "input.payload"
+            "kind": "add",
+            "left": {
+              "kind": "ref",
+              "path": "input.payload"
+            },
+            "right": {
+              "kind": "int",
+              "value": "29",
+              "unit": "Count"
+            }
           }
         }
       },
@@ -973,8 +1213,16 @@
         "outcome": "Grant",
         "fields": {
           "value": {
-            "kind": "ref",
-            "path": "input.payload"
+            "kind": "add",
+            "left": {
+              "kind": "ref",
+              "path": "input.payload"
+            },
+            "right": {
+              "kind": "int",
+              "value": "30",
+              "unit": "Count"
+            }
           }
         }
       },
@@ -1003,8 +1251,16 @@
         "outcome": "Grant",
         "fields": {
           "value": {
-            "kind": "ref",
-            "path": "input.payload"
+            "kind": "add",
+            "left": {
+              "kind": "ref",
+              "path": "input.payload"
+            },
+            "right": {
+              "kind": "int",
+              "value": "31",
+              "unit": "Count"
+            }
           }
         }
       },
@@ -1033,8 +1289,16 @@
         "outcome": "Grant",
         "fields": {
           "value": {
-            "kind": "ref",
-            "path": "input.payload"
+            "kind": "add",
+            "left": {
+              "kind": "ref",
+              "path": "input.payload"
+            },
+            "right": {
+              "kind": "int",
+              "value": "32",
+              "unit": "Count"
+            }
           }
         }
       },
@@ -1063,8 +1327,16 @@
         "outcome": "Grant",
         "fields": {
           "value": {
-            "kind": "ref",
-            "path": "input.payload"
+            "kind": "add",
+            "left": {
+              "kind": "ref",
+              "path": "input.payload"
+            },
+            "right": {
+              "kind": "int",
+              "value": "33",
+              "unit": "Count"
+            }
           }
         }
       },
@@ -1093,8 +1365,16 @@
         "outcome": "Grant",
         "fields": {
           "value": {
-            "kind": "ref",
-            "path": "input.payload"
+            "kind": "add",
+            "left": {
+              "kind": "ref",
+              "path": "input.payload"
+            },
+            "right": {
+              "kind": "int",
+              "value": "34",
+              "unit": "Count"
+            }
           }
         }
       },
@@ -1123,8 +1403,16 @@
         "outcome": "Grant",
         "fields": {
           "value": {
-            "kind": "ref",
-            "path": "input.payload"
+            "kind": "add",
+            "left": {
+              "kind": "ref",
+              "path": "input.payload"
+            },
+            "right": {
+              "kind": "int",
+              "value": "35",
+              "unit": "Count"
+            }
           }
         }
       },
@@ -1153,8 +1441,16 @@
         "outcome": "Grant",
         "fields": {
           "value": {
-            "kind": "ref",
-            "path": "input.payload"
+            "kind": "add",
+            "left": {
+              "kind": "ref",
+              "path": "input.payload"
+            },
+            "right": {
+              "kind": "int",
+              "value": "36",
+              "unit": "Count"
+            }
           }
         }
       },
@@ -1183,8 +1479,16 @@
         "outcome": "Grant",
         "fields": {
           "value": {
-            "kind": "ref",
-            "path": "input.payload"
+            "kind": "add",
+            "left": {
+              "kind": "ref",
+              "path": "input.payload"
+            },
+            "right": {
+              "kind": "int",
+              "value": "37",
+              "unit": "Count"
+            }
           }
         }
       },
@@ -1213,8 +1517,16 @@
         "outcome": "Grant",
         "fields": {
           "value": {
-            "kind": "ref",
-            "path": "input.payload"
+            "kind": "add",
+            "left": {
+              "kind": "ref",
+              "path": "input.payload"
+            },
+            "right": {
+              "kind": "int",
+              "value": "38",
+              "unit": "Count"
+            }
           }
         }
       },
@@ -1243,8 +1555,16 @@
         "outcome": "Grant",
         "fields": {
           "value": {
-            "kind": "ref",
-            "path": "input.payload"
+            "kind": "add",
+            "left": {
+              "kind": "ref",
+              "path": "input.payload"
+            },
+            "right": {
+              "kind": "int",
+              "value": "39",
+              "unit": "Count"
+            }
           }
         }
       },

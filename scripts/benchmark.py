@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Generate Author v0 benchmark models and measure a local CLI/worker honestly."""
 from __future__ import annotations
-import argparse, json, os, platform, shutil, statistics, subprocess, sys, time
+import argparse, json, math, os, platform, statistics, subprocess, sys, time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -23,8 +23,8 @@ def generate():
     cases={f"independent_thresholds_{n}":make_threshold(n) for n in (10,100,1000)}
     # Families isolate modeled structures; sizes are recorded in model IDs/files.
     m=make_threshold(40); m['model_id']='overlapping_guards'; m['rules']=[rule(f"R{i}",comparison("ge",ref('x'),integer(i))) for i in range(40)]; cases['overlapping_guards']=m
-    m=make_threshold(40); m['model_id']='same_constructor_payload'; m['inputs'].append(decl('payload',{"kind":"int","unit":"Count"})); m['outcomes']=[{"id":"Grant","fields":[{"id":"value","type":{"kind":"int","unit":"Count"}}],"origin":origin()}]; m['rules']=[{"id":f"R{i}","when":comparison("ge",ref('x'),integer(i)),"then":{"outcome":"Grant","fields":{"value":ref('payload')}},"origin":origin()} for i in range(40)]; cases['same_constructor_payload']=m
-    m=model('coupled_boolean'); m['inputs']=[decl(f"b{i}",{"kind":"bool"}) for i in range(24)]; m['outcomes']=[{"id":"Grant","fields":[],"origin":origin()}]; m['rules']=[rule('R0',{"kind":"and","args":[comparison('eq',ref(f'b{i}'),{"kind":"bool","value":bool(i%2)}) for i in range(24)]})]; cases['coupled_boolean']=m
+    m=make_threshold(40); m['model_id']='same_constructor_payload'; m['inputs'].append(decl('payload',{"kind":"int","unit":"Count"})); m['outcomes']=[{"id":"Grant","fields":[{"id":"value","type":{"kind":"int","unit":"Count"}}],"origin":origin()}]; m['rules']=[{"id":f"R{i}","when":comparison("ge",ref('x'),integer(i)),"then":{"outcome":"Grant","fields":{"value":comparison('add',ref('payload'),integer(i))}},"origin":origin()} for i in range(40)]; cases['same_constructor_payload']=m
+    m=model('coupled_boolean'); m['inputs']=[decl(f"b{i}",{"kind":"bool"}) for i in range(24)]; m['outcomes']=[{"id":"Grant","fields":[],"origin":origin()}]; m['rules']=[rule('R0',{"kind":"and","args":[{"kind":"or","args":[ref(f'b{i}'),ref(f'b{(i+1)%24}')]} for i in range(24)]})]; cases['coupled_boolean']=m
     m=model('shared_derived_dag'); m['inputs']=[decl('x',{"kind":"int","unit":"Count"})]; m['derived']=[{"id":f"d{i}","type":{"kind":"int","unit":"Count"},"expr":comparison('add',ref('x') if i==0 else {"kind":"ref","path":f"derived.d{i-1}"},integer(1)),"origin":origin()} for i in range(64)]; m['outcomes']=[{"id":"Grant","fields":[],"origin":origin()}]; m['rules']=[rule('R0',comparison('ge',{"kind":"ref","path":"derived.d63"},integer(100)))]; cases['shared_derived_dag']=m
     m=model('near_model_limits'); m['inputs']=[decl(f"x{i}",{"kind":"int","unit":"Count"}) for i in range(256)]; m['outcomes']=[{"id":"Grant","fields":[],"origin":origin()}]; m['rules']=[rule(f"R{i}",comparison('ge',ref(f"x{i%256}"),integer(10**30+i))) for i in range(2048)]; cases['near_model_limits']=m
     for name,obj in cases.items():
@@ -47,7 +47,7 @@ def validate(models):
         walk(m)
 
 def percentile(values, p):
-    return sorted(values)[min(len(values)-1, max(0, int((len(values)-1)*p)))] if values else None
+    return sorted(values)[min(len(values)-1, max(0, math.ceil(len(values)*p)-1))] if values else None
 
 def frame_write(proc, value):
     payload=json.dumps(value,separators=(',',':')).encode()
@@ -96,12 +96,15 @@ def run(args):
     binary=Path(args.binary).expanduser().resolve()
     if not binary.exists(): raise SystemExit(f'binary not found: {binary}')
     names=list(cases) if args.full else ['independent_thresholds_10','independent_thresholds_100','independent_thresholds_1000','overlapping_guards','same_constructor_payload','coupled_boolean','shared_derived_dag','near_model_limits']
+    runs=args.runs*2 if args.full else args.runs
     budget={'total_timeout_ms':args.budget_ms,'per_obligation_timeout_ms':args.per_obligation_ms,'max_obligations':args.max_obligations}
-    env=os.environ.copy(); report={'platform':platform.platform(),'machine':platform.machine(),'processor':platform.processor() or 'unreported','python':platform.python_version(),'binary':str(binary),'profile':args.profile or 'unreported','runs_per_family':args.runs,'effective_budget':budget,'worker_max_obligations':args.max_obligations,'worker':[],'cli':[],'cache_probe':None,'unavailable_metrics':['peak memory (not sampled; use external RSS tooling)','formula size (statistics hook not yet exposed)','native per-obligation solver statistics (pending backend hook)']}
+    env=os.environ.copy(); report={'platform':platform.platform(),'machine':platform.machine(),'processor':platform.processor() or 'unreported','python':platform.python_version(),'binary':str(binary),'profile':args.profile or 'unreported','runs_per_family':runs,'effective_budget':budget,'worker_max_obligations':args.max_obligations,'worker':[],'cli':[],'cache_probe':None,'unavailable_metrics':['peak memory (not sampled; use external RSS tooling)','formula size (statistics hook not yet exposed)','native per-obligation solver statistics (pending backend hook)']}
     try: report['rust_version']=subprocess.check_output(['rustc','--version'],text=True,stderr=subprocess.STDOUT,env=env).strip()
-    except (OSError,subprocess.CalledProcessError): report['rust_version']='unavailable'
+    except (OSError,subprocess.CalledProcessError):
+        try: report['rust_version']=subprocess.check_output(['mise','exec','--','rustc','--version'],text=True,stderr=subprocess.STDOUT,env=env).strip()
+        except (OSError,subprocess.CalledProcessError): report['rust_version']='unavailable'
     for key in names:
-        try: report['worker'].append(run_worker_family(binary,key,cases[key],args.runs,budget,args.max_obligations))
+        try: report['worker'].append(run_worker_family(binary,key,cases[key],runs,budget,args.max_obligations))
         except Exception as e: report['worker'].append({'family':key,'error':str(e)})
     # Explicit probes: duplicate obligations within one analysis expose planner/cache stats;
     # edits and assumption changes are isolated in subsequent requests/compiled handles.
@@ -111,21 +114,32 @@ def run(args):
         compiled=request(proc,seq,'compile',{'model':probe}); seq+=1; handle=compiled['handle']
         base={'handle':handle,'checks':['constraint_compliance'],'budget':budget}
         repeated=[]
-        for _ in range(args.runs): repeated.append(stats(request(proc,seq,'analyze',base))); seq+=1
+        for _ in range(runs): repeated.append(stats(request(proc,seq,'analyze',base))); seq+=1
         edited=json.loads(json.dumps(probe)); edited['rules'][0]['when']=comparison('ge',ref('x'),integer(1))
         edited_c=request(proc,seq,'compile',{'model':edited}); seq+=1
         metadata=json.loads(json.dumps(probe)); metadata['rules'][0]['origin']['note']='metadata only'; metadata['open_items']=[{'id':'I1','text':'provenance probe','source_ids':[],'affects':'interpretation'}]
         metadata_c=request(proc,seq,'compile',{'model':metadata}); seq+=1
         assumptions=json.loads(json.dumps(probe)); assumptions['assumptions']=[{'id':'A1','expr':comparison('ge',ref('x'),integer(0)),'origin':{'kind':'assumption','source_ids':[],'review':'proposed'}}]
         assumption_c=request(proc,seq,'compile',{'model':assumptions}); seq+=1
+        assumption_base=request(proc,seq,'analyze',{'handle':assumption_c['handle'],'checks':['constraint_compliance'],'budget':budget}); seq+=1
         assumption_report=request(proc,seq,'analyze',{'handle':assumption_c['handle'],'checks':['constraint_compliance'],'assumption_ids':['A1'],'budget':budget}); seq+=1
-        report['cache_probe']={'same_analysis_reports':repeated,'semantic_edit_hashes':{'base':compiled.get('semantic_hash'),'edited':edited_c.get('semantic_hash')},'metadata_edit_hashes':{'base_semantic':compiled.get('semantic_hash'),'metadata_semantic':metadata_c.get('semantic_hash'),'base_content':compiled.get('content_hash'),'metadata_content':metadata_c.get('content_hash')},'assumption_config_report':stats(assumption_report),'expectations':{'semantic_edit_changes_semantic_hash':compiled.get('semantic_hash')!=edited_c.get('semantic_hash'),'metadata_edit_preserves_semantics':compiled.get('semantic_hash')==metadata_c.get('semantic_hash'),'metadata_edit_changes_content':compiled.get('content_hash')!=metadata_c.get('content_hash'),'assumptions_use_distinct_analysis_configuration':True}}
+        assumption_again=request(proc,seq,'analyze',{'handle':assumption_c['handle'],'checks':['constraint_compliance'],'budget':budget}); seq+=1
+        edited_report=request(proc,seq,'analyze',{'handle':edited_c['handle'],'checks':['constraint_compliance'],'budget':budget}); seq+=1
+        metadata_report=request(proc,seq,'analyze',{'handle':metadata_c['handle'],'checks':['constraint_compliance'],'budget':budget}); seq+=1
+        # One-rule edits represent an interactive edit/analyze loop; each must change semantics.
+        edit_loop=[]; edited_loop=json.loads(json.dumps(probe))
+        for i in range(min(runs,5)):
+            edited_loop['rules'][0]['when']=comparison('ge',ref('x'),integer(i+2))
+            ec=request(proc,seq,'compile',{'model':edited_loop}); seq+=1
+            ar=request(proc,seq,'analyze',{'handle':ec['handle'],'checks':['constraint_compliance'],'budget':budget}); seq+=1
+            edit_loop.append({'semantic_hash':ec.get('semantic_hash'),'report':stats(ar)})
+        report['cache_probe']={'same_analysis_reports':repeated,'semantic_edit':{'hashes':{'base':compiled.get('semantic_hash'),'edited':edited_c.get('semantic_hash')},'report':stats(edited_report)},'metadata_edit':{'hashes':{'base_semantic':compiled.get('semantic_hash'),'metadata_semantic':metadata_c.get('semantic_hash'),'base_content':compiled.get('content_hash'),'metadata_content':metadata_c.get('content_hash')},'report':stats(metadata_report),'reported_content_hash':metadata_report.get('content_hash')},'one_rule_edit_loop':edit_loop,'assumption_key_probe':{'without_assumption_first':stats(assumption_base),'with_assumption':stats(assumption_report),'without_assumption_again':stats(assumption_again)},'expectations':{'semantic_edit_changes_semantic_hash':compiled.get('semantic_hash')!=edited_c.get('semantic_hash'),'metadata_edit_preserves_semantics':compiled.get('semantic_hash')==metadata_c.get('semantic_hash'),'metadata_edit_changes_content':compiled.get('content_hash')!=metadata_c.get('content_hash'),'assumption_configuration_separates_cache_entries':stats(assumption_again).get('cache_hits',0)==6 and stats(assumption_report).get('cache_hits',0)==0}}
     except Exception as e: report['cache_probe']={'error':str(e)}
     finally: proc.stdin.close(); proc.wait(timeout=10)
     if args.cli:
         for key in names:
             times=[]; outs=[]
-            for _ in range(args.runs):
+            for _ in range(runs):
                 t=time.perf_counter(); p=subprocess.run([str(binary),'analyze',str(OUT/f'{key}.json'),'--checks','rule_reachability,coverage,outcome_conflict','--budget-ms',str(args.budget_ms)],capture_output=True,text=True,timeout=args.timeout,env=env); times.append((time.perf_counter()-t)*1000)
                 try: outs.append(stats(json.loads(p.stdout)))
                 except ValueError: outs.append({'error':p.stderr[:300]})
