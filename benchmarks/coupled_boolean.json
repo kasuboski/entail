@@ -315,268 +315,316 @@
         "kind": "and",
         "args": [
           {
-            "kind": "eq",
-            "left": {
-              "kind": "ref",
-              "path": "input.b0"
-            },
-            "right": {
-              "kind": "bool",
-              "value": false
-            }
+            "kind": "or",
+            "args": [
+              {
+                "kind": "ref",
+                "path": "input.b0"
+              },
+              {
+                "kind": "ref",
+                "path": "input.b1"
+              }
+            ]
           },
           {
-            "kind": "eq",
-            "left": {
-              "kind": "ref",
-              "path": "input.b1"
-            },
-            "right": {
-              "kind": "bool",
-              "value": true
-            }
+            "kind": "or",
+            "args": [
+              {
+                "kind": "ref",
+                "path": "input.b1"
+              },
+              {
+                "kind": "ref",
+                "path": "input.b2"
+              }
+            ]
           },
           {
-            "kind": "eq",
-            "left": {
-              "kind": "ref",
-              "path": "input.b2"
-            },
-            "right": {
-              "kind": "bool",
-              "value": false
-            }
+            "kind": "or",
+            "args": [
+              {
+                "kind": "ref",
+                "path": "input.b2"
+              },
+              {
+                "kind": "ref",
+                "path": "input.b3"
+              }
+            ]
           },
           {
-            "kind": "eq",
-            "left": {
-              "kind": "ref",
-              "path": "input.b3"
-            },
-            "right": {
-              "kind": "bool",
-              "value": true
-            }
+            "kind": "or",
+            "args": [
+              {
+                "kind": "ref",
+                "path": "input.b3"
+              },
+              {
+                "kind": "ref",
+                "path": "input.b4"
+              }
+            ]
           },
           {
-            "kind": "eq",
-            "left": {
-              "kind": "ref",
-              "path": "input.b4"
-            },
-            "right": {
-              "kind": "bool",
-              "value": false
-            }
+            "kind": "or",
+            "args": [
+              {
+                "kind": "ref",
+                "path": "input.b4"
+              },
+              {
+                "kind": "ref",
+                "path": "input.b5"
+              }
+            ]
           },
           {
-            "kind": "eq",
-            "left": {
-              "kind": "ref",
-              "path": "input.b5"
-            },
-            "right": {
-              "kind": "bool",
-              "value": true
-            }
+            "kind": "or",
+            "args": [
+              {
+                "kind": "ref",
+                "path": "input.b5"
+              },
+              {
+                "kind": "ref",
+                "path": "input.b6"
+              }
+            ]
           },
           {
-            "kind": "eq",
-            "left": {
-              "kind": "ref",
-              "path": "input.b6"
-            },
-            "right": {
-              "kind": "bool",
-              "value": false
-            }
+            "kind": "or",
+            "args": [
+              {
+                "kind": "ref",
+                "path": "input.b6"
+              },
+              {
+                "kind": "ref",
+                "path": "input.b7"
+              }
+            ]
           },
           {
-            "kind": "eq",
-            "left": {
-              "kind": "ref",
-              "path": "input.b7"
-            },
-            "right": {
-              "kind": "bool",
-              "value": true
-            }
+            "kind": "or",
+            "args": [
+              {
+                "kind": "ref",
+                "path": "input.b7"
+              },
+              {
+                "kind": "ref",
+                "path": "input.b8"
+              }
+            ]
           },
           {
-            "kind": "eq",
-            "left": {
-              "kind": "ref",
-              "path": "input.b8"
-            },
-            "right": {
-              "kind": "bool",
-              "value": false
-            }
+            "kind": "or",
+            "args": [
+              {
+                "kind": "ref",
+                "path": "input.b8"
+              },
+              {
+                "kind": "ref",
+                "path": "input.b9"
+              }
+            ]
           },
           {
-            "kind": "eq",
-            "left": {
-              "kind": "ref",
-              "path": "input.b9"
-            },
-            "right": {
-              "kind": "bool",
-              "value": true
-            }
+            "kind": "or",
+            "args": [
+              {
+                "kind": "ref",
+                "path": "input.b9"
+              },
+              {
+                "kind": "ref",
+                "path": "input.b10"
+              }
+            ]
           },
           {
-            "kind": "eq",
-            "left": {
-              "kind": "ref",
-              "path": "input.b10"
-            },
-            "right": {
-              "kind": "bool",
-              "value": false
-            }
+            "kind": "or",
+            "args": [
+              {
+                "kind": "ref",
+                "path": "input.b10"
+              },
+              {
+                "kind": "ref",
+                "path": "input.b11"
+              }
+            ]
           },
           {
-            "kind": "eq",
-            "left": {
-              "kind": "ref",
-              "path": "input.b11"
-            },
-            "right": {
-              "kind": "bool",
-              "value": true
-            }
+            "kind": "or",
+            "args": [
+              {
+                "kind": "ref",
+                "path": "input.b11"
+              },
+              {
+                "kind": "ref",
+                "path": "input.b12"
+              }
+            ]
           },
           {
-            "kind": "eq",
-            "left": {
-              "kind": "ref",
-              "path": "input.b12"
-            },
-            "right": {
-              "kind": "bool",
-              "value": false
-            }
+            "kind": "or",
+            "args": [
+              {
+                "kind": "ref",
+                "path": "input.b12"
+              },
+              {
+                "kind": "ref",
+                "path": "input.b13"
+              }
+            ]
           },
           {
-            "kind": "eq",
-            "left": {
-              "kind": "ref",
-              "path": "input.b13"
-            },
-            "right": {
-              "kind": "bool",
-              "value": true
-            }
+            "kind": "or",
+            "args": [
+              {
+                "kind": "ref",
+                "path": "input.b13"
+              },
+              {
+                "kind": "ref",
+                "path": "input.b14"
+              }
+            ]
           },
           {
-            "kind": "eq",
-            "left": {
-              "kind": "ref",
-              "path": "input.b14"
-            },
-            "right": {
-              "kind": "bool",
-              "value": false
-            }
+            "kind": "or",
+            "args": [
+              {
+                "kind": "ref",
+                "path": "input.b14"
+              },
+              {
+                "kind": "ref",
+                "path": "input.b15"
+              }
+            ]
           },
           {
-            "kind": "eq",
-            "left": {
-              "kind": "ref",
-              "path": "input.b15"
-            },
-            "right": {
-              "kind": "bool",
-              "value": true
-            }
+            "kind": "or",
+            "args": [
+              {
+                "kind": "ref",
+                "path": "input.b15"
+              },
+              {
+                "kind": "ref",
+                "path": "input.b16"
+              }
+            ]
           },
           {
-            "kind": "eq",
-            "left": {
-              "kind": "ref",
-              "path": "input.b16"
-            },
-            "right": {
-              "kind": "bool",
-              "value": false
-            }
+            "kind": "or",
+            "args": [
+              {
+                "kind": "ref",
+                "path": "input.b16"
+              },
+              {
+                "kind": "ref",
+                "path": "input.b17"
+              }
+            ]
           },
           {
-            "kind": "eq",
-            "left": {
-              "kind": "ref",
-              "path": "input.b17"
-            },
-            "right": {
-              "kind": "bool",
-              "value": true
-            }
+            "kind": "or",
+            "args": [
+              {
+                "kind": "ref",
+                "path": "input.b17"
+              },
+              {
+                "kind": "ref",
+                "path": "input.b18"
+              }
+            ]
           },
           {
-            "kind": "eq",
-            "left": {
-              "kind": "ref",
-              "path": "input.b18"
-            },
-            "right": {
-              "kind": "bool",
-              "value": false
-            }
+            "kind": "or",
+            "args": [
+              {
+                "kind": "ref",
+                "path": "input.b18"
+              },
+              {
+                "kind": "ref",
+                "path": "input.b19"
+              }
+            ]
           },
           {
-            "kind": "eq",
-            "left": {
-              "kind": "ref",
-              "path": "input.b19"
-            },
-            "right": {
-              "kind": "bool",
-              "value": true
-            }
+            "kind": "or",
+            "args": [
+              {
+                "kind": "ref",
+                "path": "input.b19"
+              },
+              {
+                "kind": "ref",
+                "path": "input.b20"
+              }
+            ]
           },
           {
-            "kind": "eq",
-            "left": {
-              "kind": "ref",
-              "path": "input.b20"
-            },
-            "right": {
-              "kind": "bool",
-              "value": false
-            }
+            "kind": "or",
+            "args": [
+              {
+                "kind": "ref",
+                "path": "input.b20"
+              },
+              {
+                "kind": "ref",
+                "path": "input.b21"
+              }
+            ]
           },
           {
-            "kind": "eq",
-            "left": {
-              "kind": "ref",
-              "path": "input.b21"
-            },
-            "right": {
-              "kind": "bool",
-              "value": true
-            }
+            "kind": "or",
+            "args": [
+              {
+                "kind": "ref",
+                "path": "input.b21"
+              },
+              {
+                "kind": "ref",
+                "path": "input.b22"
+              }
+            ]
           },
           {
-            "kind": "eq",
-            "left": {
-              "kind": "ref",
-              "path": "input.b22"
-            },
-            "right": {
-              "kind": "bool",
-              "value": false
-            }
+            "kind": "or",
+            "args": [
+              {
+                "kind": "ref",
+                "path": "input.b22"
+              },
+              {
+                "kind": "ref",
+                "path": "input.b23"
+              }
+            ]
           },
           {
-            "kind": "eq",
-            "left": {
-              "kind": "ref",
-              "path": "input.b23"
-            },
-            "right": {
-              "kind": "bool",
-              "value": true
-            }
+            "kind": "or",
+            "args": [
+              {
+                "kind": "ref",
+                "path": "input.b23"
+              },
+              {
+                "kind": "ref",
+                "path": "input.b0"
+              }
+            ]
           }
         ]
       },

@@ -36,6 +36,30 @@ fn help_and_validate_emit_json_with_documented_exit_codes() -> TestResult<()> {
     let (valid_status, valid, valid_stderr) = run(&["validate", &valid_path])?;
     assert!(valid_status.success());
     assert_eq!(valid.get("valid"), Some(&Value::Bool(true)));
+    assert_eq!(
+        valid.get("language_version").and_then(Value::as_str),
+        Some("author-model/0.1")
+    );
+    assert_eq!(
+        valid.get("protocol_version").and_then(Value::as_str),
+        Some("author-worker/0.1")
+    );
+    assert!(
+        valid
+            .get("engine_version")
+            .and_then(Value::as_str)
+            .is_some()
+    );
+    assert!(
+        valid
+            .get("solver_version")
+            .and_then(Value::as_str)
+            .is_some()
+    );
+    assert!(matches!(
+        valid.get("readiness").and_then(Value::as_str),
+        Some("ready_for_analysis" | "incomplete_model")
+    ));
     assert!(valid_stderr.is_empty());
 
     let invalid_path = fixture("fixtures/invalid/unknown-reference.json");

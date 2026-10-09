@@ -18,6 +18,7 @@ Observed and tested on 2026-10-09:
 | Nix | 2.34.6 | Tested local Nix version |
 | mise | 2026.4.6 | `mise.toml` pins Rust 1.98.0 and cargo-nextest 0.9.117 |
 | cargo-nextest | 0.9.117 | Configured by `mise.toml` |
+| Python | 3.14.7 | Supplied by the locked Nix development shell for acceptance and benchmark scripts |
 
 Rust 1.85 remains the declared workspace MSRV. This is supported by the locked dependency graph and the checks above; reevaluate the declaration whenever dependencies are upgraded.
 
@@ -55,9 +56,9 @@ The Nix shell supplies `gcc`, `pkg-config`, Z3 headers/library, `libclang` (requ
 
 ## Workspace shape
 
-- `author_model`: model representation foundation.
-- `author_analysis`: solver-independent analysis foundation.
-- `author_z3`: native solver integration foundation and SAT/UNSAT smoke test.
-- `author_worker`: minimal `entail` binary foundation.
+- `author_model`: strict JSON model compiler, semantic validation, exact concrete evaluator, DAG and content/semantic hashes.
+- `author_analysis`: solver-independent obligation planning, result mapping, budgets, cache and witness replay.
+- `author_z3`: native SMT lowering/decoding with differential and boundary tests.
+- `author_worker`: `entail` CLI, concrete evaluation and persistent framed JSON worker.
 
-These are intentionally stubs. No decision semantics or worker protocol are implemented yet.
+End-to-end acceptance scripts and evidence status are documented in [`docs/ACCEPTANCE.md`](docs/ACCEPTANCE.md) and [`docs/DELIVERY.md`](docs/DELIVERY.md). These components validate and analyze authored formal models; they do not establish business truth or policy completeness.

@@ -1,6 +1,6 @@
 //! Native Z3 backend for Author's typed decision analysis.
 
-use author_analysis::{Backend, BackendAnswer, Obligation, SolveBudget};
+use author_analysis::{Backend, BackendAnswer, Obligation, SolveBudget, SolverStatistics};
 use author_model::{CompiledModel, Expr, InputValues, Type, Value};
 use std::{collections::BTreeMap, str::FromStr};
 use z3::{
@@ -25,14 +25,16 @@ impl Clone for Term {
     }
 }
 
-/// Stateful-free backend; each obligation receives an isolated Z3 solver.
+/// Each obligation gets an isolated Z3 solver; only detached statistics are retained.
 #[derive(Clone, Debug, Default)]
-pub struct Z3Backend;
+pub struct Z3Backend {
+    statistics: Option<SolverStatistics>,
+}
 
 impl Z3Backend {
     #[must_use]
     pub const fn new() -> Self {
-        Self
+        Self { statistics: None }
     }
 }
 
@@ -44,7 +46,18 @@ impl Backend for Z3Backend {
         assumption_ids: &[String],
         budget: &SolveBudget,
     ) -> BackendAnswer {
-        solve_query(model, obligation, assumption_ids, budget)
+        self.statistics = None;
+        solve_query(
+            model,
+            obligation,
+            assumption_ids,
+            budget,
+            &mut self.statistics,
+        )
+    }
+
+    fn statistics(&self) -> Option<SolverStatistics> {
+        self.statistics.clone()
     }
 
     fn solver_version(&self) -> String {
@@ -54,6 +67,10 @@ impl Backend for Z3Backend {
     fn solver_configuration(&self) -> String {
         "author-z3-encoding/1; qf-lia; enum-as-finite-integer; dates-as-bounded-ordinals; named-derived-dag".to_owned()
     }
+
+    fn cache_namespace(&self) -> Option<String> {
+        Some("author-z3-z3-encoding-v1".to_owned())
+    }
 }
 
 #[allow(clippy::too_many_lines)] // Keep the exhaustive obligation dispatch easy to audit.
@@ -62,6 +79,7 @@ fn solve_query(
     obligation: &Obligation,
     assumption_ids: &[String],
     budget: &SolveBudget,
+    statistics: &mut Option<SolverStatistics>,
 ) -> BackendAnswer {
     let solver = Solver::new();
     let mut params = z3::Params::new();
@@ -73,7 +91,7 @@ fn solve_query(
     solver.set_params(&params);
 
     let mut environment = BTreeMap::new();
-    for input in &model.raw.inputs {
+    for input in &model.raw().inputs {
         let term = match &input.r#type {
             Type::Bool => Term::Bool(Bool::new_const(format!("input_{}", input.id))),
             Type::Int { .. } | Type::Date | Type::Enum { .. } => {
@@ -86,8 +104,13 @@ fn solve_query(
         return translation_error(message);
     }
 
-    for derived_id in &model.derived_order {
-        let Some(declaration) = model.raw.derived.iter().find(|item| item.id == *derived_id) else {
+    for derived_id in model.derived_order() {
+        let Some(declaration) = model
+            .raw()
+            .derived
+            .iter()
+            .find(|item| item.id == *derived_id)
+        else {
             return BackendAnswer::Error {
                 code: "invalid_compiled_model".to_owned(),
                 message: format!("derived declaration {derived_id} is missing"),
@@ -118,7 +141,7 @@ fn solve_query(
         }
     }
 
-    for predicate in &model.raw.domain {
+    for predicate in &model.raw().domain {
         match lower_bool(&predicate.expr, &environment, model) {
             Ok(term) => solver.assert(&term),
             Err(message) => return translation_error(message),
@@ -126,7 +149,7 @@ fn solve_query(
     }
     for assumption_id in assumption_ids {
         let Some(assumption) = model
-            .raw
+            .raw()
             .assumptions
             .iter()
             .find(|item| item.id == *assumption_id)
@@ -145,7 +168,7 @@ fn solve_query(
     let query = match obligation {
         Obligation::DomainFeasibility => Bool::from_bool(true),
         Obligation::RuleReachability { rule_id } => {
-            let Some(rule) = model.raw.rules.iter().find(|item| item.id == *rule_id) else {
+            let Some(rule) = model.raw().rules.iter().find(|item| item.id == *rule_id) else {
                 return missing_declaration("rule", rule_id);
             };
             match lower_bool(&rule.when, &environment, model) {
@@ -155,7 +178,7 @@ fn solve_query(
         }
         Obligation::Coverage => {
             let guards = model
-                .raw
+                .raw()
                 .rules
                 .iter()
                 .map(|rule| lower_bool(&rule.when, &environment, model))
@@ -171,11 +194,16 @@ fn solve_query(
             left_rule_id,
             right_rule_id,
         } => {
-            let Some(left) = model.raw.rules.iter().find(|rule| rule.id == *left_rule_id) else {
+            let Some(left) = model
+                .raw()
+                .rules
+                .iter()
+                .find(|rule| rule.id == *left_rule_id)
+            else {
                 return missing_declaration("rule", left_rule_id);
             };
             let Some(right) = model
-                .raw
+                .raw()
                 .rules
                 .iter()
                 .find(|rule| rule.id == *right_rule_id)
@@ -200,11 +228,11 @@ fn solve_query(
             rule_id,
             constraint_id,
         } => {
-            let Some(rule) = model.raw.rules.iter().find(|item| item.id == *rule_id) else {
+            let Some(rule) = model.raw().rules.iter().find(|item| item.id == *rule_id) else {
                 return missing_declaration("rule", rule_id);
             };
             let Some(constraint) = model
-                .raw
+                .raw()
                 .constraints
                 .iter()
                 .find(|item| item.id == *constraint_id)
@@ -237,7 +265,7 @@ fn solve_query(
     };
     solver.assert(&query);
 
-    match solver.check() {
+    let answer = match solver.check() {
         SatResult::Sat => solver.get_model().map_or_else(
             || BackendAnswer::Error {
                 code: "model_unavailable".to_owned(),
@@ -250,7 +278,21 @@ fn solve_query(
         ),
         SatResult::Unsat => BackendAnswer::Unsat,
         SatResult::Unknown => unknown_answer(solver.get_reason_unknown()),
+    };
+    let mut values = BTreeMap::new();
+    values.insert(
+        "assertion_count".to_owned(),
+        solver.get_assertions().len().to_string(),
+    );
+    for entry in solver.get_statistics().entries() {
+        let value = match entry.value {
+            z3::StatisticsValue::UInt(value) => value.to_string(),
+            z3::StatisticsValue::Double(value) => value.to_string(),
+        };
+        values.insert(entry.key, value);
     }
+    *statistics = Some(SolverStatistics { values });
+    answer
 }
 
 fn unknown_answer(reason: Option<String>) -> BackendAnswer {
@@ -270,7 +312,7 @@ fn add_type_bounds(
     environment: &BTreeMap<String, Term>,
     solver: &Solver,
 ) -> Result<(), String> {
-    for input in &model.raw.inputs {
+    for input in &model.raw().inputs {
         let key = format!("input.{}", input.id);
         add_term_type_bounds(model, &input.r#type, environment, solver, &key)?;
     }
@@ -303,7 +345,7 @@ fn add_term_type_bounds(
             Ok(())
         }
         Type::Enum { name } => {
-            let Some(declaration) = model.raw.enums.iter().find(|item| item.id == *name) else {
+            let Some(declaration) = model.raw().enums.iter().find(|item| item.id == *name) else {
                 return Err(format!("unknown enum type {name}"));
             };
             let choices = declaration
@@ -344,7 +386,7 @@ fn lower_expr(
         Expr::Date { value } => Ok(Term::Int(Int::from_i64(date_ordinal(value)?))),
         Expr::Enum { enum_name, variant } => {
             let declaration = model
-                .raw
+                .raw()
                 .enums
                 .iter()
                 .find(|item| item.id == *enum_name)
@@ -521,7 +563,7 @@ fn decode_inputs(
     witness: &z3::Model,
 ) -> Result<InputValues, String> {
     let mut values = InputValues::new();
-    for input in &model.raw.inputs {
+    for input in &model.raw().inputs {
         let key = format!("input.{}", input.id);
         let Some(term) = environment.get(&key) else {
             return Err(format!("missing symbolic input {key}"));
@@ -565,7 +607,7 @@ fn decode_inputs(
                     .parse::<usize>()
                     .map_err(|_| format!("invalid enum ordinal for {key}"))?;
                 let declaration = model
-                    .raw
+                    .raw()
                     .enums
                     .iter()
                     .find(|item| item.id == *name)

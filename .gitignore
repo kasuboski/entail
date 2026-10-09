@@ -8,3 +8,5 @@
 # Editor and OS artifacts
 .DS_Store
 *.swp
+__pycache__/
+*.py[cod]

@@ -1,0 +1,4363 @@
+{
+  "measurement": "final five-run release persistent-worker benchmark on integration source revision 3da81ce",
+  "timestamp_utc": "2026-10-09",
+  "integration_source_revision": "3da81cee5fe87544eb3a5b870706881abb07b089",
+  "build_command": "mise exec -- nix develop --command cargo build --release --locked --bin entail",
+  "measurement_command": "mise exec -- nix develop --command python3 scripts/benchmark.py --binary /home/josh/projects/entail2-integration/target/release/entail --runs 5 --profile release --rust-version 'rustc 1.98.0 (88d9e12ae 2026-08-18)' > benchmarks/smoke-release-final-2026-10-09.json",
+  "runtime": {
+    "platform": "Linux-6.18.23-x86_64-with-glibc2.44",
+    "machine": "x86_64",
+    "processor": "AMD Ryzen 5 7600X 6-Core Processor",
+    "python": "3.14.7",
+    "rustc": "rustc 1.98.0 (88d9e12ae 2026-08-18)",
+    "solver": "Z3 5.1.0.0"
+  },
+  "runs_per_family": 5,
+  "effective_budget": {
+    "total_timeout_ms": 1500,
+    "per_obligation_timeout_ms": 200,
+    "max_obligations": 24
+  },
+  "worker_max_obligations": 24,
+  "rss_definition": "Linux /proc/<worker-pid>/status VmHWM sampled every 2 ms while each worker remained alive; per-family sampled peak spans five compile/analyze repetitions. Values are KiB; unavailable remains null.",
+  "formula_size_definition": "Detached Z3 statistics are reported as string-valued native maps. assertion_count is a formula-size proxy, not exact AST node count.",
+  "families": [
+    {
+      "family": "independent_thresholds_10",
+      "compile_wall": {
+        "n": 5,
+        "p50_ms": 0.3149469994241372,
+        "p95_ms": 0.4521140035649296
+      },
+      "engine_compile_elapsed_ms": {
+        "n": 5,
+        "p50_ms": 0,
+        "p95_ms": 0
+      },
+      "engine_compile_elapsed_ms_samples": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "analysis_wall": {
+        "n": 5,
+        "p50_ms": 0.16606999997748062,
+        "p95_ms": 16.188702000363264
+      },
+      "analysis_report": [
+        {
+          "elapsed_ms": 16,
+          "solver_query_count": 12,
+          "cache_hits": 0,
+          "planned_obligation_count": 12,
+          "executed_obligation_count": 12,
+          "statuses": {
+            "satisfied": 11,
+            "finding": 1
+          },
+          "inconclusive": 0,
+          "native_stats_obligations": [
+            {
+              "obligation_id": "domain_feasibility",
+              "status": "satisfied",
+              "elapsed_ms": 7,
+              "values": {
+                "assertion_count": "1",
+                "max memory": "17.17",
+                "memory": "17.17",
+                "num allocs": "10395",
+                "rlimit count": "4"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R0",
+              "status": "satisfied",
+              "elapsed_ms": 1,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "17.95",
+                "memory": "17.95",
+                "num allocs": "70633",
+                "rlimit count": "61",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R1",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18",
+                "memory": "18",
+                "num allocs": "273057",
+                "rlimit count": "118",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R2",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "613391",
+                "rlimit count": "175",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R3",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "1083855",
+                "rlimit count": "232",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R4",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "1684489",
+                "rlimit count": "289",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R5",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "2415271",
+                "rlimit count": "346",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R6",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "3276121",
+                "rlimit count": "403",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R7",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "4267093",
+                "rlimit count": "460",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R8",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "5388117",
+                "rlimit count": "517",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R9",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "6639299",
+                "rlimit count": "574",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "coverage",
+              "status": "finding",
+              "elapsed_ms": 1,
+              "values": {
+                "arith-lower": "1",
+                "arith-make-feasible": "1",
+                "arith-max-columns": "5",
+                "assertion_count": "1",
+                "final checks": "1",
+                "max memory": "18.6",
+                "memory": "18",
+                "mk bool var": "1",
+                "num allocs": "8712213",
+                "num checks": "1",
+                "random seed": "100",
+                "rlimit count": "1056",
+                "time": "0.001"
+              }
+            }
+          ]
+        },
+        {
+          "elapsed_ms": 0,
+          "solver_query_count": 0,
+          "cache_hits": 12,
+          "planned_obligation_count": 12,
+          "executed_obligation_count": 12,
+          "statuses": {
+            "satisfied": 11,
+            "finding": 1
+          },
+          "inconclusive": 0,
+          "native_stats_obligations": []
+        },
+        {
+          "elapsed_ms": 0,
+          "solver_query_count": 0,
+          "cache_hits": 12,
+          "planned_obligation_count": 12,
+          "executed_obligation_count": 12,
+          "statuses": {
+            "satisfied": 11,
+            "finding": 1
+          },
+          "inconclusive": 0,
+          "native_stats_obligations": []
+        },
+        {
+          "elapsed_ms": 0,
+          "solver_query_count": 0,
+          "cache_hits": 12,
+          "planned_obligation_count": 12,
+          "executed_obligation_count": 12,
+          "statuses": {
+            "satisfied": 11,
+            "finding": 1
+          },
+          "inconclusive": 0,
+          "native_stats_obligations": []
+        },
+        {
+          "elapsed_ms": 0,
+          "solver_query_count": 0,
+          "cache_hits": 12,
+          "planned_obligation_count": 12,
+          "executed_obligation_count": 12,
+          "statuses": {
+            "satisfied": 11,
+            "finding": 1
+          },
+          "inconclusive": 0,
+          "native_stats_obligations": []
+        }
+      ],
+      "hashes": [
+        {
+          "semantic_hash": "809ee372130b8957c1a1d3e5fac9dca4acff729fa9f25c58d1adadf95829f584",
+          "content_hash": "ea3db13917e379d7d2e9ecd103dab583c2d8f30a05263adb38023e48c60fbf8f"
+        },
+        {
+          "semantic_hash": "809ee372130b8957c1a1d3e5fac9dca4acff729fa9f25c58d1adadf95829f584",
+          "content_hash": "ea3db13917e379d7d2e9ecd103dab583c2d8f30a05263adb38023e48c60fbf8f"
+        },
+        {
+          "semantic_hash": "809ee372130b8957c1a1d3e5fac9dca4acff729fa9f25c58d1adadf95829f584",
+          "content_hash": "ea3db13917e379d7d2e9ecd103dab583c2d8f30a05263adb38023e48c60fbf8f"
+        },
+        {
+          "semantic_hash": "809ee372130b8957c1a1d3e5fac9dca4acff729fa9f25c58d1adadf95829f584",
+          "content_hash": "ea3db13917e379d7d2e9ecd103dab583c2d8f30a05263adb38023e48c60fbf8f"
+        },
+        {
+          "semantic_hash": "809ee372130b8957c1a1d3e5fac9dca4acff729fa9f25c58d1adadf95829f584",
+          "content_hash": "ea3db13917e379d7d2e9ecd103dab583c2d8f30a05263adb38023e48c60fbf8f"
+        }
+      ],
+      "hello": {
+        "capabilities": {
+          "analyze": true,
+          "compile": true,
+          "evaluate": true,
+          "hard_cancellation": true,
+          "release": true
+        },
+        "checks": [
+          "domain_feasibility",
+          "rule_reachability",
+          "coverage",
+          "outcome_conflict",
+          "constraint_compliance"
+        ],
+        "engine_version": "author-analysis/0.1",
+        "language_version": "author-model/0.1",
+        "limits": {
+          "max_budget_ms": 60000,
+          "max_frame_bytes": 8388608,
+          "max_handles": 64,
+          "max_obligations": 24,
+          "model": {
+            "constraints": 2048,
+            "expression_depth": 128,
+            "expression_nodes": 50000,
+            "inputs": 256,
+            "rules": 2048
+          }
+        },
+        "operations": [
+          "hello",
+          "compile",
+          "analyze",
+          "evaluate",
+          "release"
+        ],
+        "protocol_version": "author-worker/0.1",
+        "solver_version": "Z3 5.1.0.0"
+      },
+      "worker_peak_rss_kb_vm_hwm_sampled": 40036,
+      "rss_measurement": "Linux /proc VmHWM sampled every 2ms while worker alive; sampled peak high-water mark"
+    },
+    {
+      "family": "independent_thresholds_100",
+      "compile_wall": {
+        "n": 5,
+        "p50_ms": 2.4818909987516236,
+        "p95_ms": 2.9331840014492627
+      },
+      "engine_compile_elapsed_ms": {
+        "n": 5,
+        "p50_ms": 1,
+        "p95_ms": 2
+      },
+      "engine_compile_elapsed_ms_samples": [
+        2,
+        2,
+        1,
+        1,
+        1
+      ],
+      "analysis_wall": {
+        "n": 5,
+        "p50_ms": 1.127583997003967,
+        "p95_ms": 23.83907100011129
+      },
+      "analysis_report": [
+        {
+          "elapsed_ms": 23,
+          "solver_query_count": 24,
+          "cache_hits": 0,
+          "planned_obligation_count": 25,
+          "executed_obligation_count": 24,
+          "statuses": {
+            "satisfied": 24,
+            "skipped": 1
+          },
+          "inconclusive": 1,
+          "native_stats_obligations": [
+            {
+              "obligation_id": "domain_feasibility",
+              "status": "satisfied",
+              "elapsed_ms": 6,
+              "values": {
+                "assertion_count": "1",
+                "max memory": "17.17",
+                "memory": "17.17",
+                "num allocs": "10375",
+                "rlimit count": "4"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R0",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "17.95",
+                "memory": "17.95",
+                "num allocs": "70545",
+                "rlimit count": "61",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R1",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18",
+                "memory": "18",
+                "num allocs": "272787",
+                "rlimit count": "118",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R10",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18",
+                "memory": "18",
+                "num allocs": "612892",
+                "rlimit count": "175",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R11",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18",
+                "memory": "18",
+                "num allocs": "1083164",
+                "rlimit count": "232",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R12",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18",
+                "memory": "18",
+                "num allocs": "1683509",
+                "rlimit count": "289",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R13",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18",
+                "memory": "18",
+                "num allocs": "2413929",
+                "rlimit count": "346",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R14",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "3274531",
+                "rlimit count": "403",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R15",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "4265308",
+                "rlimit count": "460",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R16",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "5386282",
+                "rlimit count": "517",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R17",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "6637461",
+                "rlimit count": "574",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R18",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "8018833",
+                "rlimit count": "631",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R19",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "9530391",
+                "rlimit count": "688",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R2",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "11172094",
+                "rlimit count": "745",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R20",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "12943843",
+                "rlimit count": "802",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R21",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "14845737",
+                "rlimit count": "859",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R22",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "16877823",
+                "rlimit count": "916",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R23",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "19218626",
+                "rlimit count": "973",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R24",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "21511075",
+                "rlimit count": "1030",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R25",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "23933642",
+                "rlimit count": "1087",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R26",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "26486355",
+                "rlimit count": "1144",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R27",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "29169225",
+                "rlimit count": "1201",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R28",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "31982241",
+                "rlimit count": "1258",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R29",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "34925624",
+                "rlimit count": "1315",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            }
+          ]
+        },
+        {
+          "elapsed_ms": 0,
+          "solver_query_count": 0,
+          "cache_hits": 24,
+          "planned_obligation_count": 25,
+          "executed_obligation_count": 24,
+          "statuses": {
+            "satisfied": 24,
+            "skipped": 1
+          },
+          "inconclusive": 1,
+          "native_stats_obligations": []
+        },
+        {
+          "elapsed_ms": 0,
+          "solver_query_count": 0,
+          "cache_hits": 24,
+          "planned_obligation_count": 25,
+          "executed_obligation_count": 24,
+          "statuses": {
+            "satisfied": 24,
+            "skipped": 1
+          },
+          "inconclusive": 1,
+          "native_stats_obligations": []
+        },
+        {
+          "elapsed_ms": 0,
+          "solver_query_count": 0,
+          "cache_hits": 24,
+          "planned_obligation_count": 25,
+          "executed_obligation_count": 24,
+          "statuses": {
+            "satisfied": 24,
+            "skipped": 1
+          },
+          "inconclusive": 1,
+          "native_stats_obligations": []
+        },
+        {
+          "elapsed_ms": 0,
+          "solver_query_count": 0,
+          "cache_hits": 24,
+          "planned_obligation_count": 25,
+          "executed_obligation_count": 24,
+          "statuses": {
+            "satisfied": 24,
+            "skipped": 1
+          },
+          "inconclusive": 1,
+          "native_stats_obligations": []
+        }
+      ],
+      "hashes": [
+        {
+          "semantic_hash": "ba077ff8975c80dd0c7e90309bacad4f7143f2853595dd7310439ef3187c895e",
+          "content_hash": "b8b2389f03759cb0be5d74568824ae26e4b8f0f6c793c49cd11ea8859b4ee9bc"
+        },
+        {
+          "semantic_hash": "ba077ff8975c80dd0c7e90309bacad4f7143f2853595dd7310439ef3187c895e",
+          "content_hash": "b8b2389f03759cb0be5d74568824ae26e4b8f0f6c793c49cd11ea8859b4ee9bc"
+        },
+        {
+          "semantic_hash": "ba077ff8975c80dd0c7e90309bacad4f7143f2853595dd7310439ef3187c895e",
+          "content_hash": "b8b2389f03759cb0be5d74568824ae26e4b8f0f6c793c49cd11ea8859b4ee9bc"
+        },
+        {
+          "semantic_hash": "ba077ff8975c80dd0c7e90309bacad4f7143f2853595dd7310439ef3187c895e",
+          "content_hash": "b8b2389f03759cb0be5d74568824ae26e4b8f0f6c793c49cd11ea8859b4ee9bc"
+        },
+        {
+          "semantic_hash": "ba077ff8975c80dd0c7e90309bacad4f7143f2853595dd7310439ef3187c895e",
+          "content_hash": "b8b2389f03759cb0be5d74568824ae26e4b8f0f6c793c49cd11ea8859b4ee9bc"
+        }
+      ],
+      "hello": {
+        "capabilities": {
+          "analyze": true,
+          "compile": true,
+          "evaluate": true,
+          "hard_cancellation": true,
+          "release": true
+        },
+        "checks": [
+          "domain_feasibility",
+          "rule_reachability",
+          "coverage",
+          "outcome_conflict",
+          "constraint_compliance"
+        ],
+        "engine_version": "author-analysis/0.1",
+        "language_version": "author-model/0.1",
+        "limits": {
+          "max_budget_ms": 60000,
+          "max_frame_bytes": 8388608,
+          "max_handles": 64,
+          "max_obligations": 24,
+          "model": {
+            "constraints": 2048,
+            "expression_depth": 128,
+            "expression_nodes": 50000,
+            "inputs": 256,
+            "rules": 2048
+          }
+        },
+        "operations": [
+          "hello",
+          "compile",
+          "analyze",
+          "evaluate",
+          "release"
+        ],
+        "protocol_version": "author-worker/0.1",
+        "solver_version": "Z3 5.1.0.0"
+      },
+      "worker_peak_rss_kb_vm_hwm_sampled": 37204,
+      "rss_measurement": "Linux /proc VmHWM sampled every 2ms while worker alive; sampled peak high-water mark"
+    },
+    {
+      "family": "independent_thresholds_1000",
+      "compile_wall": {
+        "n": 5,
+        "p50_ms": 22.583837002457585,
+        "p95_ms": 28.75468400088721
+      },
+      "engine_compile_elapsed_ms": {
+        "n": 5,
+        "p50_ms": 17,
+        "p95_ms": 21
+      },
+      "engine_compile_elapsed_ms_samples": [
+        21,
+        16,
+        15,
+        17,
+        17
+      ],
+      "analysis_wall": {
+        "n": 5,
+        "p50_ms": 9.165654999378603,
+        "p95_ms": 33.70604500014451
+      },
+      "analysis_report": [
+        {
+          "elapsed_ms": 32,
+          "solver_query_count": 24,
+          "cache_hits": 0,
+          "planned_obligation_count": 25,
+          "executed_obligation_count": 24,
+          "statuses": {
+            "satisfied": 24,
+            "skipped": 1
+          },
+          "inconclusive": 1,
+          "native_stats_obligations": [
+            {
+              "obligation_id": "domain_feasibility",
+              "status": "satisfied",
+              "elapsed_ms": 7,
+              "values": {
+                "assertion_count": "1",
+                "max memory": "17.17",
+                "memory": "17.17",
+                "num allocs": "10394",
+                "rlimit count": "4"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R0",
+              "status": "satisfied",
+              "elapsed_ms": 1,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "17.95",
+                "memory": "17.95",
+                "num allocs": "70653",
+                "rlimit count": "61",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R1",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18",
+                "memory": "18",
+                "num allocs": "289011",
+                "rlimit count": "118",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R10",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "656218",
+                "rlimit count": "175",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R100",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "1164601",
+                "rlimit count": "232",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R101",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "1814121",
+                "rlimit count": "289",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R102",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "2604821",
+                "rlimit count": "346",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R103",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "3536592",
+                "rlimit count": "403",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R104",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "4609519",
+                "rlimit count": "460",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R105",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "5823525",
+                "rlimit count": "517",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R106",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "7178707",
+                "rlimit count": "574",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R107",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "8674963",
+                "rlimit count": "631",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R108",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "10312351",
+                "rlimit count": "688",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R109",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "12090787",
+                "rlimit count": "745",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R11",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "14010274",
+                "rlimit count": "802",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R110",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "16070865",
+                "rlimit count": "859",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R111",
+              "status": "satisfied",
+              "elapsed_ms": 1,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "18272532",
+                "rlimit count": "916",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R112",
+              "status": "satisfied",
+              "elapsed_ms": 1,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "20615328",
+                "rlimit count": "973",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R113",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "23099244",
+                "rlimit count": "1030",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R114",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "25724133",
+                "rlimit count": "1087",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R115",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "28490071",
+                "rlimit count": "1144",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R116",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "31397086",
+                "rlimit count": "1201",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R117",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "34445196",
+                "rlimit count": "1258",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R118",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "37634367",
+                "rlimit count": "1315",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            }
+          ]
+        },
+        {
+          "elapsed_ms": 7,
+          "solver_query_count": 0,
+          "cache_hits": 24,
+          "planned_obligation_count": 25,
+          "executed_obligation_count": 24,
+          "statuses": {
+            "satisfied": 24,
+            "skipped": 1
+          },
+          "inconclusive": 1,
+          "native_stats_obligations": []
+        },
+        {
+          "elapsed_ms": 7,
+          "solver_query_count": 0,
+          "cache_hits": 24,
+          "planned_obligation_count": 25,
+          "executed_obligation_count": 24,
+          "statuses": {
+            "satisfied": 24,
+            "skipped": 1
+          },
+          "inconclusive": 1,
+          "native_stats_obligations": []
+        },
+        {
+          "elapsed_ms": 7,
+          "solver_query_count": 0,
+          "cache_hits": 24,
+          "planned_obligation_count": 25,
+          "executed_obligation_count": 24,
+          "statuses": {
+            "satisfied": 24,
+            "skipped": 1
+          },
+          "inconclusive": 1,
+          "native_stats_obligations": []
+        },
+        {
+          "elapsed_ms": 7,
+          "solver_query_count": 0,
+          "cache_hits": 24,
+          "planned_obligation_count": 25,
+          "executed_obligation_count": 24,
+          "statuses": {
+            "satisfied": 24,
+            "skipped": 1
+          },
+          "inconclusive": 1,
+          "native_stats_obligations": []
+        }
+      ],
+      "hashes": [
+        {
+          "semantic_hash": "f3ef0661c8391df6b5b39bbeb0dff63b73ca39d49de921a1adf10a7fc5ebd44a",
+          "content_hash": "e00e43aac02040b02351b2a57e10cfdb67ff3d916f75214efc7553c30f23617f"
+        },
+        {
+          "semantic_hash": "f3ef0661c8391df6b5b39bbeb0dff63b73ca39d49de921a1adf10a7fc5ebd44a",
+          "content_hash": "e00e43aac02040b02351b2a57e10cfdb67ff3d916f75214efc7553c30f23617f"
+        },
+        {
+          "semantic_hash": "f3ef0661c8391df6b5b39bbeb0dff63b73ca39d49de921a1adf10a7fc5ebd44a",
+          "content_hash": "e00e43aac02040b02351b2a57e10cfdb67ff3d916f75214efc7553c30f23617f"
+        },
+        {
+          "semantic_hash": "f3ef0661c8391df6b5b39bbeb0dff63b73ca39d49de921a1adf10a7fc5ebd44a",
+          "content_hash": "e00e43aac02040b02351b2a57e10cfdb67ff3d916f75214efc7553c30f23617f"
+        },
+        {
+          "semantic_hash": "f3ef0661c8391df6b5b39bbeb0dff63b73ca39d49de921a1adf10a7fc5ebd44a",
+          "content_hash": "e00e43aac02040b02351b2a57e10cfdb67ff3d916f75214efc7553c30f23617f"
+        }
+      ],
+      "hello": {
+        "capabilities": {
+          "analyze": true,
+          "compile": true,
+          "evaluate": true,
+          "hard_cancellation": true,
+          "release": true
+        },
+        "checks": [
+          "domain_feasibility",
+          "rule_reachability",
+          "coverage",
+          "outcome_conflict",
+          "constraint_compliance"
+        ],
+        "engine_version": "author-analysis/0.1",
+        "language_version": "author-model/0.1",
+        "limits": {
+          "max_budget_ms": 60000,
+          "max_frame_bytes": 8388608,
+          "max_handles": 64,
+          "max_obligations": 24,
+          "model": {
+            "constraints": 2048,
+            "expression_depth": 128,
+            "expression_nodes": 50000,
+            "inputs": 256,
+            "rules": 2048
+          }
+        },
+        "operations": [
+          "hello",
+          "compile",
+          "analyze",
+          "evaluate",
+          "release"
+        ],
+        "protocol_version": "author-worker/0.1",
+        "solver_version": "Z3 5.1.0.0"
+      },
+      "worker_peak_rss_kb_vm_hwm_sampled": 58500,
+      "rss_measurement": "Linux /proc VmHWM sampled every 2ms while worker alive; sampled peak high-water mark"
+    },
+    {
+      "family": "overlapping_guards",
+      "compile_wall": {
+        "n": 5,
+        "p50_ms": 0.8114449992717709,
+        "p95_ms": 1.1628299980657175
+      },
+      "engine_compile_elapsed_ms": {
+        "n": 5,
+        "p50_ms": 0,
+        "p95_ms": 0
+      },
+      "engine_compile_elapsed_ms_samples": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "analysis_wall": {
+        "n": 5,
+        "p50_ms": 0.5527609973796643,
+        "p95_ms": 22.304086000076495
+      },
+      "analysis_report": [
+        {
+          "elapsed_ms": 22,
+          "solver_query_count": 24,
+          "cache_hits": 0,
+          "planned_obligation_count": 25,
+          "executed_obligation_count": 24,
+          "statuses": {
+            "satisfied": 24,
+            "skipped": 1
+          },
+          "inconclusive": 1,
+          "native_stats_obligations": [
+            {
+              "obligation_id": "domain_feasibility",
+              "status": "satisfied",
+              "elapsed_ms": 6,
+              "values": {
+                "assertion_count": "1",
+                "max memory": "17.17",
+                "memory": "17.17",
+                "num allocs": "10395",
+                "rlimit count": "4"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R0",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "17.95",
+                "memory": "17.95",
+                "num allocs": "70634",
+                "rlimit count": "61",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R1",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "273058",
+                "rlimit count": "118",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R10",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "613459",
+                "rlimit count": "175",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R11",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "1084031",
+                "rlimit count": "232",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R12",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "1684816",
+                "rlimit count": "289",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R13",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "2415795",
+                "rlimit count": "346",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R14",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "3276891",
+                "rlimit count": "403",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R15",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "4268201",
+                "rlimit count": "460",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R16",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "5389698",
+                "rlimit count": "517",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R17",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "6641371",
+                "rlimit count": "574",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R18",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "8023253",
+                "rlimit count": "631",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R19",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "9535340",
+                "rlimit count": "688",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R2",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "11177653",
+                "rlimit count": "745",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R20",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "12950078",
+                "rlimit count": "802",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R21",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "14852640",
+                "rlimit count": "859",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R22",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "16885409",
+                "rlimit count": "916",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R23",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "19048242",
+                "rlimit count": "973",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R24",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "21341429",
+                "rlimit count": "1030",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R25",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "23764757",
+                "rlimit count": "1087",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R26",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "26318156",
+                "rlimit count": "1144",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R27",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "29001849",
+                "rlimit count": "1201",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R28",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "31815664",
+                "rlimit count": "1258",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R29",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "34759607",
+                "rlimit count": "1315",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            }
+          ]
+        },
+        {
+          "elapsed_ms": 0,
+          "solver_query_count": 0,
+          "cache_hits": 24,
+          "planned_obligation_count": 25,
+          "executed_obligation_count": 24,
+          "statuses": {
+            "satisfied": 24,
+            "skipped": 1
+          },
+          "inconclusive": 1,
+          "native_stats_obligations": []
+        },
+        {
+          "elapsed_ms": 0,
+          "solver_query_count": 0,
+          "cache_hits": 24,
+          "planned_obligation_count": 25,
+          "executed_obligation_count": 24,
+          "statuses": {
+            "satisfied": 24,
+            "skipped": 1
+          },
+          "inconclusive": 1,
+          "native_stats_obligations": []
+        },
+        {
+          "elapsed_ms": 0,
+          "solver_query_count": 0,
+          "cache_hits": 24,
+          "planned_obligation_count": 25,
+          "executed_obligation_count": 24,
+          "statuses": {
+            "satisfied": 24,
+            "skipped": 1
+          },
+          "inconclusive": 1,
+          "native_stats_obligations": []
+        },
+        {
+          "elapsed_ms": 0,
+          "solver_query_count": 0,
+          "cache_hits": 24,
+          "planned_obligation_count": 25,
+          "executed_obligation_count": 24,
+          "statuses": {
+            "satisfied": 24,
+            "skipped": 1
+          },
+          "inconclusive": 1,
+          "native_stats_obligations": []
+        }
+      ],
+      "hashes": [
+        {
+          "semantic_hash": "1ef7cc98846c02434045b1da2ecfe84d93e411f47e59f617f90f69e6115c9561",
+          "content_hash": "968d07b725e5a3c7832dec21aba63fd6eacabfa01b11ec157c0bda008fee922d"
+        },
+        {
+          "semantic_hash": "1ef7cc98846c02434045b1da2ecfe84d93e411f47e59f617f90f69e6115c9561",
+          "content_hash": "968d07b725e5a3c7832dec21aba63fd6eacabfa01b11ec157c0bda008fee922d"
+        },
+        {
+          "semantic_hash": "1ef7cc98846c02434045b1da2ecfe84d93e411f47e59f617f90f69e6115c9561",
+          "content_hash": "968d07b725e5a3c7832dec21aba63fd6eacabfa01b11ec157c0bda008fee922d"
+        },
+        {
+          "semantic_hash": "1ef7cc98846c02434045b1da2ecfe84d93e411f47e59f617f90f69e6115c9561",
+          "content_hash": "968d07b725e5a3c7832dec21aba63fd6eacabfa01b11ec157c0bda008fee922d"
+        },
+        {
+          "semantic_hash": "1ef7cc98846c02434045b1da2ecfe84d93e411f47e59f617f90f69e6115c9561",
+          "content_hash": "968d07b725e5a3c7832dec21aba63fd6eacabfa01b11ec157c0bda008fee922d"
+        }
+      ],
+      "hello": {
+        "capabilities": {
+          "analyze": true,
+          "compile": true,
+          "evaluate": true,
+          "hard_cancellation": true,
+          "release": true
+        },
+        "checks": [
+          "domain_feasibility",
+          "rule_reachability",
+          "coverage",
+          "outcome_conflict",
+          "constraint_compliance"
+        ],
+        "engine_version": "author-analysis/0.1",
+        "language_version": "author-model/0.1",
+        "limits": {
+          "max_budget_ms": 60000,
+          "max_frame_bytes": 8388608,
+          "max_handles": 64,
+          "max_obligations": 24,
+          "model": {
+            "constraints": 2048,
+            "expression_depth": 128,
+            "expression_nodes": 50000,
+            "inputs": 256,
+            "rules": 2048
+          }
+        },
+        "operations": [
+          "hello",
+          "compile",
+          "analyze",
+          "evaluate",
+          "release"
+        ],
+        "protocol_version": "author-worker/0.1",
+        "solver_version": "Z3 5.1.0.0"
+      },
+      "worker_peak_rss_kb_vm_hwm_sampled": 36488,
+      "rss_measurement": "Linux /proc VmHWM sampled every 2ms while worker alive; sampled peak high-water mark"
+    },
+    {
+      "family": "same_constructor_payload",
+      "compile_wall": {
+        "n": 5,
+        "p50_ms": 1.4698529994348064,
+        "p95_ms": 2.211457998782862
+      },
+      "engine_compile_elapsed_ms": {
+        "n": 5,
+        "p50_ms": 1,
+        "p95_ms": 1
+      },
+      "engine_compile_elapsed_ms_samples": [
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "analysis_wall": {
+        "n": 5,
+        "p50_ms": 0.9689479993539862,
+        "p95_ms": 22.999474000243936
+      },
+      "analysis_report": [
+        {
+          "elapsed_ms": 22,
+          "solver_query_count": 24,
+          "cache_hits": 0,
+          "planned_obligation_count": 25,
+          "executed_obligation_count": 24,
+          "statuses": {
+            "satisfied": 24,
+            "skipped": 1
+          },
+          "inconclusive": 1,
+          "native_stats_obligations": [
+            {
+              "obligation_id": "domain_feasibility",
+              "status": "satisfied",
+              "elapsed_ms": 6,
+              "values": {
+                "assertion_count": "1",
+                "max memory": "17.17",
+                "memory": "17.17",
+                "num allocs": "10384",
+                "rlimit count": "5"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R0",
+              "status": "satisfied",
+              "elapsed_ms": 1,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "17.95",
+                "memory": "17.95",
+                "num allocs": "70982",
+                "rlimit count": "63",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R1",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "274358",
+                "rlimit count": "121",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R10",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "616206",
+                "rlimit count": "179",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R11",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "1088816",
+                "rlimit count": "237",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R12",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "1692048",
+                "rlimit count": "295",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R13",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "2425941",
+                "rlimit count": "353",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R14",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "3290413",
+                "rlimit count": "411",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R15",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "4285540",
+                "rlimit count": "469",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R16",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "5411101",
+                "rlimit count": "527",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R17",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "6667521",
+                "rlimit count": "585",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R18",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "8054566",
+                "rlimit count": "643",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R19",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "9572128",
+                "rlimit count": "701",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R2",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "11220289",
+                "rlimit count": "759",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R20",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "12999169",
+                "rlimit count": "817",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R21",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "14908642",
+                "rlimit count": "875",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R22",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "16948735",
+                "rlimit count": "933",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R23",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "19119544",
+                "rlimit count": "991",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R24",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "21420993",
+                "rlimit count": "1049",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R25",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "23852961",
+                "rlimit count": "1107",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R26",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "26415517",
+                "rlimit count": "1165",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R27",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "29108680",
+                "rlimit count": "1223",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R28",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "31932513",
+                "rlimit count": "1281",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R29",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.01",
+                "memory": "18.01",
+                "num allocs": "34886795",
+                "rlimit count": "1339",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            }
+          ]
+        },
+        {
+          "elapsed_ms": 0,
+          "solver_query_count": 0,
+          "cache_hits": 24,
+          "planned_obligation_count": 25,
+          "executed_obligation_count": 24,
+          "statuses": {
+            "satisfied": 24,
+            "skipped": 1
+          },
+          "inconclusive": 1,
+          "native_stats_obligations": []
+        },
+        {
+          "elapsed_ms": 0,
+          "solver_query_count": 0,
+          "cache_hits": 24,
+          "planned_obligation_count": 25,
+          "executed_obligation_count": 24,
+          "statuses": {
+            "satisfied": 24,
+            "skipped": 1
+          },
+          "inconclusive": 1,
+          "native_stats_obligations": []
+        },
+        {
+          "elapsed_ms": 0,
+          "solver_query_count": 0,
+          "cache_hits": 24,
+          "planned_obligation_count": 25,
+          "executed_obligation_count": 24,
+          "statuses": {
+            "satisfied": 24,
+            "skipped": 1
+          },
+          "inconclusive": 1,
+          "native_stats_obligations": []
+        },
+        {
+          "elapsed_ms": 0,
+          "solver_query_count": 0,
+          "cache_hits": 24,
+          "planned_obligation_count": 25,
+          "executed_obligation_count": 24,
+          "statuses": {
+            "satisfied": 24,
+            "skipped": 1
+          },
+          "inconclusive": 1,
+          "native_stats_obligations": []
+        }
+      ],
+      "hashes": [
+        {
+          "semantic_hash": "9cc5d84232cd6499af44c9121357f8fb5408ac83f4558890829b488374b82986",
+          "content_hash": "59d2be0f8378e3e30b214b2c9fc039ae0f76407e17d5da7556c59867ddeb525b"
+        },
+        {
+          "semantic_hash": "9cc5d84232cd6499af44c9121357f8fb5408ac83f4558890829b488374b82986",
+          "content_hash": "59d2be0f8378e3e30b214b2c9fc039ae0f76407e17d5da7556c59867ddeb525b"
+        },
+        {
+          "semantic_hash": "9cc5d84232cd6499af44c9121357f8fb5408ac83f4558890829b488374b82986",
+          "content_hash": "59d2be0f8378e3e30b214b2c9fc039ae0f76407e17d5da7556c59867ddeb525b"
+        },
+        {
+          "semantic_hash": "9cc5d84232cd6499af44c9121357f8fb5408ac83f4558890829b488374b82986",
+          "content_hash": "59d2be0f8378e3e30b214b2c9fc039ae0f76407e17d5da7556c59867ddeb525b"
+        },
+        {
+          "semantic_hash": "9cc5d84232cd6499af44c9121357f8fb5408ac83f4558890829b488374b82986",
+          "content_hash": "59d2be0f8378e3e30b214b2c9fc039ae0f76407e17d5da7556c59867ddeb525b"
+        }
+      ],
+      "hello": {
+        "capabilities": {
+          "analyze": true,
+          "compile": true,
+          "evaluate": true,
+          "hard_cancellation": true,
+          "release": true
+        },
+        "checks": [
+          "domain_feasibility",
+          "rule_reachability",
+          "coverage",
+          "outcome_conflict",
+          "constraint_compliance"
+        ],
+        "engine_version": "author-analysis/0.1",
+        "language_version": "author-model/0.1",
+        "limits": {
+          "max_budget_ms": 60000,
+          "max_frame_bytes": 8388608,
+          "max_handles": 64,
+          "max_obligations": 24,
+          "model": {
+            "constraints": 2048,
+            "expression_depth": 128,
+            "expression_nodes": 50000,
+            "inputs": 256,
+            "rules": 2048
+          }
+        },
+        "operations": [
+          "hello",
+          "compile",
+          "analyze",
+          "evaluate",
+          "release"
+        ],
+        "protocol_version": "author-worker/0.1",
+        "solver_version": "Z3 5.1.0.0"
+      },
+      "worker_peak_rss_kb_vm_hwm_sampled": 36752,
+      "rss_measurement": "Linux /proc VmHWM sampled every 2ms while worker alive; sampled peak high-water mark"
+    },
+    {
+      "family": "coupled_boolean",
+      "compile_wall": {
+        "n": 5,
+        "p50_ms": 0.529357999766944,
+        "p95_ms": 0.7235000011860393
+      },
+      "engine_compile_elapsed_ms": {
+        "n": 5,
+        "p50_ms": 0,
+        "p95_ms": 0
+      },
+      "engine_compile_elapsed_ms_samples": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "analysis_wall": {
+        "n": 5,
+        "p50_ms": 0.10424499851069413,
+        "p95_ms": 7.358273000136251
+      },
+      "analysis_report": [
+        {
+          "elapsed_ms": 7,
+          "solver_query_count": 3,
+          "cache_hits": 0,
+          "planned_obligation_count": 3,
+          "executed_obligation_count": 3,
+          "statuses": {
+            "satisfied": 2,
+            "finding": 1
+          },
+          "inconclusive": 0,
+          "native_stats_obligations": [
+            {
+              "obligation_id": "domain_feasibility",
+              "status": "satisfied",
+              "elapsed_ms": 6,
+              "values": {
+                "assertion_count": "1",
+                "max memory": "17.17",
+                "memory": "17.17",
+                "num allocs": "10377",
+                "rlimit count": "27"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R0",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "max memory": "17.37",
+                "memory": "17.37",
+                "num allocs": "39707",
+                "rlimit count": "394",
+                "sat decisions": "12",
+                "sat mk clause 2ary": "24",
+                "sat mk var": "26",
+                "sat propagations 2ary": "13"
+              }
+            },
+            {
+              "obligation_id": "coverage",
+              "status": "finding",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "max memory": "17.5",
+                "memory": "17.31",
+                "num allocs": "139327",
+                "rlimit count": "855",
+                "sat decisions": "24",
+                "sat mk clause 2ary": "48",
+                "sat mk clause nary": "25",
+                "sat mk var": "50",
+                "sat propagations 2ary": "22",
+                "sat propagations nary": "3"
+              }
+            }
+          ]
+        },
+        {
+          "elapsed_ms": 0,
+          "solver_query_count": 0,
+          "cache_hits": 3,
+          "planned_obligation_count": 3,
+          "executed_obligation_count": 3,
+          "statuses": {
+            "satisfied": 2,
+            "finding": 1
+          },
+          "inconclusive": 0,
+          "native_stats_obligations": []
+        },
+        {
+          "elapsed_ms": 0,
+          "solver_query_count": 0,
+          "cache_hits": 3,
+          "planned_obligation_count": 3,
+          "executed_obligation_count": 3,
+          "statuses": {
+            "satisfied": 2,
+            "finding": 1
+          },
+          "inconclusive": 0,
+          "native_stats_obligations": []
+        },
+        {
+          "elapsed_ms": 0,
+          "solver_query_count": 0,
+          "cache_hits": 3,
+          "planned_obligation_count": 3,
+          "executed_obligation_count": 3,
+          "statuses": {
+            "satisfied": 2,
+            "finding": 1
+          },
+          "inconclusive": 0,
+          "native_stats_obligations": []
+        },
+        {
+          "elapsed_ms": 0,
+          "solver_query_count": 0,
+          "cache_hits": 3,
+          "planned_obligation_count": 3,
+          "executed_obligation_count": 3,
+          "statuses": {
+            "satisfied": 2,
+            "finding": 1
+          },
+          "inconclusive": 0,
+          "native_stats_obligations": []
+        }
+      ],
+      "hashes": [
+        {
+          "semantic_hash": "cef8db0a5a6be49dd71637ca93bc28fc4d02d3b2e4319b62b19eebaeb613f495",
+          "content_hash": "f705401f06da73f6e308485227ff88e40e5ed59fe052acc57a59a1e4b00d0e17"
+        },
+        {
+          "semantic_hash": "cef8db0a5a6be49dd71637ca93bc28fc4d02d3b2e4319b62b19eebaeb613f495",
+          "content_hash": "f705401f06da73f6e308485227ff88e40e5ed59fe052acc57a59a1e4b00d0e17"
+        },
+        {
+          "semantic_hash": "cef8db0a5a6be49dd71637ca93bc28fc4d02d3b2e4319b62b19eebaeb613f495",
+          "content_hash": "f705401f06da73f6e308485227ff88e40e5ed59fe052acc57a59a1e4b00d0e17"
+        },
+        {
+          "semantic_hash": "cef8db0a5a6be49dd71637ca93bc28fc4d02d3b2e4319b62b19eebaeb613f495",
+          "content_hash": "f705401f06da73f6e308485227ff88e40e5ed59fe052acc57a59a1e4b00d0e17"
+        },
+        {
+          "semantic_hash": "cef8db0a5a6be49dd71637ca93bc28fc4d02d3b2e4319b62b19eebaeb613f495",
+          "content_hash": "f705401f06da73f6e308485227ff88e40e5ed59fe052acc57a59a1e4b00d0e17"
+        }
+      ],
+      "hello": {
+        "capabilities": {
+          "analyze": true,
+          "compile": true,
+          "evaluate": true,
+          "hard_cancellation": true,
+          "release": true
+        },
+        "checks": [
+          "domain_feasibility",
+          "rule_reachability",
+          "coverage",
+          "outcome_conflict",
+          "constraint_compliance"
+        ],
+        "engine_version": "author-analysis/0.1",
+        "language_version": "author-model/0.1",
+        "limits": {
+          "max_budget_ms": 60000,
+          "max_frame_bytes": 8388608,
+          "max_handles": 64,
+          "max_obligations": 24,
+          "model": {
+            "constraints": 2048,
+            "expression_depth": 128,
+            "expression_nodes": 50000,
+            "inputs": 256,
+            "rules": 2048
+          }
+        },
+        "operations": [
+          "hello",
+          "compile",
+          "analyze",
+          "evaluate",
+          "release"
+        ],
+        "protocol_version": "author-worker/0.1",
+        "solver_version": "Z3 5.1.0.0"
+      },
+      "worker_peak_rss_kb_vm_hwm_sampled": 35408,
+      "rss_measurement": "Linux /proc VmHWM sampled every 2ms while worker alive; sampled peak high-water mark"
+    },
+    {
+      "family": "shared_derived_dag",
+      "compile_wall": {
+        "n": 5,
+        "p50_ms": 1.5965790007612668,
+        "p95_ms": 2.1698699965782
+      },
+      "engine_compile_elapsed_ms": {
+        "n": 5,
+        "p50_ms": 1,
+        "p95_ms": 1
+      },
+      "engine_compile_elapsed_ms_samples": [
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "analysis_wall": {
+        "n": 5,
+        "p50_ms": 0.2244889983558096,
+        "p95_ms": 9.745397001097444
+      },
+      "analysis_report": [
+        {
+          "elapsed_ms": 9,
+          "solver_query_count": 3,
+          "cache_hits": 0,
+          "planned_obligation_count": 3,
+          "executed_obligation_count": 3,
+          "statuses": {
+            "satisfied": 2,
+            "finding": 1
+          },
+          "inconclusive": 0,
+          "native_stats_obligations": [
+            {
+              "obligation_id": "domain_feasibility",
+              "status": "satisfied",
+              "elapsed_ms": 7,
+              "values": {
+                "assertion_count": "65",
+                "max memory": "18.16",
+                "memory": "18.16",
+                "num allocs": "53080",
+                "rlimit count": "3726",
+                "solve-eqs-elim-vars": "64",
+                "solve-eqs-steps": "128",
+                "time": "0.001"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R0",
+              "status": "satisfied",
+              "elapsed_ms": 1,
+              "values": {
+                "assertion_count": "65",
+                "elim-unconstrained": "1",
+                "max memory": "18.16",
+                "memory": "18.11",
+                "num allocs": "293927",
+                "rlimit count": "7509",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "coverage",
+              "status": "finding",
+              "elapsed_ms": 1,
+              "values": {
+                "assertion_count": "65",
+                "elim-unconstrained": "2",
+                "max memory": "18.2",
+                "memory": "18.1",
+                "num allocs": "771979",
+                "rlimit count": "11318",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            }
+          ]
+        },
+        {
+          "elapsed_ms": 0,
+          "solver_query_count": 0,
+          "cache_hits": 3,
+          "planned_obligation_count": 3,
+          "executed_obligation_count": 3,
+          "statuses": {
+            "satisfied": 2,
+            "finding": 1
+          },
+          "inconclusive": 0,
+          "native_stats_obligations": []
+        },
+        {
+          "elapsed_ms": 0,
+          "solver_query_count": 0,
+          "cache_hits": 3,
+          "planned_obligation_count": 3,
+          "executed_obligation_count": 3,
+          "statuses": {
+            "satisfied": 2,
+            "finding": 1
+          },
+          "inconclusive": 0,
+          "native_stats_obligations": []
+        },
+        {
+          "elapsed_ms": 0,
+          "solver_query_count": 0,
+          "cache_hits": 3,
+          "planned_obligation_count": 3,
+          "executed_obligation_count": 3,
+          "statuses": {
+            "satisfied": 2,
+            "finding": 1
+          },
+          "inconclusive": 0,
+          "native_stats_obligations": []
+        },
+        {
+          "elapsed_ms": 0,
+          "solver_query_count": 0,
+          "cache_hits": 3,
+          "planned_obligation_count": 3,
+          "executed_obligation_count": 3,
+          "statuses": {
+            "satisfied": 2,
+            "finding": 1
+          },
+          "inconclusive": 0,
+          "native_stats_obligations": []
+        }
+      ],
+      "hashes": [
+        {
+          "semantic_hash": "de808a5429a4b85771570b225fb93e183fca586ac3197d8c264b00c649ed07f8",
+          "content_hash": "c08f984fb2535ac91f0dd045afd980ebd965bb8454b6d342eec82bb93f58707e"
+        },
+        {
+          "semantic_hash": "de808a5429a4b85771570b225fb93e183fca586ac3197d8c264b00c649ed07f8",
+          "content_hash": "c08f984fb2535ac91f0dd045afd980ebd965bb8454b6d342eec82bb93f58707e"
+        },
+        {
+          "semantic_hash": "de808a5429a4b85771570b225fb93e183fca586ac3197d8c264b00c649ed07f8",
+          "content_hash": "c08f984fb2535ac91f0dd045afd980ebd965bb8454b6d342eec82bb93f58707e"
+        },
+        {
+          "semantic_hash": "de808a5429a4b85771570b225fb93e183fca586ac3197d8c264b00c649ed07f8",
+          "content_hash": "c08f984fb2535ac91f0dd045afd980ebd965bb8454b6d342eec82bb93f58707e"
+        },
+        {
+          "semantic_hash": "de808a5429a4b85771570b225fb93e183fca586ac3197d8c264b00c649ed07f8",
+          "content_hash": "c08f984fb2535ac91f0dd045afd980ebd965bb8454b6d342eec82bb93f58707e"
+        }
+      ],
+      "hello": {
+        "capabilities": {
+          "analyze": true,
+          "compile": true,
+          "evaluate": true,
+          "hard_cancellation": true,
+          "release": true
+        },
+        "checks": [
+          "domain_feasibility",
+          "rule_reachability",
+          "coverage",
+          "outcome_conflict",
+          "constraint_compliance"
+        ],
+        "engine_version": "author-analysis/0.1",
+        "language_version": "author-model/0.1",
+        "limits": {
+          "max_budget_ms": 60000,
+          "max_frame_bytes": 8388608,
+          "max_handles": 64,
+          "max_obligations": 24,
+          "model": {
+            "constraints": 2048,
+            "expression_depth": 128,
+            "expression_nodes": 50000,
+            "inputs": 256,
+            "rules": 2048
+          }
+        },
+        "operations": [
+          "hello",
+          "compile",
+          "analyze",
+          "evaluate",
+          "release"
+        ],
+        "protocol_version": "author-worker/0.1",
+        "solver_version": "Z3 5.1.0.0"
+      },
+      "worker_peak_rss_kb_vm_hwm_sampled": 36644,
+      "rss_measurement": "Linux /proc VmHWM sampled every 2ms while worker alive; sampled peak high-water mark"
+    },
+    {
+      "family": "near_model_limits",
+      "compile_wall": {
+        "n": 5,
+        "p50_ms": 60.4220040004293,
+        "p95_ms": 63.831428000412416
+      },
+      "engine_compile_elapsed_ms": {
+        "n": 5,
+        "p50_ms": 46,
+        "p95_ms": 50
+      },
+      "engine_compile_elapsed_ms_samples": [
+        43,
+        50,
+        45,
+        46,
+        49
+      ],
+      "analysis_wall": {
+        "n": 5,
+        "p50_ms": 34.204063998913625,
+        "p95_ms": 64.62792399906903
+      },
+      "analysis_report": [
+        {
+          "elapsed_ms": 56,
+          "solver_query_count": 24,
+          "cache_hits": 0,
+          "planned_obligation_count": 25,
+          "executed_obligation_count": 24,
+          "statuses": {
+            "satisfied": 24,
+            "skipped": 1
+          },
+          "inconclusive": 1,
+          "native_stats_obligations": [
+            {
+              "obligation_id": "domain_feasibility",
+              "status": "satisfied",
+              "elapsed_ms": 3,
+              "values": {
+                "assertion_count": "1",
+                "max memory": "17.19",
+                "memory": "17.19",
+                "num allocs": "10261",
+                "rlimit count": "259"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R0",
+              "status": "satisfied",
+              "elapsed_ms": 2,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "17.97",
+                "memory": "17.97",
+                "num allocs": "153210",
+                "rlimit count": "571",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R1",
+              "status": "satisfied",
+              "elapsed_ms": 1,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.02",
+                "memory": "18.02",
+                "num allocs": "630176",
+                "rlimit count": "883",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R10",
+              "status": "satisfied",
+              "elapsed_ms": 1,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.02",
+                "memory": "18.02",
+                "num allocs": "1400744",
+                "rlimit count": "1195",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R100",
+              "status": "satisfied",
+              "elapsed_ms": 1,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.02",
+                "memory": "18.02",
+                "num allocs": "2446845",
+                "rlimit count": "1507",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R1000",
+              "status": "satisfied",
+              "elapsed_ms": 1,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.02",
+                "memory": "18.02",
+                "num allocs": "3768454",
+                "rlimit count": "1819",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R1001",
+              "status": "satisfied",
+              "elapsed_ms": 1,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.02",
+                "memory": "18.02",
+                "num allocs": "5365658",
+                "rlimit count": "2131",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R1002",
+              "status": "satisfied",
+              "elapsed_ms": 1,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.02",
+                "memory": "18.02",
+                "num allocs": "7238498",
+                "rlimit count": "2443",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R1003",
+              "status": "satisfied",
+              "elapsed_ms": 1,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.02",
+                "memory": "18.02",
+                "num allocs": "9386803",
+                "rlimit count": "2755",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R1004",
+              "status": "satisfied",
+              "elapsed_ms": 1,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.02",
+                "memory": "18.02",
+                "num allocs": "11810688",
+                "rlimit count": "3067",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R1005",
+              "status": "satisfied",
+              "elapsed_ms": 1,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.02",
+                "memory": "18.02",
+                "num allocs": "14510081",
+                "rlimit count": "3379",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R1006",
+              "status": "satisfied",
+              "elapsed_ms": 1,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.02",
+                "memory": "18.02",
+                "num allocs": "17484905",
+                "rlimit count": "3691",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R1007",
+              "status": "satisfied",
+              "elapsed_ms": 1,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.02",
+                "memory": "18.02",
+                "num allocs": "20735096",
+                "rlimit count": "4003",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R1008",
+              "status": "satisfied",
+              "elapsed_ms": 1,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.02",
+                "memory": "18.02",
+                "num allocs": "24261020",
+                "rlimit count": "4315",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R1009",
+              "status": "satisfied",
+              "elapsed_ms": 1,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.02",
+                "memory": "18.02",
+                "num allocs": "28062429",
+                "rlimit count": "4627",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R101",
+              "status": "satisfied",
+              "elapsed_ms": 1,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.02",
+                "memory": "18.02",
+                "num allocs": "32139447",
+                "rlimit count": "4939",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R1010",
+              "status": "satisfied",
+              "elapsed_ms": 1,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.02",
+                "memory": "18.02",
+                "num allocs": "36492201",
+                "rlimit count": "5251",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R1011",
+              "status": "satisfied",
+              "elapsed_ms": 1,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.02",
+                "memory": "18.02",
+                "num allocs": "41120592",
+                "rlimit count": "5563",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R1012",
+              "status": "satisfied",
+              "elapsed_ms": 1,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.02",
+                "memory": "18.02",
+                "num allocs": "46024524",
+                "rlimit count": "5875",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R1013",
+              "status": "satisfied",
+              "elapsed_ms": 1,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.02",
+                "memory": "18.02",
+                "num allocs": "51203976",
+                "rlimit count": "6187",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R1014",
+              "status": "satisfied",
+              "elapsed_ms": 1,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.02",
+                "memory": "18.02",
+                "num allocs": "56658938",
+                "rlimit count": "6499",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R1015",
+              "status": "satisfied",
+              "elapsed_ms": 1,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.02",
+                "memory": "18.02",
+                "num allocs": "62389361",
+                "rlimit count": "6811",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R1016",
+              "status": "satisfied",
+              "elapsed_ms": 1,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.02",
+                "memory": "18.02",
+                "num allocs": "68395417",
+                "rlimit count": "7123",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R1017",
+              "status": "satisfied",
+              "elapsed_ms": 1,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.02",
+                "memory": "18.02",
+                "num allocs": "74676931",
+                "rlimit count": "7435",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            }
+          ]
+        },
+        {
+          "elapsed_ms": 23,
+          "solver_query_count": 0,
+          "cache_hits": 24,
+          "planned_obligation_count": 25,
+          "executed_obligation_count": 24,
+          "statuses": {
+            "satisfied": 24,
+            "skipped": 1
+          },
+          "inconclusive": 1,
+          "native_stats_obligations": []
+        },
+        {
+          "elapsed_ms": 23,
+          "solver_query_count": 0,
+          "cache_hits": 24,
+          "planned_obligation_count": 25,
+          "executed_obligation_count": 24,
+          "statuses": {
+            "satisfied": 24,
+            "skipped": 1
+          },
+          "inconclusive": 1,
+          "native_stats_obligations": []
+        },
+        {
+          "elapsed_ms": 24,
+          "solver_query_count": 0,
+          "cache_hits": 24,
+          "planned_obligation_count": 25,
+          "executed_obligation_count": 24,
+          "statuses": {
+            "satisfied": 24,
+            "skipped": 1
+          },
+          "inconclusive": 1,
+          "native_stats_obligations": []
+        },
+        {
+          "elapsed_ms": 26,
+          "solver_query_count": 0,
+          "cache_hits": 24,
+          "planned_obligation_count": 25,
+          "executed_obligation_count": 24,
+          "statuses": {
+            "satisfied": 24,
+            "skipped": 1
+          },
+          "inconclusive": 1,
+          "native_stats_obligations": []
+        }
+      ],
+      "hashes": [
+        {
+          "semantic_hash": "c7084bd66841aac4a39d6833d16d8aa7cdaebe94b0c740c3818bc63d8fe8eb25",
+          "content_hash": "483c62f1322033c2c345c6b3a4e92a20e022d3b3b696d3624c104876ef3ce98a"
+        },
+        {
+          "semantic_hash": "c7084bd66841aac4a39d6833d16d8aa7cdaebe94b0c740c3818bc63d8fe8eb25",
+          "content_hash": "483c62f1322033c2c345c6b3a4e92a20e022d3b3b696d3624c104876ef3ce98a"
+        },
+        {
+          "semantic_hash": "c7084bd66841aac4a39d6833d16d8aa7cdaebe94b0c740c3818bc63d8fe8eb25",
+          "content_hash": "483c62f1322033c2c345c6b3a4e92a20e022d3b3b696d3624c104876ef3ce98a"
+        },
+        {
+          "semantic_hash": "c7084bd66841aac4a39d6833d16d8aa7cdaebe94b0c740c3818bc63d8fe8eb25",
+          "content_hash": "483c62f1322033c2c345c6b3a4e92a20e022d3b3b696d3624c104876ef3ce98a"
+        },
+        {
+          "semantic_hash": "c7084bd66841aac4a39d6833d16d8aa7cdaebe94b0c740c3818bc63d8fe8eb25",
+          "content_hash": "483c62f1322033c2c345c6b3a4e92a20e022d3b3b696d3624c104876ef3ce98a"
+        }
+      ],
+      "hello": {
+        "capabilities": {
+          "analyze": true,
+          "compile": true,
+          "evaluate": true,
+          "hard_cancellation": true,
+          "release": true
+        },
+        "checks": [
+          "domain_feasibility",
+          "rule_reachability",
+          "coverage",
+          "outcome_conflict",
+          "constraint_compliance"
+        ],
+        "engine_version": "author-analysis/0.1",
+        "language_version": "author-model/0.1",
+        "limits": {
+          "max_budget_ms": 60000,
+          "max_frame_bytes": 8388608,
+          "max_handles": 64,
+          "max_obligations": 24,
+          "model": {
+            "constraints": 2048,
+            "expression_depth": 128,
+            "expression_nodes": 50000,
+            "inputs": 256,
+            "rules": 2048
+          }
+        },
+        "operations": [
+          "hello",
+          "compile",
+          "analyze",
+          "evaluate",
+          "release"
+        ],
+        "protocol_version": "author-worker/0.1",
+        "solver_version": "Z3 5.1.0.0"
+      },
+      "worker_peak_rss_kb_vm_hwm_sampled": 88520,
+      "rss_measurement": "Linux /proc VmHWM sampled every 2ms while worker alive; sampled peak high-water mark"
+    }
+  ],
+  "cache_probes": {
+    "same_analysis_reports": [
+      {
+        "elapsed_ms": 7,
+        "solver_query_count": 6,
+        "cache_hits": 0,
+        "planned_obligation_count": 6,
+        "executed_obligation_count": 6,
+        "statuses": {
+          "satisfied": 6
+        },
+        "inconclusive": 0,
+        "native_stats_obligations": [
+          {
+            "obligation_id": "domain_feasibility",
+            "status": "satisfied",
+            "elapsed_ms": 6,
+            "values": {
+              "assertion_count": "1",
+              "max memory": "17.17",
+              "memory": "17.17",
+              "num allocs": "10396",
+              "rlimit count": "4"
+            }
+          },
+          {
+            "obligation_id": "rule_reachability:R0",
+            "status": "satisfied",
+            "elapsed_ms": 0,
+            "values": {
+              "assertion_count": "1",
+              "elim-unconstrained": "1",
+              "max memory": "17.95",
+              "memory": "17.95",
+              "num allocs": "70656",
+              "rlimit count": "61",
+              "solve-eqs-elim-vars": "1",
+              "solve-eqs-steps": "1"
+            }
+          },
+          {
+            "obligation_id": "constraint_compliance:R0:C0",
+            "status": "satisfied",
+            "elapsed_ms": 0,
+            "values": {
+              "assertion_count": "1",
+              "max memory": "17.95",
+              "memory": "17.23",
+              "num allocs": "189177",
+              "rlimit count": "75"
+            }
+          },
+          {
+            "obligation_id": "constraint_compliance:R0:C1",
+            "status": "satisfied",
+            "elapsed_ms": 0,
+            "values": {
+              "assertion_count": "1",
+              "max memory": "17.95",
+              "memory": "17.23",
+              "num allocs": "263678",
+              "rlimit count": "89"
+            }
+          },
+          {
+            "obligation_id": "constraint_compliance:R0:C2",
+            "status": "satisfied",
+            "elapsed_ms": 0,
+            "values": {
+              "assertion_count": "1",
+              "max memory": "17.95",
+              "memory": "17.23",
+              "num allocs": "347820",
+              "rlimit count": "103"
+            }
+          },
+          {
+            "obligation_id": "constraint_compliance:R0:C3",
+            "status": "satisfied",
+            "elapsed_ms": 0,
+            "values": {
+              "assertion_count": "1",
+              "max memory": "17.95",
+              "memory": "17.23",
+              "num allocs": "441602",
+              "rlimit count": "117"
+            }
+          }
+        ]
+      },
+      {
+        "elapsed_ms": 0,
+        "solver_query_count": 0,
+        "cache_hits": 6,
+        "planned_obligation_count": 6,
+        "executed_obligation_count": 6,
+        "statuses": {
+          "satisfied": 6
+        },
+        "inconclusive": 0,
+        "native_stats_obligations": []
+      },
+      {
+        "elapsed_ms": 0,
+        "solver_query_count": 0,
+        "cache_hits": 6,
+        "planned_obligation_count": 6,
+        "executed_obligation_count": 6,
+        "statuses": {
+          "satisfied": 6
+        },
+        "inconclusive": 0,
+        "native_stats_obligations": []
+      },
+      {
+        "elapsed_ms": 0,
+        "solver_query_count": 0,
+        "cache_hits": 6,
+        "planned_obligation_count": 6,
+        "executed_obligation_count": 6,
+        "statuses": {
+          "satisfied": 6
+        },
+        "inconclusive": 0,
+        "native_stats_obligations": []
+      },
+      {
+        "elapsed_ms": 0,
+        "solver_query_count": 0,
+        "cache_hits": 6,
+        "planned_obligation_count": 6,
+        "executed_obligation_count": 6,
+        "statuses": {
+          "satisfied": 6
+        },
+        "inconclusive": 0,
+        "native_stats_obligations": []
+      }
+    ],
+    "semantic_edit": {
+      "hashes": {
+        "base": "93e2ac43e8e2ae910282433dbb20b0cbe490f0b813eadfe0feaa2166cbbc0893",
+        "edited": "a8523cd1c3f48184025506e6f24f24979cc6b2d0fd4ff6deed50e72db43e5358"
+      },
+      "report": {
+        "elapsed_ms": 4,
+        "solver_query_count": 6,
+        "cache_hits": 0,
+        "planned_obligation_count": 6,
+        "executed_obligation_count": 6,
+        "statuses": {
+          "satisfied": 6
+        },
+        "inconclusive": 0,
+        "native_stats_obligations": [
+          {
+            "obligation_id": "domain_feasibility",
+            "status": "satisfied",
+            "elapsed_ms": 0,
+            "values": {
+              "assertion_count": "1",
+              "max memory": "18.01",
+              "memory": "17.23",
+              "num allocs": "4565911",
+              "rlimit count": "434"
+            }
+          },
+          {
+            "obligation_id": "rule_reachability:R0",
+            "status": "satisfied",
+            "elapsed_ms": 0,
+            "values": {
+              "assertion_count": "1",
+              "elim-unconstrained": "1",
+              "max memory": "18.01",
+              "memory": "18.01",
+              "num allocs": "5248360",
+              "rlimit count": "491",
+              "solve-eqs-elim-vars": "1",
+              "solve-eqs-steps": "1"
+            }
+          },
+          {
+            "obligation_id": "constraint_compliance:R0:C0",
+            "status": "satisfied",
+            "elapsed_ms": 1,
+            "values": {
+              "assertion_count": "1",
+              "conflicts": "1",
+              "max memory": "18.49",
+              "memory": "18.03",
+              "mk bool var": "2",
+              "num allocs": "6809804",
+              "num checks": "1",
+              "random seed": "100",
+              "rlimit count": "661"
+            }
+          },
+          {
+            "obligation_id": "constraint_compliance:R0:C1",
+            "status": "satisfied",
+            "elapsed_ms": 0,
+            "values": {
+              "assertion_count": "1",
+              "conflicts": "1",
+              "max memory": "18.49",
+              "memory": "18.04",
+              "mk bool var": "2",
+              "num allocs": "8580869",
+              "num checks": "1",
+              "random seed": "100",
+              "rlimit count": "831"
+            }
+          },
+          {
+            "obligation_id": "constraint_compliance:R0:C2",
+            "status": "satisfied",
+            "elapsed_ms": 0,
+            "values": {
+              "assertion_count": "1",
+              "conflicts": "1",
+              "max memory": "18.49",
+              "memory": "18.03",
+              "mk bool var": "2",
+              "num allocs": "10561527",
+              "num checks": "1",
+              "random seed": "100",
+              "rlimit count": "1001"
+            }
+          },
+          {
+            "obligation_id": "constraint_compliance:R0:C3",
+            "status": "satisfied",
+            "elapsed_ms": 0,
+            "values": {
+              "assertion_count": "1",
+              "conflicts": "1",
+              "max memory": "18.49",
+              "memory": "18.03",
+              "mk bool var": "2",
+              "num allocs": "12751791",
+              "num checks": "1",
+              "random seed": "100",
+              "rlimit count": "1171"
+            }
+          }
+        ]
+      }
+    },
+    "metadata_edit": {
+      "hashes": {
+        "base_semantic": "93e2ac43e8e2ae910282433dbb20b0cbe490f0b813eadfe0feaa2166cbbc0893",
+        "metadata_semantic": "93e2ac43e8e2ae910282433dbb20b0cbe490f0b813eadfe0feaa2166cbbc0893",
+        "base_content": "3bbeaf7aef5c8fe63b81bf728c556909afa11f9f08d4b02905104e58044ffe9b",
+        "metadata_content": "274f7d9ee0a3b8a8de26c5baa63ef20c51fcf36b56ee5b10cec4eb4d21f18dd4"
+      },
+      "report": {
+        "elapsed_ms": 0,
+        "solver_query_count": 0,
+        "cache_hits": 6,
+        "planned_obligation_count": 6,
+        "executed_obligation_count": 6,
+        "statuses": {
+          "satisfied": 6
+        },
+        "inconclusive": 0,
+        "native_stats_obligations": []
+      },
+      "reported_content_hash": "274f7d9ee0a3b8a8de26c5baa63ef20c51fcf36b56ee5b10cec4eb4d21f18dd4"
+    },
+    "one_rule_edit_loop": [
+      {
+        "semantic_hash": "2b04046b1dd7339f79054b2e3166432fd2b098515a5ed210129d459c393a407f",
+        "report": {
+          "elapsed_ms": 4,
+          "solver_query_count": 6,
+          "cache_hits": 0,
+          "planned_obligation_count": 6,
+          "executed_obligation_count": 6,
+          "statuses": {
+            "satisfied": 6
+          },
+          "inconclusive": 0,
+          "native_stats_obligations": [
+            {
+              "obligation_id": "domain_feasibility",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "max memory": "18.49",
+                "memory": "17.23",
+                "num allocs": "13917679",
+                "rlimit count": "1175"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R0",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.49",
+                "memory": "18.01",
+                "num allocs": "15127406",
+                "rlimit count": "1232",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "constraint_compliance:R0:C0",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "conflicts": "1",
+                "max memory": "18.49",
+                "memory": "18.03",
+                "mk bool var": "2",
+                "num allocs": "17743338",
+                "num checks": "1",
+                "random seed": "100",
+                "rlimit count": "1402"
+              }
+            },
+            {
+              "obligation_id": "constraint_compliance:R0:C1",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "conflicts": "1",
+                "max memory": "18.49",
+                "memory": "18.04",
+                "mk bool var": "2",
+                "num allocs": "20568908",
+                "num checks": "1",
+                "random seed": "100",
+                "rlimit count": "1572"
+              }
+            },
+            {
+              "obligation_id": "constraint_compliance:R0:C2",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "conflicts": "1",
+                "max memory": "18.49",
+                "memory": "18.04",
+                "mk bool var": "2",
+                "num allocs": "23604301",
+                "num checks": "1",
+                "random seed": "100",
+                "rlimit count": "1742"
+              }
+            },
+            {
+              "obligation_id": "constraint_compliance:R0:C3",
+              "status": "satisfied",
+              "elapsed_ms": 1,
+              "values": {
+                "assertion_count": "1",
+                "conflicts": "1",
+                "max memory": "18.49",
+                "memory": "18.04",
+                "mk bool var": "2",
+                "num allocs": "26849570",
+                "num checks": "1",
+                "random seed": "100",
+                "rlimit count": "1912"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "semantic_hash": "2feafa06e6d65ea26b203f86b144981ef12036c6727b323b36da15a18329600e",
+        "report": {
+          "elapsed_ms": 4,
+          "solver_query_count": 6,
+          "cache_hits": 0,
+          "planned_obligation_count": 6,
+          "executed_obligation_count": 6,
+          "statuses": {
+            "satisfied": 6
+          },
+          "inconclusive": 0,
+          "native_stats_obligations": [
+            {
+              "obligation_id": "domain_feasibility",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "max memory": "18.49",
+                "memory": "17.23",
+                "num allocs": "28543057",
+                "rlimit count": "1916"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R0",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.49",
+                "memory": "18.01",
+                "num allocs": "30280360",
+                "rlimit count": "1973",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "constraint_compliance:R0:C0",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "conflicts": "1",
+                "max memory": "18.49",
+                "memory": "18.04",
+                "mk bool var": "2",
+                "num allocs": "33951342",
+                "num checks": "1",
+                "random seed": "100",
+                "rlimit count": "2143"
+              }
+            },
+            {
+              "obligation_id": "constraint_compliance:R0:C1",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "conflicts": "1",
+                "max memory": "18.49",
+                "memory": "18.04",
+                "mk bool var": "2",
+                "num allocs": "37831986",
+                "num checks": "1",
+                "random seed": "100",
+                "rlimit count": "2313"
+              }
+            },
+            {
+              "obligation_id": "constraint_compliance:R0:C2",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "conflicts": "1",
+                "max memory": "18.49",
+                "memory": "18.04",
+                "mk bool var": "2",
+                "num allocs": "41922346",
+                "num checks": "1",
+                "random seed": "100",
+                "rlimit count": "2483"
+              }
+            },
+            {
+              "obligation_id": "constraint_compliance:R0:C3",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "conflicts": "1",
+                "max memory": "18.49",
+                "memory": "18.04",
+                "mk bool var": "2",
+                "num allocs": "46222601",
+                "num checks": "1",
+                "random seed": "100",
+                "rlimit count": "2653"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "semantic_hash": "58479b6e01de2516acb3bf892b71065c9fadf286a9833ba7fac2437cc528cd36",
+        "report": {
+          "elapsed_ms": 4,
+          "solver_query_count": 6,
+          "cache_hits": 0,
+          "planned_obligation_count": 6,
+          "executed_obligation_count": 6,
+          "statuses": {
+            "satisfied": 6
+          },
+          "inconclusive": 0,
+          "native_stats_obligations": [
+            {
+              "obligation_id": "domain_feasibility",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "max memory": "18.49",
+                "memory": "17.23",
+                "num allocs": "48443653",
+                "rlimit count": "2657"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R0",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.49",
+                "memory": "18.02",
+                "num allocs": "50708531",
+                "rlimit count": "2714",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "constraint_compliance:R0:C0",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "conflicts": "1",
+                "max memory": "18.49",
+                "memory": "18.04",
+                "mk bool var": "2",
+                "num allocs": "55434636",
+                "num checks": "1",
+                "random seed": "100",
+                "rlimit count": "2884"
+              }
+            },
+            {
+              "obligation_id": "constraint_compliance:R0:C1",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "conflicts": "1",
+                "max memory": "18.49",
+                "memory": "18.04",
+                "mk bool var": "2",
+                "num allocs": "60370511",
+                "num checks": "1",
+                "random seed": "100",
+                "rlimit count": "3054"
+              }
+            },
+            {
+              "obligation_id": "constraint_compliance:R0:C2",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "conflicts": "1",
+                "max memory": "18.49",
+                "memory": "18.04",
+                "mk bool var": "2",
+                "num allocs": "65515926",
+                "num checks": "1",
+                "random seed": "100",
+                "rlimit count": "3224"
+              }
+            },
+            {
+              "obligation_id": "constraint_compliance:R0:C3",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "conflicts": "1",
+                "max memory": "18.49",
+                "memory": "18.04",
+                "mk bool var": "2",
+                "num allocs": "70871059",
+                "num checks": "1",
+                "random seed": "100",
+                "rlimit count": "3394"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "semantic_hash": "63b4c98e761277ba66f8d255010583dc24a4378be912b62f3f053dde36d8ef08",
+        "report": {
+          "elapsed_ms": 4,
+          "solver_query_count": 6,
+          "cache_hits": 0,
+          "planned_obligation_count": 6,
+          "executed_obligation_count": 6,
+          "statuses": {
+            "satisfied": 6
+          },
+          "inconclusive": 0,
+          "native_stats_obligations": [
+            {
+              "obligation_id": "domain_feasibility",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "max memory": "18.49",
+                "memory": "17.23",
+                "num allocs": "73619476",
+                "rlimit count": "3398"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R0",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.49",
+                "memory": "18.02",
+                "num allocs": "76411750",
+                "rlimit count": "3455",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "constraint_compliance:R0:C0",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "conflicts": "1",
+                "max memory": "18.49",
+                "memory": "18.04",
+                "mk bool var": "2",
+                "num allocs": "82192815",
+                "num checks": "1",
+                "random seed": "100",
+                "rlimit count": "3625"
+              }
+            },
+            {
+              "obligation_id": "constraint_compliance:R0:C1",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "conflicts": "1",
+                "max memory": "18.49",
+                "memory": "18.04",
+                "mk bool var": "2",
+                "num allocs": "88183520",
+                "num checks": "1",
+                "random seed": "100",
+                "rlimit count": "3795"
+              }
+            },
+            {
+              "obligation_id": "constraint_compliance:R0:C2",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "conflicts": "1",
+                "max memory": "18.49",
+                "memory": "18.04",
+                "mk bool var": "2",
+                "num allocs": "94384217",
+                "num checks": "1",
+                "random seed": "100",
+                "rlimit count": "3965"
+              }
+            },
+            {
+              "obligation_id": "constraint_compliance:R0:C3",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "conflicts": "1",
+                "max memory": "18.49",
+                "memory": "18.04",
+                "mk bool var": "2",
+                "num allocs": "100794721",
+                "num checks": "1",
+                "random seed": "100",
+                "rlimit count": "4135"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "semantic_hash": "a97da7c5a2fc1f161d53479d2bb7b41f340821edf10581283ed9159705da03d1",
+        "report": {
+          "elapsed_ms": 3,
+          "solver_query_count": 6,
+          "cache_hits": 0,
+          "planned_obligation_count": 6,
+          "executed_obligation_count": 6,
+          "statuses": {
+            "satisfied": 6
+          },
+          "inconclusive": 0,
+          "native_stats_obligations": [
+            {
+              "obligation_id": "domain_feasibility",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "max memory": "18.49",
+                "memory": "17.23",
+                "num allocs": "104070909",
+                "rlimit count": "4139"
+              }
+            },
+            {
+              "obligation_id": "rule_reachability:R0",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "elim-unconstrained": "1",
+                "max memory": "18.49",
+                "memory": "18.02",
+                "num allocs": "107390878",
+                "rlimit count": "4196",
+                "solve-eqs-elim-vars": "1",
+                "solve-eqs-steps": "1"
+              }
+            },
+            {
+              "obligation_id": "constraint_compliance:R0:C0",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "conflicts": "1",
+                "max memory": "18.49",
+                "memory": "18.04",
+                "mk bool var": "2",
+                "num allocs": "114227181",
+                "num checks": "1",
+                "random seed": "100",
+                "rlimit count": "4366"
+              }
+            },
+            {
+              "obligation_id": "constraint_compliance:R0:C1",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "conflicts": "1",
+                "max memory": "18.49",
+                "memory": "18.04",
+                "mk bool var": "2",
+                "num allocs": "121273282",
+                "num checks": "1",
+                "random seed": "100",
+                "rlimit count": "4536"
+              }
+            },
+            {
+              "obligation_id": "constraint_compliance:R0:C2",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "conflicts": "1",
+                "max memory": "18.49",
+                "memory": "18.04",
+                "mk bool var": "2",
+                "num allocs": "128528938",
+                "num checks": "1",
+                "random seed": "100",
+                "rlimit count": "4706"
+              }
+            },
+            {
+              "obligation_id": "constraint_compliance:R0:C3",
+              "status": "satisfied",
+              "elapsed_ms": 0,
+              "values": {
+                "assertion_count": "1",
+                "conflicts": "1",
+                "max memory": "18.49",
+                "memory": "18.04",
+                "mk bool var": "2",
+                "num allocs": "135994212",
+                "num checks": "1",
+                "random seed": "100",
+                "rlimit count": "4876"
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "assumption_key_probe": {
+      "without_assumption_first": {
+        "elapsed_ms": 1,
+        "solver_query_count": 6,
+        "cache_hits": 0,
+        "planned_obligation_count": 6,
+        "executed_obligation_count": 6,
+        "statuses": {
+          "satisfied": 6
+        },
+        "inconclusive": 0,
+        "native_stats_obligations": [
+          {
+            "obligation_id": "domain_feasibility",
+            "status": "satisfied",
+            "elapsed_ms": 0,
+            "values": {
+              "assertion_count": "1",
+              "max memory": "17.95",
+              "memory": "17.23",
+              "num allocs": "545018",
+              "rlimit count": "121"
+            }
+          },
+          {
+            "obligation_id": "rule_reachability:R0",
+            "status": "satisfied",
+            "elapsed_ms": 0,
+            "values": {
+              "assertion_count": "1",
+              "elim-unconstrained": "1",
+              "max memory": "18.01",
+              "memory": "18.01",
+              "num allocs": "792102",
+              "rlimit count": "178",
+              "solve-eqs-elim-vars": "1",
+              "solve-eqs-steps": "1"
+            }
+          },
+          {
+            "obligation_id": "constraint_compliance:R0:C0",
+            "status": "satisfied",
+            "elapsed_ms": 0,
+            "values": {
+              "assertion_count": "1",
+              "max memory": "18.01",
+              "memory": "17.23",
+              "num allocs": "1103375",
+              "rlimit count": "192"
+            }
+          },
+          {
+            "obligation_id": "constraint_compliance:R0:C1",
+            "status": "satisfied",
+            "elapsed_ms": 0,
+            "values": {
+              "assertion_count": "1",
+              "max memory": "18.01",
+              "memory": "17.23",
+              "num allocs": "1270363",
+              "rlimit count": "206"
+            }
+          },
+          {
+            "obligation_id": "constraint_compliance:R0:C2",
+            "status": "satisfied",
+            "elapsed_ms": 0,
+            "values": {
+              "assertion_count": "1",
+              "max memory": "18.01",
+              "memory": "17.23",
+              "num allocs": "1446984",
+              "rlimit count": "220"
+            }
+          },
+          {
+            "obligation_id": "constraint_compliance:R0:C3",
+            "status": "satisfied",
+            "elapsed_ms": 0,
+            "values": {
+              "assertion_count": "1",
+              "max memory": "18.01",
+              "memory": "17.23",
+              "num allocs": "1633245",
+              "rlimit count": "234"
+            }
+          }
+        ]
+      },
+      "with_assumption": {
+        "elapsed_ms": 1,
+        "solver_query_count": 6,
+        "cache_hits": 0,
+        "planned_obligation_count": 6,
+        "executed_obligation_count": 6,
+        "statuses": {
+          "satisfied": 6
+        },
+        "inconclusive": 0,
+        "native_stats_obligations": [
+          {
+            "obligation_id": "domain_feasibility",
+            "status": "satisfied",
+            "elapsed_ms": 0,
+            "values": {
+              "assertion_count": "2",
+              "elim-unconstrained": "1",
+              "max memory": "18.01",
+              "memory": "18.01",
+              "num allocs": "2044108",
+              "rlimit count": "292",
+              "solve-eqs-elim-vars": "1",
+              "solve-eqs-steps": "1"
+            }
+          },
+          {
+            "obligation_id": "rule_reachability:R0",
+            "status": "satisfied",
+            "elapsed_ms": 0,
+            "values": {
+              "assertion_count": "2",
+              "elim-unconstrained": "1",
+              "max memory": "18.01",
+              "memory": "18.01",
+              "num allocs": "2777478",
+              "rlimit count": "354",
+              "solve-eqs-elim-vars": "1",
+              "solve-eqs-steps": "1"
+            }
+          },
+          {
+            "obligation_id": "constraint_compliance:R0:C0",
+            "status": "satisfied",
+            "elapsed_ms": 0,
+            "values": {
+              "assertion_count": "2",
+              "max memory": "18.01",
+              "memory": "17.23",
+              "num allocs": "3339240",
+              "rlimit count": "373"
+            }
+          },
+          {
+            "obligation_id": "constraint_compliance:R0:C1",
+            "status": "satisfied",
+            "elapsed_ms": 0,
+            "values": {
+              "assertion_count": "2",
+              "max memory": "18.01",
+              "memory": "17.23",
+              "num allocs": "3631461",
+              "rlimit count": "392"
+            }
+          },
+          {
+            "obligation_id": "constraint_compliance:R0:C2",
+            "status": "satisfied",
+            "elapsed_ms": 0,
+            "values": {
+              "assertion_count": "2",
+              "max memory": "18.01",
+              "memory": "17.23",
+              "num allocs": "3933320",
+              "rlimit count": "411"
+            }
+          },
+          {
+            "obligation_id": "constraint_compliance:R0:C3",
+            "status": "satisfied",
+            "elapsed_ms": 0,
+            "values": {
+              "assertion_count": "2",
+              "max memory": "18.01",
+              "memory": "17.23",
+              "num allocs": "4244803",
+              "rlimit count": "430"
+            }
+          }
+        ]
+      },
+      "without_assumption_again": {
+        "elapsed_ms": 0,
+        "solver_query_count": 0,
+        "cache_hits": 6,
+        "planned_obligation_count": 6,
+        "executed_obligation_count": 6,
+        "statuses": {
+          "satisfied": 6
+        },
+        "inconclusive": 0,
+        "native_stats_obligations": []
+      }
+    },
+    "engine_compile_elapsed_ms": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "expectations": {
+      "semantic_edit_changes_semantic_hash": true,
+      "metadata_edit_preserves_semantics": true,
+      "metadata_edit_changes_content": true,
+      "assumption_configuration_separates_cache_entries": true
+    },
+    "worker_peak_rss_kb_vm_hwm_sampled": 39852,
+    "rss_measurement": "Linux /proc VmHWM sampled every 2ms while worker alive"
+  },
+  "unavailable_metrics": [
+    "exact formula AST node count is not provided; detached assertion_count is reported only as a formula-size proxy"
+  ]
+}
