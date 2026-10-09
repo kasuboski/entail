@@ -279,9 +279,7 @@ fn recover_request_id(payload: &[u8]) -> Value {
             let Some(encoded) = trimmed.get(..end) else {
                 return Value::Null;
             };
-            return serde_json::from_str::<String>(encoded)
-                .map(Value::String)
-                .unwrap_or(Value::Null);
+            return serde_json::from_str::<String>(encoded).map_or(Value::Null, Value::String);
         }
     }
     Value::Null
