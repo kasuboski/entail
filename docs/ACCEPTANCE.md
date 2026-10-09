@@ -1,6 +1,6 @@
 # Author engine v0 end-user acceptance
 
-**Status: final CLI and worker acceptance passed against integrated code source `3da81ceb`.** These scripts are black-box checks against a built executable, not an engine mock. Fixtures and expectations in `author-engine-v0/fixtures` are test inputs, never evidence by themselves.
+**Status: final CLI and worker acceptance passed against integrated code source `3da81cee`.** These scripts are black-box checks against a built executable, not an engine mock. Fixtures and expectations in `author-engine-v0/fixtures` are test inputs, never evidence by themselves.
 
 ## Run
 
