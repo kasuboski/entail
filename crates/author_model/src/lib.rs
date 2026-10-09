@@ -155,36 +155,36 @@ pub enum Expr {
     #[serde(rename = "ref")]
     Ref { path: String },
     #[serde(rename = "not")]
-    Not { arg: Box<Expr> },
+    Not { arg: Box<Self> },
     #[serde(rename = "and")]
-    And { args: Vec<Expr> },
+    And { args: Vec<Self> },
     #[serde(rename = "or")]
-    Or { args: Vec<Expr> },
+    Or { args: Vec<Self> },
     #[serde(rename = "eq")]
-    Eq { left: Box<Expr>, right: Box<Expr> },
+    Eq { left: Box<Self>, right: Box<Self> },
     #[serde(rename = "ne")]
-    Ne { left: Box<Expr>, right: Box<Expr> },
+    Ne { left: Box<Self>, right: Box<Self> },
     #[serde(rename = "lt")]
-    Lt { left: Box<Expr>, right: Box<Expr> },
+    Lt { left: Box<Self>, right: Box<Self> },
     #[serde(rename = "le")]
-    Le { left: Box<Expr>, right: Box<Expr> },
+    Le { left: Box<Self>, right: Box<Self> },
     #[serde(rename = "gt")]
-    Gt { left: Box<Expr>, right: Box<Expr> },
+    Gt { left: Box<Self>, right: Box<Self> },
     #[serde(rename = "ge")]
-    Ge { left: Box<Expr>, right: Box<Expr> },
+    Ge { left: Box<Self>, right: Box<Self> },
     #[serde(rename = "add")]
-    Add { left: Box<Expr>, right: Box<Expr> },
+    Add { left: Box<Self>, right: Box<Self> },
     #[serde(rename = "sub")]
-    Sub { left: Box<Expr>, right: Box<Expr> },
+    Sub { left: Box<Self>, right: Box<Self> },
     #[serde(rename = "scale")]
-    Scale { factor: String, arg: Box<Expr> },
+    Scale { factor: String, arg: Box<Self> },
     #[serde(rename = "if")]
     If {
-        condition: Box<Expr>,
+        condition: Box<Self>,
         #[serde(rename = "then")]
-        then_expr: Box<Expr>,
+        then_expr: Box<Self>,
         #[serde(rename = "else")]
-        else_expr: Box<Expr>,
+        else_expr: Box<Self>,
     },
 }
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
@@ -309,7 +309,8 @@ fn expr_count(e: &Expr, depth: usize, count: &mut usize, maxdepth: usize) -> boo
     if depth > maxdepth {
         return false;
     }
-    let child = |x: &Expr, c: &mut usize| expr_count(x, depth + 1, c, maxdepth);
+    let child_depth = depth.saturating_add(1);
+    let child = |x: &Expr, c: &mut usize| expr_count(x, child_depth, c, maxdepth);
     match e {
         Expr::Not { arg } | Expr::Scale { arg, .. } => child(arg, count),
         Expr::And { args } | Expr::Or { args } => args.iter().all(|x| child(x, count)),
@@ -335,7 +336,7 @@ fn refs(e: &Expr, out: &mut Vec<String>) {
         Expr::Not { arg } | Expr::Scale { arg, .. } => refs(arg, out),
         Expr::And { args } | Expr::Or { args } => {
             for x in args {
-                refs(x, out)
+                refs(x, out);
             }
         }
         Expr::Eq { left, right }
@@ -347,7 +348,7 @@ fn refs(e: &Expr, out: &mut Vec<String>) {
         | Expr::Add { left, right }
         | Expr::Sub { left, right } => {
             refs(left, out);
-            refs(right, out)
+            refs(right, out);
         }
         Expr::If {
             condition,
@@ -356,12 +357,20 @@ fn refs(e: &Expr, out: &mut Vec<String>) {
         } => {
             refs(condition, out);
             refs(then_expr, out);
-            refs(else_expr, out)
+            refs(else_expr, out);
         }
         _ => {}
     }
 }
-fn check_refs(e: &Expr, raw: &RawModel, allow_outcome: bool, ds: &mut Vec<Diagnostic>) {
+fn check_refs(
+    e: &Expr,
+    raw: &RawModel,
+    allow_outcome: bool,
+    ds: &mut Vec<Diagnostic>,
+    declaration_id: &str,
+    pointer: &str,
+    source_ids: &[String],
+) {
     let mut paths = vec![];
     refs(e, &mut paths);
     for path in paths {
@@ -381,23 +390,36 @@ fn check_refs(e: &Expr, raw: &RawModel, allow_outcome: bool, ds: &mut Vec<Diagno
             _ => false,
         };
         if !valid {
-            ds.push(error(
+            let mut diagnostic = error(
                 "unknown_reference",
                 format!("unknown or out-of-scope reference {path}"),
-            ));
+            );
+            diagnostic.declaration_id = Some(declaration_id.to_string());
+            diagnostic.pointer = Some(pointer.to_string());
+            diagnostic.source_ids = source_ids.to_vec();
+            ds.push(diagnostic);
         }
     }
 }
-fn infer(e: &Expr, raw: &RawModel, allow_outcome: bool, ds: &mut Vec<Diagnostic>) -> Option<Type> {
-    let child = |x: &Expr, d: &mut Vec<Diagnostic>| infer(x, raw, allow_outcome, d);
-    match e {
+// Type inference is intentionally one exhaustive dispatch over the public expression variants.
+#[allow(clippy::too_many_lines)]
+fn infer(
+    expression: &Expr,
+    raw: &RawModel,
+    allow_outcome: bool,
+    diagnostics: &mut Vec<Diagnostic>,
+) -> Option<Type> {
+    let child = |node: &Expr, diagnostics: &mut Vec<Diagnostic>| {
+        infer(node, raw, allow_outcome, diagnostics)
+    };
+    match expression {
         Expr::Bool { .. } => Some(Type::Bool),
         Expr::Int { value, unit } => {
             if !valid_identifier(unit) {
-                ds.push(error("schema_error", format!("invalid unit {unit}")));
+                diagnostics.push(error("schema_error", format!("invalid unit {unit}")));
             }
             if !canonical_integer(value) {
-                ds.push(error(
+                diagnostics.push(error(
                     "type_mismatch",
                     "integer literal must be canonical decimal",
                 ));
@@ -406,7 +428,7 @@ fn infer(e: &Expr, raw: &RawModel, allow_outcome: bool, ds: &mut Vec<Diagnostic>
         }
         Expr::Date { value } => {
             if parse_date(value).is_none() {
-                ds.push(error(
+                diagnostics.push(error(
                     "invalid_date",
                     format!("invalid date literal {value}"),
                 ));
@@ -415,14 +437,14 @@ fn infer(e: &Expr, raw: &RawModel, allow_outcome: bool, ds: &mut Vec<Diagnostic>
         }
         Expr::Enum { enum_name, variant } => {
             if !valid_identifier(enum_name) || !valid_identifier(variant) {
-                ds.push(error("schema_error", "invalid enum literal identifier"));
+                diagnostics.push(error("schema_error", "invalid enum literal identifier"));
             }
             if !raw
                 .enums
                 .iter()
                 .any(|x| x.id == *enum_name && x.variants.contains(variant))
             {
-                ds.push(error(
+                diagnostics.push(error(
                     "unknown_variant",
                     format!("unknown variant {enum_name}.{variant}"),
                 ));
@@ -456,21 +478,21 @@ fn infer(e: &Expr, raw: &RawModel, allow_outcome: bool, ds: &mut Vec<Diagnostic>
             }
         }
         Expr::Not { arg } => {
-            if child(arg, ds) != Some(Type::Bool) {
-                ds.push(error("type_mismatch", "not requires bool"));
+            if child(arg, diagnostics) != Some(Type::Bool) {
+                diagnostics.push(error("type_mismatch", "not requires bool"));
             }
             Some(Type::Bool)
         }
         Expr::And { args } | Expr::Or { args } => {
             if args.is_empty() {
-                ds.push(error(
+                diagnostics.push(error(
                     "type_mismatch",
                     "and/or requires at least one argument",
                 ));
             }
             for x in args {
-                if child(x, ds) != Some(Type::Bool) {
-                    ds.push(error("type_mismatch", "and/or arguments must be bool"));
+                if child(x, diagnostics) != Some(Type::Bool) {
+                    diagnostics.push(error("type_mismatch", "and/or arguments must be bool"));
                 }
             }
             Some(Type::Bool)
@@ -481,21 +503,22 @@ fn infer(e: &Expr, raw: &RawModel, allow_outcome: bool, ds: &mut Vec<Diagnostic>
         | Expr::Le { left, right }
         | Expr::Gt { left, right }
         | Expr::Ge { left, right } => {
-            let a = child(left, ds);
-            let b = child(right, ds);
-            if a != b {
-                if matches!((&a,&b),(Some(Type::Int{unit:u}),Some(Type::Int{unit:v})) if u!=v) {
-                    ds.push(error("unit_mismatch", "integer units differ"));
+            let left_type = child(left, diagnostics);
+            let right_type = child(right, diagnostics);
+            if left_type != right_type {
+                if matches!((&left_type,&right_type),(Some(Type::Int{unit:left_unit}),Some(Type::Int{unit:right_unit})) if left_unit!=right_unit)
+                {
+                    diagnostics.push(error("unit_mismatch", "integer units differ"));
                 } else {
-                    ds.push(error("type_mismatch", "comparison operands differ in type"));
+                    diagnostics.push(error("type_mismatch", "comparison operands differ in type"));
                 }
             }
             if matches!(
-                e,
+                expression,
                 Expr::Lt { .. } | Expr::Le { .. } | Expr::Gt { .. } | Expr::Ge { .. }
-            ) && !matches!(a, Some(Type::Int { .. } | Type::Date))
+            ) && !matches!(left_type, Some(Type::Int { .. } | Type::Date))
             {
-                ds.push(error(
+                diagnostics.push(error(
                     "type_mismatch",
                     "ordered comparison requires int or date",
                 ));
@@ -503,55 +526,77 @@ fn infer(e: &Expr, raw: &RawModel, allow_outcome: bool, ds: &mut Vec<Diagnostic>
             Some(Type::Bool)
         }
         Expr::Add { left, right } | Expr::Sub { left, right } => {
-            let a = child(left, ds);
-            let b = child(right, ds);
-            if a != b {
-                if matches!((&a,&b),(Some(Type::Int{unit:u}),Some(Type::Int{unit:v})) if u!=v) {
-                    ds.push(error("unit_mismatch", "integer units differ"));
+            let left_type = child(left, diagnostics);
+            let right_type = child(right, diagnostics);
+            if left_type != right_type {
+                if matches!((&left_type,&right_type),(Some(Type::Int{unit:left_unit}),Some(Type::Int{unit:right_unit})) if left_unit!=right_unit)
+                {
+                    diagnostics.push(error("unit_mismatch", "integer units differ"));
                 } else {
-                    ds.push(error("type_mismatch", "arithmetic operands differ"));
+                    diagnostics.push(error("type_mismatch", "arithmetic operands differ"));
                 }
             }
-            if !matches!(a, Some(Type::Int { .. })) {
-                ds.push(error("type_mismatch", "arithmetic requires integers"));
+            if !matches!(left_type, Some(Type::Int { .. })) {
+                diagnostics.push(error("type_mismatch", "arithmetic requires integers"));
             }
-            a
+            left_type
         }
         Expr::Scale { factor, arg } => {
             if !canonical_integer(factor) {
-                ds.push(error(
+                diagnostics.push(error(
                     "type_mismatch",
                     "scale factor must be canonical integer",
                 ));
             }
-            let a = child(arg, ds);
-            if !matches!(a, Some(Type::Int { .. })) {
-                ds.push(error("type_mismatch", "scale requires integer"));
+            let left_type = child(arg, diagnostics);
+            if !matches!(left_type, Some(Type::Int { .. })) {
+                diagnostics.push(error("type_mismatch", "scale requires integer"));
             }
-            a
+            left_type
         }
         Expr::If {
             condition,
             then_expr,
             else_expr,
         } => {
-            if child(condition, ds) != Some(Type::Bool) {
-                ds.push(error("type_mismatch", "if condition must be bool"));
+            if child(condition, diagnostics) != Some(Type::Bool) {
+                diagnostics.push(error("type_mismatch", "if condition must be bool"));
             }
-            let a = child(then_expr, ds);
-            let b = child(else_expr, ds);
-            if a != b {
-                ds.push(error("type_mismatch", "if branches differ"));
+            let left_type = child(then_expr, diagnostics);
+            let right_type = child(else_expr, diagnostics);
+            if left_type != right_type {
+                diagnostics.push(error("type_mismatch", "if branches differ"));
             }
-            a
+            left_type
         }
     }
 }
 
-fn preflight(value: &serde_json::Value, limits: &ModelLimits) -> Result<(), Vec<Diagnostic>> {
-    let Some(root) = value.as_object() else {
-        return Err(vec![error("schema_error", "model must be an object")]);
-    };
+fn infer_in_context(
+    expression: &Expr,
+    raw: &RawModel,
+    allow_outcome: bool,
+    diagnostics: &mut Vec<Diagnostic>,
+    declaration_id: &str,
+    pointer: &str,
+    source_ids: &[String],
+) -> Option<Type> {
+    let start = diagnostics.len();
+    let inferred = infer(expression, raw, allow_outcome, diagnostics);
+    if let Some(new_diagnostics) = diagnostics.get_mut(start..) {
+        for diagnostic in new_diagnostics {
+            diagnostic.declaration_id = Some(declaration_id.to_string());
+            diagnostic.pointer = Some(pointer.to_string());
+            diagnostic.source_ids = source_ids.to_vec();
+        }
+    }
+    inferred
+}
+
+fn check_declaration_limits(
+    root: &serde_json::Map<String, serde_json::Value>,
+    limits: &ModelLimits,
+) -> Result<(), Diagnostic> {
     for (key, limit) in [
         ("inputs", limits.inputs),
         ("derived", limits.inputs),
@@ -568,12 +613,47 @@ fn preflight(value: &serde_json::Value, limits: &ModelLimits) -> Result<(), Vec<
             .and_then(serde_json::Value::as_array)
             .is_some_and(|items| items.len() > limit)
         {
-            return Err(vec![error(
+            return Err(error(
                 "resource_limit",
                 format!("{key} declaration limit exceeded"),
-            )]);
+            ));
         }
     }
+    Ok(())
+}
+
+fn add_unique_name(id: &str, names: &mut BTreeSet<String>, diagnostics: &mut Vec<Diagnostic>) {
+    if !names.insert(id.to_string()) {
+        diagnostics.push(error(
+            "duplicate_name",
+            format!("duplicate declaration {id}"),
+        ));
+    }
+}
+
+fn strip_semantic_metadata(value: &mut serde_json::Value) {
+    match value {
+        serde_json::Value::Object(object) => {
+            object.remove("origin");
+            object.remove("note");
+            for child in object.values_mut() {
+                strip_semantic_metadata(child);
+            }
+        }
+        serde_json::Value::Array(items) => {
+            for item in items {
+                strip_semantic_metadata(item);
+            }
+        }
+        _ => {}
+    }
+}
+
+fn preflight(value: &serde_json::Value, limits: &ModelLimits) -> Result<(), Vec<Diagnostic>> {
+    let Some(root) = value.as_object() else {
+        return Err(vec![error("schema_error", "model must be an object")]);
+    };
+    check_declaration_limits(root, limits).map_err(|diagnostic| vec![diagnostic])?;
     let mut roots: Vec<&serde_json::Value> = Vec::new();
     for key in ["derived", "domain", "assumptions", "rules", "constraints"] {
         if let Some(items) = root.get(key).and_then(serde_json::Value::as_array) {
@@ -664,6 +744,12 @@ fn preflight(value: &serde_json::Value, limits: &ModelLimits) -> Result<(), Vec<
     Ok(())
 }
 
+/// Validate and compile a JSON model into its executable representation.
+///
+/// # Errors
+/// Returns diagnostics for schema, resource-limit, reference, type, or semantic errors.
+// This remains cohesive as the compiler's ordered semantic-validation pipeline.
+#[allow(clippy::too_many_lines)]
 pub fn compile_json(
     value: &serde_json::Value,
     limits: &ModelLimits,
@@ -739,7 +825,7 @@ pub fn compile_json(
                 format!("unknown enum type {name}"),
             )),
             Type::Int { unit } if !valid_id(unit) => {
-                ds.push(error("schema_error", format!("invalid unit {unit}")))
+                ds.push(error("schema_error", format!("invalid unit {unit}")));
             }
             _ => {}
         }
@@ -775,42 +861,21 @@ pub fn compile_json(
             ));
         }
     }
-    let mut add = |id: &str| {
-        if !names.insert(id.to_string()) {
-            ds.push(error(
-                "duplicate_name",
-                format!("duplicate declaration {id}"),
-            ));
-        }
-    };
-    for e in &raw.enums {
-        add(&e.id)
+    for id in raw
+        .enums
+        .iter()
+        .map(|item| &item.id)
+        .chain(raw.inputs.iter().map(|item| &item.id))
+        .chain(raw.derived.iter().map(|item| &item.id))
+        .chain(raw.outcomes.iter().map(|item| &item.id))
+        .chain(raw.domain.iter().map(|item| &item.id))
+        .chain(raw.assumptions.iter().map(|item| &item.id))
+        .chain(raw.rules.iter().map(|item| &item.id))
+        .chain(raw.constraints.iter().map(|item| &item.id))
+        .chain(raw.open_items.iter().map(|item| &item.id))
+    {
+        add_unique_name(id, &mut names, &mut ds);
     }
-    for i in &raw.inputs {
-        add(&i.id)
-    }
-    for d in &raw.derived {
-        add(&d.id)
-    }
-    for o in &raw.outcomes {
-        add(&o.id)
-    }
-    for p in &raw.domain {
-        add(&p.id)
-    }
-    for p in &raw.assumptions {
-        add(&p.id)
-    }
-    for r in &raw.rules {
-        add(&r.id)
-    }
-    for c in &raw.constraints {
-        add(&c.id)
-    }
-    for o in &raw.open_items {
-        add(&o.id)
-    }
-    drop(add);
     for (id, origin) in raw
         .enums
         .iter()
@@ -883,20 +948,20 @@ pub fn compile_json(
     let mut counts = 0usize;
     let mut all = vec![];
     for d in &raw.derived {
-        all.push(&d.expr)
+        all.push(&d.expr);
     }
     for p in &raw.domain {
-        all.push(&p.expr)
+        all.push(&p.expr);
     }
     for p in &raw.assumptions {
-        all.push(&p.expr)
+        all.push(&p.expr);
     }
     for r in &raw.rules {
         all.push(&r.when);
-        all.extend(r.then.fields.values())
+        all.extend(r.then.fields.values());
     }
     for c in &raw.constraints {
-        all.push(&c.must)
+        all.push(&c.must);
     }
     for e in all {
         if !expr_count(e, 1, &mut counts, limits.expression_depth) {
@@ -907,34 +972,119 @@ pub fn compile_json(
     if counts > limits.expression_nodes {
         ds.push(error("resource_limit", "expression node limit exceeded"));
     }
-    for d in &raw.derived {
-        check_refs(&d.expr, &raw, false, &mut ds);
+    for (index, derived) in raw.derived.iter().enumerate() {
+        check_refs(
+            &derived.expr,
+            &raw,
+            false,
+            &mut ds,
+            &derived.id,
+            &format!("/derived/{index}/expr"),
+            &derived.origin.source_ids,
+        );
     }
-    for p in &raw.domain {
-        check_refs(&p.expr, &raw, false, &mut ds);
+    for (index, predicate) in raw.domain.iter().enumerate() {
+        check_refs(
+            &predicate.expr,
+            &raw,
+            false,
+            &mut ds,
+            &predicate.id,
+            &format!("/domain/{index}/expr"),
+            &predicate.origin.source_ids,
+        );
     }
-    for p in &raw.assumptions {
-        check_refs(&p.expr, &raw, false, &mut ds);
+    for (index, predicate) in raw.assumptions.iter().enumerate() {
+        check_refs(
+            &predicate.expr,
+            &raw,
+            false,
+            &mut ds,
+            &predicate.id,
+            &format!("/assumptions/{index}/expr"),
+            &predicate.origin.source_ids,
+        );
     }
-    for r in &raw.rules {
-        check_refs(&r.when, &raw, false, &mut ds);
-        for e in r.then.fields.values() {
-            check_refs(e, &raw, false, &mut ds);
+    for (index, rule) in raw.rules.iter().enumerate() {
+        check_refs(
+            &rule.when,
+            &raw,
+            false,
+            &mut ds,
+            &rule.id,
+            &format!("/rules/{index}/when"),
+            &rule.origin.source_ids,
+        );
+        for (field, expression) in &rule.then.fields {
+            check_refs(
+                expression,
+                &raw,
+                false,
+                &mut ds,
+                &rule.id,
+                &format!("/rules/{index}/then/fields/{field}"),
+                &rule.origin.source_ids,
+            );
         }
     }
-    for c in &raw.constraints {
-        check_refs(&c.must, &raw, true, &mut ds);
+    for (index, constraint) in raw.constraints.iter().enumerate() {
+        check_refs(
+            &constraint.must,
+            &raw,
+            true,
+            &mut ds,
+            &constraint.id,
+            &format!("/constraints/{index}/must"),
+            &constraint.origin.source_ids,
+        );
     }
     for d in &raw.derived {
-        if infer(&d.expr, &raw, false, &mut ds).as_ref() != Some(&d.r#type) {
+        if infer_in_context(
+            &d.expr,
+            &raw,
+            false,
+            &mut ds,
+            &d.id,
+            &format!(
+                "/derived/{}/expr",
+                raw.derived
+                    .iter()
+                    .position(|item| item.id == d.id)
+                    .unwrap_or(0)
+            ),
+            &d.origin.source_ids,
+        )
+        .as_ref()
+            != Some(&d.r#type)
+        {
             ds.push(error(
                 "type_mismatch",
                 format!("derived {} expression has wrong type", d.id),
             ));
         }
     }
-    for p in raw.domain.iter().chain(raw.assumptions.iter()) {
-        if infer(&p.expr, &raw, false, &mut ds) != Some(Type::Bool) {
+    for (pointer, p) in raw
+        .domain
+        .iter()
+        .enumerate()
+        .map(|(index, p)| (format!("/domain/{index}/expr"), p))
+        .chain(
+            raw.assumptions
+                .iter()
+                .enumerate()
+                .map(|(index, p)| (format!("/assumptions/{index}/expr"), p)),
+        )
+    {
+        if infer_in_context(
+            &p.expr,
+            &raw,
+            false,
+            &mut ds,
+            &p.id,
+            &pointer,
+            &p.origin.source_ids,
+        ) != Some(Type::Bool)
+        {
             ds.push(error(
                 "type_mismatch",
                 format!("predicate {} must be boolean", p.id),
@@ -942,7 +1092,21 @@ pub fn compile_json(
         }
     }
     for r in &raw.rules {
-        if infer(&r.when, &raw, false, &mut ds) != Some(Type::Bool) {
+        let rule_index = raw
+            .rules
+            .iter()
+            .position(|item| item.id == r.id)
+            .unwrap_or(0);
+        if infer_in_context(
+            &r.when,
+            &raw,
+            false,
+            &mut ds,
+            &r.id,
+            &format!("/rules/{rule_index}/when"),
+            &r.origin.source_ids,
+        ) != Some(Type::Bool)
+        {
             ds.push(error(
                 "type_mismatch",
                 format!("rule {} guard must be boolean", r.id),
@@ -957,7 +1121,18 @@ pub fn compile_json(
         };
         for f in &o.fields {
             match r.then.fields.get(&f.id) {
-                Some(e) if infer(e, &raw, false, &mut ds).as_ref() == Some(&f.r#type) => {}
+                Some(e)
+                    if infer_in_context(
+                        e,
+                        &raw,
+                        false,
+                        &mut ds,
+                        &r.id,
+                        &format!("/rules/{rule_index}/then/fields/{}", f.id),
+                        &r.origin.source_ids,
+                    )
+                    .as_ref()
+                        == Some(&f.r#type) => {}
                 Some(_) => ds.push(error(
                     "type_mismatch",
                     format!("rule {} field {} has wrong type", r.id, f.id),
@@ -1008,7 +1183,21 @@ pub fn compile_json(
         scoped
             .outcomes
             .retain(|outcome| outcome.id == c.for_outcome);
-        if infer(&c.must, &scoped, true, &mut ds) != Some(Type::Bool) {
+        let constraint_index = raw
+            .constraints
+            .iter()
+            .position(|item| item.id == c.id)
+            .unwrap_or(0);
+        if infer_in_context(
+            &c.must,
+            &scoped,
+            true,
+            &mut ds,
+            &c.id,
+            &format!("/constraints/{constraint_index}/must"),
+            &c.origin.source_ids,
+        ) != Some(Type::Bool)
+        {
             ds.push(error(
                 "type_mismatch",
                 format!("constraint {} must be boolean", c.id),
@@ -1047,9 +1236,10 @@ pub fn compile_json(
             .cloned()
             .collect::<Vec<_>>();
         if ready.is_empty() {
+            let cycle_id = pending.iter().next().map_or("unknown", String::as_str);
             ds.push(error(
                 "derived_cycle",
-                "derived dependency graph contains a cycle",
+                format!("derived dependency graph contains a cycle involving {cycle_id}"),
             ));
             break;
         }
@@ -1059,6 +1249,7 @@ pub fn compile_json(
             order.push(id);
         }
     }
+    enrich_diagnostics(&mut ds, &raw);
     if !ds.is_empty() {
         return Err(ds);
     }
@@ -1069,24 +1260,7 @@ pub fn compile_json(
         m.remove("sources");
         m.remove("open_items");
     }
-    fn strip(v: &mut serde_json::Value) {
-        match v {
-            serde_json::Value::Object(m) => {
-                m.remove("origin");
-                m.remove("note");
-                for x in m.values_mut() {
-                    strip(x)
-                }
-            }
-            serde_json::Value::Array(a) => {
-                for x in a {
-                    strip(x)
-                }
-            }
-            _ => {}
-        }
-    }
-    strip(&mut semantic);
+    strip_semantic_metadata(&mut semantic);
     Ok(CompiledModel {
         raw,
         derived_order: order,
@@ -1095,16 +1269,102 @@ pub fn compile_json(
     })
 }
 
-fn value_type(v: &Value) -> Option<Type> {
-    match v {
-        Value::Bool { .. } => Some(Type::Bool),
-        Value::Int { unit, .. } => Some(Type::Int { unit: unit.clone() }),
-        Value::Date { .. } => Some(Type::Date),
-        Value::Enum { enum_name, .. } => Some(Type::Enum {
-            name: enum_name.clone(),
-        }),
+fn enrich_diagnostics(diagnostics: &mut [Diagnostic], raw: &RawModel) {
+    let declarations: Vec<_> = raw
+        .enums
+        .iter()
+        .map(|item| (&item.id, "/enums", &item.origin.source_ids))
+        .chain(
+            raw.inputs
+                .iter()
+                .map(|item| (&item.id, "/inputs", &item.origin.source_ids)),
+        )
+        .chain(
+            raw.derived
+                .iter()
+                .map(|item| (&item.id, "/derived", &item.origin.source_ids)),
+        )
+        .chain(
+            raw.outcomes
+                .iter()
+                .map(|item| (&item.id, "/outcomes", &item.origin.source_ids)),
+        )
+        .chain(
+            raw.domain
+                .iter()
+                .map(|item| (&item.id, "/domain", &item.origin.source_ids)),
+        )
+        .chain(
+            raw.assumptions
+                .iter()
+                .map(|item| (&item.id, "/assumptions", &item.origin.source_ids)),
+        )
+        .chain(
+            raw.rules
+                .iter()
+                .map(|item| (&item.id, "/rules", &item.origin.source_ids)),
+        )
+        .chain(
+            raw.constraints
+                .iter()
+                .map(|item| (&item.id, "/constraints", &item.origin.source_ids)),
+        )
+        .chain(
+            raw.open_items
+                .iter()
+                .map(|item| (&item.id, "/open_items", &item.source_ids)),
+        )
+        .collect();
+    for diagnostic in diagnostics {
+        if diagnostic.pointer.is_some() && diagnostic.declaration_id.is_some() {
+            continue;
+        }
+        if let Some((id, pointer, source_ids)) = declarations
+            .iter()
+            .find(|(id, _, _)| diagnostic.message.contains(id.as_str()))
+        {
+            diagnostic.declaration_id = Some((*id).clone());
+            let index = match *pointer {
+                "/enums" => raw.enums.iter().position(|item| item.id == **id),
+                "/inputs" => raw.inputs.iter().position(|item| item.id == **id),
+                "/derived" => raw.derived.iter().position(|item| item.id == **id),
+                "/outcomes" => raw.outcomes.iter().position(|item| item.id == **id),
+                "/domain" => raw.domain.iter().position(|item| item.id == **id),
+                "/assumptions" => raw.assumptions.iter().position(|item| item.id == **id),
+                "/rules" => raw.rules.iter().position(|item| item.id == **id),
+                "/constraints" => raw.constraints.iter().position(|item| item.id == **id),
+                "/open_items" => raw.open_items.iter().position(|item| item.id == **id),
+                _ => None,
+            };
+            if diagnostic.pointer.is_none() {
+                diagnostic.pointer = Some(index.map_or_else(
+                    || (*pointer).to_string(),
+                    |index| format!("{pointer}/{index}"),
+                ));
+            }
+            if diagnostic.source_ids.is_empty() {
+                diagnostic.source_ids.clone_from(source_ids);
+            }
+        } else if diagnostic.pointer.is_none() {
+            diagnostic.pointer = Some("/".to_string());
+        }
     }
 }
+
+fn value_type(v: &Value) -> Type {
+    match v {
+        Value::Bool { .. } => Type::Bool,
+        Value::Int { unit, .. } => Type::Int { unit: unit.clone() },
+        Value::Date { .. } => Type::Date,
+        Value::Enum { enum_name, .. } => Type::Enum {
+            name: enum_name.clone(),
+        },
+    }
+}
+/// Validate that a scenario supplies exactly the model's declared inputs.
+///
+/// # Errors
+/// Returns a diagnostic for missing, extra, malformed, or incorrectly typed values.
 pub fn validate_inputs(model: &CompiledModel, inputs: &InputValues) -> Result<(), Diagnostic> {
     let decl: BTreeMap<_, _> = model
         .raw
@@ -1116,7 +1376,7 @@ pub fn validate_inputs(model: &CompiledModel, inputs: &InputValues) -> Result<()
         let Some(v) = inputs.get(*id) else {
             return Err(error("missing_input", format!("missing input {id}")));
         };
-        if value_type(v).as_ref() != Some(*t) {
+        if &value_type(v) != *t {
             return Err(error("type_mismatch", format!("input {id} has wrong type")));
         }
         match v {
@@ -1170,6 +1430,29 @@ fn getpath(
     v.cloned()
         .ok_or_else(|| error("unknown_reference", format!("unavailable reference {path}")))
 }
+// BigInt is arbitrary precision: these operations cannot overflow, so checked fixed-width
+// arithmetic would add no safety and would incorrectly suggest a bounded numeric domain.
+#[allow(clippy::arithmetic_side_effects)]
+fn arbitrary_precision_add(left: &BigInt, right: &BigInt) -> BigInt {
+    left + right
+}
+
+#[allow(clippy::arithmetic_side_effects)]
+fn arbitrary_precision_subtract(left: &BigInt, right: &BigInt) -> BigInt {
+    left - right
+}
+
+#[allow(clippy::arithmetic_side_effects)]
+fn arbitrary_precision_multiply(left: &BigInt, right: &BigInt) -> BigInt {
+    left * right
+}
+
+/// Evaluate an expression with the supplied input, derived, and outcome values.
+///
+/// # Errors
+/// Returns a diagnostic for unavailable references, invalid values, or incompatible operands.
+// Evaluation is kept as one exhaustive dispatch so each expression's runtime behavior is auditable.
+#[allow(clippy::too_many_lines)]
 pub fn eval_expr(
     expr: &Expr,
     inputs: &InputValues,
@@ -1177,23 +1460,27 @@ pub fn eval_expr(
     outcome_fields: &BTreeMap<String, Value>,
 ) -> Result<Value, Diagnostic> {
     let ev = |e: &Expr| eval_expr(e, inputs, derived, outcome_fields);
-    let boolean = |v: Value| {
-        if let Value::Bool { value } = v {
+    let boolean = |right_unit: Value| {
+        if let Value::Bool { value } = right_unit {
             Ok(value)
         } else {
             Err(error("type_mismatch", "expected boolean"))
         }
     };
-    let int = |v: Value| {
-        if let Value::Int { value, unit } = v {
+    let int = |right_unit: Value| {
+        if let Value::Int { value, unit } = right_unit {
             BigInt::parse_bytes(value.as_bytes(), 10)
-                .map(|n| (n, unit))
+                .map(|result| (result, unit))
                 .ok_or_else(|| error("invalid_value", "invalid integer"))
         } else {
             Err(error("type_mismatch", "expected integer"))
         }
     };
-    let b = |x| Ok(Value::Bool { value: x });
+    let bool_value = |boolean_value| {
+        Ok(Value::Bool {
+            value: boolean_value,
+        })
+    };
     match expr {
         Expr::Bool { value } => Ok(Value::Bool { value: *value }),
         Expr::Int { value, unit } => Ok(Value::Int {
@@ -1214,43 +1501,60 @@ pub fn eval_expr(
             variant: variant.clone(),
         }),
         Expr::Ref { path } => getpath(path, inputs, derived, outcome_fields),
-        Expr::Not { arg } => b(!boolean(ev(arg)?)?),
+        Expr::Not { arg } => bool_value(!boolean(ev(arg)?)?),
         Expr::And { args } => {
-            for a in args {
-                if !boolean(ev(a)?)? {
-                    return b(false);
+            for left_operand in args {
+                if !boolean(ev(left_operand)?)? {
+                    return bool_value(false);
                 }
             }
-            b(true)
+            bool_value(true)
         }
         Expr::Or { args } => {
-            for a in args {
-                if boolean(ev(a)?)? {
-                    return b(true);
+            for left_operand in args {
+                if boolean(ev(left_operand)?)? {
+                    return bool_value(true);
                 }
             }
-            b(false)
+            bool_value(false)
         }
-        Expr::Eq { left, right } => b(ev(left)? == ev(right)?),
-        Expr::Ne { left, right } => b(ev(left)? != ev(right)?),
+        Expr::Eq { left, right } => bool_value(ev(left)? == ev(right)?),
+        Expr::Ne { left, right } => bool_value(ev(left)? != ev(right)?),
         Expr::Lt { left, right }
         | Expr::Le { left, right }
         | Expr::Gt { left, right }
         | Expr::Ge { left, right } => {
-            let l = ev(left)?;
-            let r = ev(right)?;
-            let ord = match (&l, &r) {
-                (Value::Int { value: a, unit: u }, Value::Int { value: c, unit: v }) if u == v => {
-                    BigInt::parse_bytes(a.as_bytes(), 10)
-                        .and_then(|x| BigInt::parse_bytes(c.as_bytes(), 10).map(|y| x.cmp(&y)))
-                }
-                (Value::Date { value: a }, Value::Date { value: c }) => {
-                    parse_date(a).zip(parse_date(c)).map(|(x, y)| x.cmp(&y))
-                }
+            let left_value = ev(left)?;
+            let right_value = ev(right)?;
+            let ord = match (&left_value, &right_value) {
+                (
+                    Value::Int {
+                        value: left_operand,
+                        unit: left_unit,
+                    },
+                    Value::Int {
+                        value: right_operand,
+                        unit: right_unit,
+                    },
+                ) if left_unit == right_unit => BigInt::parse_bytes(left_operand.as_bytes(), 10)
+                    .and_then(|boolean_value| {
+                        BigInt::parse_bytes(right_operand.as_bytes(), 10)
+                            .map(|y| boolean_value.cmp(&y))
+                    }),
+                (
+                    Value::Date {
+                        value: left_operand,
+                    },
+                    Value::Date {
+                        value: right_operand,
+                    },
+                ) => parse_date(left_operand)
+                    .zip(parse_date(right_operand))
+                    .map(|(boolean_value, y)| boolean_value.cmp(&y)),
                 _ => None,
             }
             .ok_or_else(|| error("type_mismatch", "incompatible ordered values"))?;
-            b(match expr {
+            bool_value(match expr {
                 Expr::Lt { .. } => ord.is_lt(),
                 Expr::Le { .. } => !ord.is_gt(),
                 Expr::Gt { .. } => ord.is_gt(),
@@ -1258,31 +1562,31 @@ pub fn eval_expr(
             })
         }
         Expr::Add { left, right } | Expr::Sub { left, right } => {
-            let (a, u) = int(ev(left)?)?;
-            let (c, v) = int(ev(right)?)?;
-            if u != v {
+            let (left_operand, left_unit) = int(ev(left)?)?;
+            let (right_operand, right_unit) = int(ev(right)?)?;
+            if left_unit != right_unit {
                 return Err(error("unit_mismatch", "integer units differ"));
             }
-            let n = if matches!(expr, Expr::Add { .. }) {
-                a + c
+            let result = if matches!(expr, Expr::Add { .. }) {
+                arbitrary_precision_add(&left_operand, &right_operand)
             } else {
-                a - c
+                arbitrary_precision_subtract(&left_operand, &right_operand)
             };
             Ok(Value::Int {
-                value: n.to_string(),
-                unit: u,
+                value: result.to_string(),
+                unit: left_unit,
             })
         }
         Expr::Scale { factor, arg } => {
-            let (n, u) = int(ev(arg)?)?;
+            let (result, left_unit) = int(ev(arg)?)?;
             if !canonical_integer(factor) {
                 return Err(error("invalid_value", "invalid scale factor"));
             }
             let f = BigInt::parse_bytes(factor.as_bytes(), 10)
                 .ok_or_else(|| error("invalid_value", "invalid scale factor"))?;
             Ok(Value::Int {
-                value: (n * f).to_string(),
-                unit: u,
+                value: arbitrary_precision_multiply(&result, &f).to_string(),
+                unit: left_unit,
             })
         }
         Expr::If {
@@ -1298,6 +1602,10 @@ pub fn eval_expr(
         }
     }
 }
+/// Compute derived values in dependency order after validating the input scenario.
+///
+/// # Errors
+/// Returns a diagnostic if inputs are invalid or expression evaluation fails.
 pub fn compute_derived(
     model: &CompiledModel,
     inputs: &InputValues,
@@ -1312,7 +1620,7 @@ pub fn compute_derived(
             .find(|x| x.id == *id)
             .ok_or_else(|| error("internal_error", "missing derived declaration"))?;
         let v = eval_expr(&d.expr, inputs, &vals, &BTreeMap::new())?;
-        if value_type(&v).as_ref() != Some(&d.r#type) {
+        if value_type(&v) != d.r#type {
             return Err(error(
                 "type_mismatch",
                 format!("derived {id} type mismatch"),
@@ -1322,6 +1630,10 @@ pub fn compute_derived(
     }
     Ok(vals)
 }
+/// Select assumptions explicitly by declaration ID; no assumptions are selected by default.
+///
+/// # Errors
+/// Returns a diagnostic for unknown IDs or duplicate selections.
 pub fn select_assumptions(
     model: &CompiledModel,
     ids: &[String],
@@ -1345,6 +1657,10 @@ pub fn select_assumptions(
     }
     Ok(out)
 }
+/// Check the model domain and only the explicitly selected assumptions.
+///
+/// # Errors
+/// Returns a diagnostic if assumption selection or predicate evaluation fails.
 pub fn in_domain(
     model: &CompiledModel,
     inputs: &InputValues,
@@ -1363,6 +1679,10 @@ pub fn in_domain(
     }
     Ok(true)
 }
+/// Evaluate matching rules, applicable constraints, and an optional expected outcome.
+///
+/// # Errors
+/// Returns a diagnostic when input validation, assumption selection, or evaluation fails.
 pub fn evaluate(
     model: &CompiledModel,
     inputs: &InputValues,
@@ -1588,5 +1908,158 @@ mod tests {
     fn if_expression_uses_schema_else_property() {
         let value = serde_json::json!({"kind":"if", "condition":{"kind":"bool", "value":true}, "then":{"kind":"bool", "value":true}, "else":{"kind":"bool", "value":false}});
         assert!(serde_json::from_value::<Expr>(value).is_ok());
+    }
+
+    #[test]
+    fn selected_assumptions_are_explicit_and_unknown_is_rejected() {
+        let model = compile_json(&fixture(), &ModelLimits::default()).unwrap();
+        assert!(select_assumptions(&model, &[]).unwrap().is_empty());
+        let missing = select_assumptions(&model, &["NoSuchAssumption".into()]).unwrap_err();
+        assert_eq!(missing.code, "unknown_reference");
+    }
+
+    #[test]
+    fn dates_cover_calendar_edges_and_year_9999() {
+        assert!(parse_date("0001-01-01").is_some());
+        assert!(parse_date("9999-12-31").is_some());
+        assert!(parse_date("0000-12-31").is_none());
+        assert!(parse_date("1900-02-29").is_none());
+        assert!(parse_date("2000-02-29").is_some());
+    }
+
+    #[test]
+    fn arbitrary_precision_arithmetic_scale_and_if_are_exact() {
+        let huge = "184467440737095516160000000000000000000";
+        let scaled = Expr::Scale {
+            factor: "-3".into(),
+            arg: Box::new(Expr::Int {
+                value: huge.into(),
+                unit: "credits".into(),
+            }),
+        };
+        assert_eq!(
+            eval_expr(
+                &scaled,
+                &BTreeMap::new(),
+                &BTreeMap::new(),
+                &BTreeMap::new()
+            )
+            .unwrap(),
+            Value::Int {
+                value: "-553402322211286548480000000000000000000".into(),
+                unit: "credits".into()
+            }
+        );
+        let conditional = Expr::If {
+            condition: Box::new(Expr::Bool { value: false }),
+            then_expr: Box::new(Expr::Int {
+                value: "999999999999999999999999999".into(),
+                unit: "credits".into(),
+            }),
+            else_expr: Box::new(Expr::Sub {
+                left: Box::new(Expr::Int {
+                    value: "0".into(),
+                    unit: "credits".into(),
+                }),
+                right: Box::new(Expr::Int {
+                    value: "999999999999999999999999999".into(),
+                    unit: "credits".into(),
+                }),
+            }),
+        };
+        assert_eq!(
+            eval_expr(
+                &conditional,
+                &BTreeMap::new(),
+                &BTreeMap::new(),
+                &BTreeMap::new()
+            )
+            .unwrap(),
+            Value::Int {
+                value: "-999999999999999999999999999".into(),
+                unit: "credits".into()
+            }
+        );
+    }
+
+    #[test]
+    fn semantic_failures_include_declaration_context() {
+        let mut value = fixture();
+        value["constraints"][0]["must"] = serde_json::json!({"kind":"ref", "path":"input.Missing"});
+        let diagnostics = compile_json(&value, &ModelLimits::default()).unwrap_err();
+        let diagnostic = diagnostics
+            .iter()
+            .find(|item| item.code == "unknown_reference")
+            .unwrap();
+        assert_eq!(
+            diagnostic.declaration_id.as_deref(),
+            Some(value["constraints"][0]["id"].as_str().unwrap())
+        );
+        assert!(
+            diagnostic
+                .pointer
+                .as_deref()
+                .is_some_and(|pointer| pointer.starts_with("/constraints/"))
+        );
+        assert!(!diagnostic.source_ids.is_empty());
+    }
+
+    #[test]
+    fn derived_forward_dependencies_sort_and_cycles_identify_a_declaration() {
+        let mut value = fixture();
+        value["derived"] = serde_json::json!([
+            {"id":"Later", "type":{"kind":"int", "unit":"days"}, "expr":{"kind":"ref", "path":"derived.Earlier"}, "origin":{"kind":"proposal", "source_ids":[], "review":"proposed"}},
+            {"id":"Earlier", "type":{"kind":"int", "unit":"days"}, "expr":{"kind":"int", "value":"1", "unit":"days"}, "origin":{"kind":"proposal", "source_ids":[], "review":"proposed"}}
+        ]);
+        let model = compile_json(&value, &ModelLimits::default()).unwrap();
+        assert_eq!(model.derived_order, ["Earlier", "Later"]);
+        value["derived"][1]["expr"] = serde_json::json!({"kind":"ref", "path":"derived.Later"});
+        let diagnostics = compile_json(&value, &ModelLimits::default()).unwrap_err();
+        let cycle = diagnostics
+            .iter()
+            .find(|item| item.code == "derived_cycle")
+            .unwrap();
+        assert!(cycle.declaration_id.is_some());
+        assert!(cycle.pointer.is_some());
+    }
+
+    #[test]
+    fn deduplicates_equal_outcomes_but_reports_conflicting_payloads() {
+        let mut value = fixture();
+        value["rules"] = serde_json::json!([
+            {"id":"R1", "when":{"kind":"bool", "value":true}, "then":{"outcome":"Grant", "fields":{"expiry":{"kind":"date", "value":"2025-01-01"}}}, "origin":{"kind":"proposal", "source_ids":[], "review":"proposed"}},
+            {"id":"R2", "when":{"kind":"bool", "value":true}, "then":{"outcome":"Grant", "fields":{"expiry":{"kind":"date", "value":"2025-01-01"}}}, "origin":{"kind":"proposal", "source_ids":[], "review":"proposed"}}
+        ]);
+        let model = compile_json(&value, &ModelLimits::default()).unwrap();
+        let inputs: InputValues =
+            serde_json::from_value(value_for_declared_inputs(&model)).unwrap();
+        assert_eq!(
+            evaluate(&model, &inputs, &[], None).unwrap().outcomes.len(),
+            1
+        );
+        value["rules"][1]["then"]["fields"]["expiry"]["value"] = serde_json::json!("2026-01-01");
+        let model = compile_json(&value, &ModelLimits::default()).unwrap();
+        let inputs: InputValues =
+            serde_json::from_value(value_for_declared_inputs(&model)).unwrap();
+        assert_eq!(
+            evaluate(&model, &inputs, &[], None).unwrap().classification,
+            "conflicting"
+        );
+    }
+
+    fn value_for_declared_inputs(model: &CompiledModel) -> serde_json::Value {
+        let mut values = serde_json::Map::new();
+        for input in &model.raw.inputs {
+            let value = match &input.r#type {
+                Type::Bool => serde_json::json!({"kind":"bool", "value":false}),
+                Type::Int { unit } => serde_json::json!({"kind":"int", "value":"0", "unit":unit}),
+                Type::Date => serde_json::json!({"kind":"date", "value":"2000-01-01"}),
+                Type::Enum { name } => {
+                    serde_json::json!({"kind":"enum", "enum":name, "variant":model.raw.enums.iter().find(|item| item.id == *name).unwrap().variants[0]})
+                }
+            };
+            values.insert(input.id.clone(), value);
+        }
+        serde_json::Value::Object(values)
     }
 }
