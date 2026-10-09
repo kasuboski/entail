@@ -1,45 +1,73 @@
 # V0 delivery evidence
 
-**Status: incomplete.** This document separates implementation/test evidence from specification expectations. A fixture's expected result is a contract, not observed engine evidence. A source/API review or successful build is not end-to-end acceptance.
+**Status: integrated and application acceptance passed; performance/cache evidence remains partial.** This document separates observed implementation/test results from specification expectations. Fixture expectations are contracts, not evidence by themselves.
 
 ## Requirements and evidence map
 
 | Requirement | Evidence source | Integrated evidence / status |
 | --- | --- | --- |
-| Strict JSON model validation, typed expressions, exact integers/dates, derived DAG, hashes, and concrete evaluation | `author_model` unit tests; schema/invalid fixtures; CLI acceptance | Model compiler/evaluator and schema/resource hardening are integrated. Model tests cover fixture compilation, evaluation, exact values/hashes, target-scoped fields, schema parity, and bounded preflight. A separate targeted model Clippy/diagnostics repair remains pending. CLI acceptance is pending. |
-| Feasibility, reachability, coverage, conflict, compliance, prerequisites, assumptions, and result provenance | `author_analysis` injected-backend tests and analysis API; CLI acceptance | Analysis planner, bounded obligation scheduling, cache/report hardening, witness replay, and injected-backend tests are integrated. |
-| Exact Z3 lowering/decoding, timeout/resource behavior, and differential checks | `author_z3` backend tests, including exhaustive/differential cases | Native Z3 encoding/decoding and differential/boundary tests are integrated. These library tests are not CLI acceptance. |
-| Witness replay before findings; budgets, cache keys/invalidation, and incomplete-result behavior | Analysis replay/cache/budget tests; worker behavior | Implemented and covered by solver-independent analysis tests; process-level worker enforcement remains pending. Do not infer these from a satisfiable solver result. |
-| CLI validate/analyze/evaluate behavior and exit codes | `scripts/acceptance.py` against the integrated executable | Acceptance assets are integrated; no usable integrated CLI run recorded. |
-| Framed persistent worker, lifecycle, capacity, restart, malformed input, and recovery | `scripts/worker_acceptance.py` against the integrated executable | Three isolated transport framing tests passed; complete worker operations/restart acceptance is pending. |
-| Reproducible workload generation and measured performance/cache evidence | `scripts/benchmark.py`, `docs/BENCHMARKS.md`, archived report | Workload generator/harness is integrated. Its Python 3 runtime is supplied by the pinned Nix development shell. No end-to-end measurements or budget/cache claims recorded. |
-| Reproducible tooling, pinned native solver, lint policy, and MSRV | `BUILD.md`; `mise run check` | Rust 1.85 `cargo check --workspace --all-targets --all-features --locked` passes. The 34-test workspace nextest suite passes. Formatting passes after integration formatting cleanup; strict workspace Clippy remains blocked by model and transport findings. |
+| Strict JSON model validation, typed expressions, exact integers/dates, derived DAG, hashes, and concrete evaluation | `author_model` tests; schema/invalid fixtures; CLI acceptance | Model compiler/evaluator, schema/resource hardening, diagnostic context and expanded exactness tests integrated. Workspace tests and external fixture acceptance pass. |
+| Feasibility, reachability, coverage, conflict, compliance, prerequisites, assumptions, result provenance | `author_analysis` tests/API; CLI acceptance | Analysis planner, bounded obligation scheduling, cache/report hardening, witness replay and injected-backend tests integrated; black-box fixture acceptance passes. |
+| Exact Z3 lowering/decoding, timeout/resource behavior, and differential checks | `author_z3` backend tests | Native Z3 encoding/decoding, boundary tests and finite-domain differential checks pass. Native solver is pinned at Z3 5.1.0 through Nix. |
+| Witness replay before findings; budgets, cache keys/invalidation, incomplete-result behavior | Analysis replay/cache/budget tests; worker tests | Covered by solver-independent tests; worker budget clamping and process lifecycle are exercised. No cache-hit or budget-performance measurements are claimed. |
+| CLI validate/analyze/evaluate behavior and exit codes | `scripts/acceptance.py` against the built executable | **Passed:** 20 fixture/scenario/CLI acceptance groups, including witness replay and structured errors. |
+| Framed persistent worker, lifecycle, capacity, restart, malformed input, and recovery | `scripts/worker_acceptance.py`; Rust worker process tests | **Passed:** external worker protocol/lifecycle acceptance plus in-process integration tests for capacity, kill/wait/restart and stale handles. |
+| Reproducible workload generation and measured performance/cache evidence | `scripts/benchmark.py`, `docs/BENCHMARKS.md` | Smoke benchmark completed: five workload families, three samples each, no command failures. It measures debug CLI validation wall time including process startup. Cache rate, query/formula counts, memory, and solver metadata are unavailable; no cache or performance-budget conclusion is made. |
+| Reproducible tooling, pinned native solver, lint policy, and MSRV | `BUILD.md`; `mise run check` | **Passed** at `758d32d`: format, strict workspace Clippy, Rust 1.85 locked check, and all-target/all-feature nextest. Root Clippy policy and pins were preserved. |
 
-### Current test evidence
+## Exact verification evidence
 
-At integration revision `43d7fce`, `nix develop --command cargo nextest run --workspace --all-features --no-tests=pass` ran 34 tests and passed: model validation/evaluation, analysis planning and replay/cache/budget behavior, transport framing, and Z3 backend/differential tests. CLI/worker lifecycle and black-box acceptance are not yet present.
-
-After the lockfile update, the following exact MSRV command passed:
+At integration revision `758d32d`, the executable was built with:
 
 ```sh
-mise x rust@1.85.0 -- nix develop --command cargo check --workspace --all-targets --all-features --locked
+nix develop --command cargo build --workspace --bin entail --locked
 ```
 
-The complete required gate is:
+The complete workspace gate passed:
 
-```sh
+```text
 mise run check
+format: passed
+lint: passed (Clippy all targets/features, warnings denied)
+msrv: passed (Rust 1.85, cargo check all targets/features, locked)
+test: passed (46 tests, 0 failed, 0 skipped)
 ```
 
-Do not mark the release gate passed until this completes successfully on the integrated revisions and the acceptance/worker scripts run against the actual executable. Acceptance and worker helper self-tests passed under `nix develop` (these test only Python framing/process helpers, not the application). The benchmark generator ran and structurally validated its fixtures; no measurements were collected because no integrated CLI/worker is available. No end-to-end acceptance or benchmark result is currently claimed.
+Black-box CLI/worker and Python helper tests passed against `target/debug/entail`:
 
-## Known blockers and open evidence
+```text
+nix develop --command python3 scripts/acceptance.py target/debug/entail
+PASS: 20 fixture/scenario/CLI acceptance groups
 
-- Integrated model review repairs address target-specific outcome-field validation, year-zero date rejection, schema parity, and bounded preflight concerns. The model still fails the workspace's unchanged pedantic Clippy policy (documentation, arithmetic, `Self`, function-size, and related findings); the targeted model quality/diagnostics agent owns those repairs. No integration-side lint weakening is acceptable.
-- The imported framed transport checkpoint's format issues were cleaned up in integration, but it still fails strict Clippy for public `# Errors` docs, interrupted-read control flow, safe slicing, and checked arithmetic/conversion. The worker owner has analogous fixes in progress; keep root Clippy policies intact.
-- The analysis and Z3 library implementations are integrated and their tests pass. CLI/worker dispatch and lifecycle, external application acceptance, and measured budget/cache/performance evidence remain pending.
-- Before declaring feature completion, reconcile the full specification's process/restart, differential, budgets/cache/provenance, witness replay, and complete-policy behavioral tests. Document any genuinely deferred requirement explicitly rather than implying completion.
+nix develop --command python3 scripts/worker_acceptance.py target/debug/entail
+PASS: real worker protocol/lifecycle acceptance
+
+nix develop --command python3 -m unittest scripts.test_acceptance -v
+7 helper tests passed
+```
+
+Benchmark evidence (debug executable; x86_64 Linux, Rust 1.98.0, Python 3.14.7; three samples per family):
+
+```text
+nix develop --command python3 scripts/benchmark.py --binary target/debug/entail --runs 3
+```
+
+| Workload | p50 wall ms | p95 wall ms | Failures |
+| --- | ---: | ---: | ---: |
+| `independent_thresholds_10` | 2.909 | 3.528 | 0 |
+| `overlapping_guards` | 5.961 | 6.350 | 0 |
+| `same_constructor_payload` | 6.816 | 6.885 | 0 |
+| `coupled_boolean` | 4.006 | 4.062 | 0 |
+| `shared_derived_dag` | 9.514 | 10.082 | 0 |
+
+These are small smoke measurements, not release-performance claims. The harness could not report profile, Z3 version, peak memory, formula size, cache rate, inconclusive rate, or query count. The binary's analysis report does expose solver version; the harness does not collect it. Do not infer cache behavior or analysis latency from these CLI-validation timings.
+
+## Remaining evidence gaps
+
+- Run/record the full benchmark suite (including larger workloads) with a release build and analysis operations, not only validation. Keep solver version, command/profile, and platform with the report.
+- The benchmark harness does not currently expose or measure cache hit rate/invalidation, solver query/formula counts, peak memory, or budget exhaustion rates. Until those are instrumented and measured, there is no quantitative performance/cache evidence or validated interactive budget claim.
+- The engine validates and analyzes authored models; it does not establish source truth, completeness of requirements, or that a proposed policy is lawful, fair, safe, or appropriate. Assumptions remain conditional, proposed rules participate, open items remain visible, and V0 does not prove lifecycle behavior or execute effects.
 
 ## Business correctness limitation
 
-A passing validator, SAT/UNSAT result, fixture, or benchmark only says something about the encoded model and tested execution. The engine does not establish that source material is true or correctly interpreted, that requirements are complete, or that a proposed policy is lawful, fair, safe, or appropriate. Proposed rules participate in analysis; assumptions are conditional; open items and model gaps remain material. V0 models a decision at one snapshot and does not prove lifecycle behavior or execute business effects.
+A passing validator, SAT/UNSAT result, fixture, acceptance suite, or benchmark only says something about the encoded model and tested execution. It cannot establish that the model faithfully represents reality or that the represented decision is correct. Use the results as evidence for human review, not as business authorization.

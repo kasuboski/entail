@@ -1,62 +1,65 @@
 # Author engine v0 end-user acceptance
 
-**Status: pending real application runs.** These scripts are black-box checks against the integration executable, not an engine mock. The fixtures and expected outcomes live in `author-engine-v0/fixtures`; they are test inputs, never evidence by themselves.
+**Status: black-box CLI and worker acceptance passed at integration revision `758d32d`.** These are real subprocess checks against the integration executable, not engine mocks. Fixtures and expected outcomes in `author-engine-v0/fixtures` remain contracts, not evidence by themselves.
 
 ## Run
 
+Run inside the pinned Nix development shell so subprocesses inherit the native Z3 runtime path:
+
 ```sh
-python3 -m unittest scripts.test_acceptance -v
-python3 scripts/acceptance.py /path/to/entail
-python3 scripts/worker_acceptance.py /path/to/entail
+nix develop --command cargo build --workspace --bin entail --locked
+nix develop --command python3 -m unittest scripts.test_acceptance -v
+nix develop --command python3 scripts/acceptance.py target/debug/entail
+nix develop --command python3 scripts/worker_acceptance.py target/debug/entail
 ```
 
-Every subprocess has a finite timeout. The Python helper tests and either script's `--self-test` exercise only local assertion/framing/process utilities; none counts as application acceptance. Record the executable path/revision, build command, platform, exact commands, exit codes, pass counts, and failures in the evidence log below. Do not mark criteria passed on source inspection or helper-only output.
+Each subprocess has a finite timeout. Helper tests and either script's `--self-test` exercise only local assertion/framing/process utilities; they do not count as application acceptance.
 
-`acceptance.py` checks all valid and invalid fixtures, stable diagnostic codes and exit 2, analysis exit 0, exact obligation kind/status/category, mandatory domain feasibility, one reachability result per rule, and each expected rule/constraint compliance result by exact IDs (never provenance substrings). It also verifies report identity/hashes/assumptions/open items, proposed-policy context and `complete=true` without claiming business verification. The conditional fixture is run both with an explicit empty assumption list and with `SponsorsAlreadyApproved`. Concrete scenarios check unknown approval remains unspecified, unsafe expiry reports the exact violated constraint, unsafe SAT witness replays through `evaluate`, and the arbitrary-precision result is a typed exact integer. CLI malformed-input and missing-file cases must return structured errors with exit 2. The payload fixture must show a conflict between unequal payloads of the same `Grant` constructor.
+`acceptance.py` checks valid and invalid fixtures, stable diagnostic codes/exit 2, analysis exit 0, exact typed obligation categories, mandatory domain feasibility, reachability per rule, exact rule/constraint compliance IDs, report identity/hashes/assumptions/open items, proposed-policy context and `complete=true` without claiming business verification. It exercises conditional assumptions both explicitly empty and selected, scenario evaluation, unsafe-witness replay, arbitrary-precision output, and structured CLI errors. Its payload case ties the conflicting typed rule pair to independently inspected model constructors and replays the returned witness to ensure it produces distinct `Grant` payloads.
 
-The worker acceptance script checks the documented `author-worker/0.1` framing and stable protocol error codes, fragmented frames, operation envelopes, valid/invalid compile, analysis and evaluation, exact release behavior, advertised handle capacity without eviction, malformed JSON recovery, invalid-version and invalid-length handling, kill/wait, restart and handle invalidation. It rejects a capacity bound above its explicitly safe 128-model probe rather than weakening the criterion. Every worker frame read and process wait is bounded.
+The worker script covers framed I/O, operation envelopes, valid/invalid compilation, analysis/evaluation/release, live-handle capacity without eviction, malformed JSON recovery, protocol/version/frame errors, process kill/wait, restart, and stale-handle rejection. It rejects capacity bounds beyond its safe 128-model probe. Worker process waits and frame reads are bounded.
 
 ## Criteria map
 
-| Spec criterion | Evidence in scripts | Status |
+| Spec criterion | Evidence | Status |
 | --- | --- | --- |
-| §9.1 Partial model: `behavior_unspecified` | `partial`, exact coverage category | Pending real run |
-| §9.2 Unsafe Grant violates expiry independently of guard | `unsafe-grant`, exact rule/constraint result and evaluator replay | Pending real run |
-| §9.3 Guard repair removes violation but leaves uncovered inputs | `repaired-partial`, each per-rule constraint plus coverage | Pending real run |
-| §9.4 Complete proposed policy | `complete-proposed`: exact coverage/conflict, report complete, proposed IDs/open items; rejects `business_verified=true` | Pending real run |
-| §9.5 Simultaneous Grant/Deny conflicts | `conflict-tag`: exact conflict category | Pending real run |
-| §9.6 Identical outcomes deduplicate | `duplicate-output`: compatible | Pending real run |
-| §9.7 Same constructor with distinct payloads conflicts | `conflict-payload`: expected conflict constructor and unequal Grant payload evidence | Pending real run |
-| §9.8 Assumptions are opt-in and visible | Baseline with explicit `[]`, selected assumption run, report IDs and conditional result | Pending real run |
-| §9.9 Impossible domain | `empty-domain`: feasibility empty; every dependent result skipped, no vacuous success | Pending real run |
-| §9.10 Unknown is an ordinary enum, not approval | `unknown-approval` concrete evaluation is unspecified | Pending real run |
-| §9.11 Arbitrary precision | Typed evaluated integer exactly `18446744073709551616`; no floating-point/text-only match | Pending real run |
-| §9.12 Invalid references/units/date/cycle/node | All invalid fixtures, exact diagnostic and exit 2 | Pending real run |
-| §9.13 SAT witness replay | Typed `ExpiryWithinContract` violation witness is evaluated through CLI; exact violation must recur | Pending real run |
-| §9.14 Limits/restart | Worker advertised capacity, no live-handle eviction, kill/wait/restart invalidates old handle | Pending real run |
-| §7 framed worker protocol | Worker script exercises hello/compile/analyze/evaluate/release and transport errors | Pending real run |
-| CLI malformed input and file errors | Acceptance script requires structured JSON error and exit 2 | Pending real run |
+| §9.1 Partial model: `behavior_unspecified` | `partial`, typed coverage category | Passed |
+| §9.2 Unsafe Grant violates expiry independently of guard | `unsafe-grant`, exact rule/constraint result and evaluator replay | Passed |
+| §9.3 Guard repair removes violation but leaves uncovered inputs | `repaired-partial`, per-rule compliance and coverage | Passed |
+| §9.4 Complete proposed policy | `complete-proposed`: coverage/conflict, complete report, proposed IDs/open items; rejects `business_verified=true` | Passed |
+| §9.5 Simultaneous Grant/Deny conflicts | `conflict-tag`, typed conflict obligation | Passed |
+| §9.6 Identical outcomes deduplicate | `duplicate-output`, compatible outcome | Passed |
+| §9.7 Same constructor with distinct payloads conflicts | `conflict-payload`, typed pair plus independent evaluator replay | Passed |
+| §9.8 Assumptions are opt-in and visible | Explicit empty and selected-assumption runs, report IDs and conditional result | Passed |
+| §9.9 Impossible domain | Empty feasibility; dependent obligations skipped without vacuous success | Passed |
+| §9.10 Unknown is an ordinary enum, not approval | `unknown-approval` evaluates to unspecified | Passed |
+| §9.11 Arbitrary precision | Typed evaluated integer exactly `18446744073709551616` | Passed |
+| §9.12 Invalid references/units/date/cycle/node | Invalid fixtures return exact diagnostics and exit 2 | Passed |
+| §9.13 SAT witness replay | Typed `ExpiryWithinContract` witness replayed through CLI evaluator | Passed |
+| §9.14 Limits/restart | Capacity/no-eviction and kill/wait/restart invalidation | Passed |
+| §7 framed worker protocol | Real worker hello/compile/analyze/evaluate/release and transport error cases | Passed |
+| CLI malformed input/file errors | Structured JSON errors and exit 2 | Passed |
 
 ## Evidence log
 
-A real integration binary was built and exercised, but this is **not application acceptance**: the integration checkout at revision `8b0def0` still has the documented stub `crates/author_worker/src/main.rs` (`fn main() { println!("entail"); }`). Build command:
-
-```sh
-cd /home/josh/projects/entail2-integration
-mise exec -- nix develop --command cargo build --workspace --bin entail
-```
-
-Build succeeded. Actual script commands and outcomes:
+At integration revision `758d32d` on x86_64 Linux, the following build passed:
 
 ```text
-nix shell nixpkgs#python3 -c python3 scripts/acceptance.py /home/josh/projects/entail2-integration/target/debug/entail
-exit 1: command did not print JSON for analyze; stdout was `entail`
-
-nix shell nixpkgs#python3 -c python3 scripts/worker_acceptance.py /home/josh/projects/entail2-integration/target/debug/entail
-exit 1: worker response frame exceeds client limit (1701737569 > 8388608); stdout was the stub text `entail`
-
-/home/josh/projects/entail2-integration/target/debug/entail --help
-exit 0; stdout `entail` (no CLI is implemented)
+nix develop --command cargo build --workspace --bin entail --locked
+exit 0
 ```
 
-This is a genuine application blocker, not a validation-tool limitation: there is no CLI or worker implementation in the integration binary yet, and `entail2-integration/BUILD.md` describes component stubs. Retain all checks unchanged. Once the CLI/worker implementation is committed, rebuild and rerun both commands above; report assertion failures as app defects with the smallest failing fixture/command rather than relaxing any expected behavior. No acceptance groups passed against an application binary.
+Against `target/debug/entail`:
+
+```text
+nix develop --command python3 scripts/acceptance.py target/debug/entail
+exit 0: PASS: 20 fixture/scenario/CLI acceptance groups
+
+nix develop --command python3 scripts/worker_acceptance.py target/debug/entail
+exit 0: PASS: real worker protocol/lifecycle acceptance
+
+nix develop --command python3 -m unittest scripts.test_acceptance -v
+exit 0: 7 helper tests passed
+```
+
+The full checks and component-level suite are recorded in [`DELIVERY.md`](DELIVERY.md). These results establish only that the tested formal models and process protocol behaved as specified in this acceptance suite; they do not certify any business policy as complete, lawful, fair, or correct.
