@@ -1,0 +1,1040 @@
+{
+  "language_version": "author-model/0.1",
+  "model_id": "overlapping_guards",
+  "sources": [],
+  "enums": [],
+  "inputs": [
+    {
+      "id": "x",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    }
+  ],
+  "derived": [],
+  "outcomes": [
+    {
+      "id": "Grant",
+      "fields": [],
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    }
+  ],
+  "domain": [],
+  "assumptions": [],
+  "rules": [
+    {
+      "id": "R0",
+      "when": {
+        "kind": "ge",
+        "left": {
+          "kind": "ref",
+          "path": "input.x"
+        },
+        "right": {
+          "kind": "int",
+          "value": "0",
+          "unit": "Count"
+        }
+      },
+      "then": {
+        "outcome": "Grant",
+        "fields": {}
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "R1",
+      "when": {
+        "kind": "ge",
+        "left": {
+          "kind": "ref",
+          "path": "input.x"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "then": {
+        "outcome": "Grant",
+        "fields": {}
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "R2",
+      "when": {
+        "kind": "ge",
+        "left": {
+          "kind": "ref",
+          "path": "input.x"
+        },
+        "right": {
+          "kind": "int",
+          "value": "2",
+          "unit": "Count"
+        }
+      },
+      "then": {
+        "outcome": "Grant",
+        "fields": {}
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "R3",
+      "when": {
+        "kind": "ge",
+        "left": {
+          "kind": "ref",
+          "path": "input.x"
+        },
+        "right": {
+          "kind": "int",
+          "value": "3",
+          "unit": "Count"
+        }
+      },
+      "then": {
+        "outcome": "Grant",
+        "fields": {}
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "R4",
+      "when": {
+        "kind": "ge",
+        "left": {
+          "kind": "ref",
+          "path": "input.x"
+        },
+        "right": {
+          "kind": "int",
+          "value": "4",
+          "unit": "Count"
+        }
+      },
+      "then": {
+        "outcome": "Grant",
+        "fields": {}
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "R5",
+      "when": {
+        "kind": "ge",
+        "left": {
+          "kind": "ref",
+          "path": "input.x"
+        },
+        "right": {
+          "kind": "int",
+          "value": "5",
+          "unit": "Count"
+        }
+      },
+      "then": {
+        "outcome": "Grant",
+        "fields": {}
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "R6",
+      "when": {
+        "kind": "ge",
+        "left": {
+          "kind": "ref",
+          "path": "input.x"
+        },
+        "right": {
+          "kind": "int",
+          "value": "6",
+          "unit": "Count"
+        }
+      },
+      "then": {
+        "outcome": "Grant",
+        "fields": {}
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "R7",
+      "when": {
+        "kind": "ge",
+        "left": {
+          "kind": "ref",
+          "path": "input.x"
+        },
+        "right": {
+          "kind": "int",
+          "value": "7",
+          "unit": "Count"
+        }
+      },
+      "then": {
+        "outcome": "Grant",
+        "fields": {}
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "R8",
+      "when": {
+        "kind": "ge",
+        "left": {
+          "kind": "ref",
+          "path": "input.x"
+        },
+        "right": {
+          "kind": "int",
+          "value": "8",
+          "unit": "Count"
+        }
+      },
+      "then": {
+        "outcome": "Grant",
+        "fields": {}
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "R9",
+      "when": {
+        "kind": "ge",
+        "left": {
+          "kind": "ref",
+          "path": "input.x"
+        },
+        "right": {
+          "kind": "int",
+          "value": "9",
+          "unit": "Count"
+        }
+      },
+      "then": {
+        "outcome": "Grant",
+        "fields": {}
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "R10",
+      "when": {
+        "kind": "ge",
+        "left": {
+          "kind": "ref",
+          "path": "input.x"
+        },
+        "right": {
+          "kind": "int",
+          "value": "10",
+          "unit": "Count"
+        }
+      },
+      "then": {
+        "outcome": "Grant",
+        "fields": {}
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "R11",
+      "when": {
+        "kind": "ge",
+        "left": {
+          "kind": "ref",
+          "path": "input.x"
+        },
+        "right": {
+          "kind": "int",
+          "value": "11",
+          "unit": "Count"
+        }
+      },
+      "then": {
+        "outcome": "Grant",
+        "fields": {}
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "R12",
+      "when": {
+        "kind": "ge",
+        "left": {
+          "kind": "ref",
+          "path": "input.x"
+        },
+        "right": {
+          "kind": "int",
+          "value": "12",
+          "unit": "Count"
+        }
+      },
+      "then": {
+        "outcome": "Grant",
+        "fields": {}
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "R13",
+      "when": {
+        "kind": "ge",
+        "left": {
+          "kind": "ref",
+          "path": "input.x"
+        },
+        "right": {
+          "kind": "int",
+          "value": "13",
+          "unit": "Count"
+        }
+      },
+      "then": {
+        "outcome": "Grant",
+        "fields": {}
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "R14",
+      "when": {
+        "kind": "ge",
+        "left": {
+          "kind": "ref",
+          "path": "input.x"
+        },
+        "right": {
+          "kind": "int",
+          "value": "14",
+          "unit": "Count"
+        }
+      },
+      "then": {
+        "outcome": "Grant",
+        "fields": {}
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "R15",
+      "when": {
+        "kind": "ge",
+        "left": {
+          "kind": "ref",
+          "path": "input.x"
+        },
+        "right": {
+          "kind": "int",
+          "value": "15",
+          "unit": "Count"
+        }
+      },
+      "then": {
+        "outcome": "Grant",
+        "fields": {}
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "R16",
+      "when": {
+        "kind": "ge",
+        "left": {
+          "kind": "ref",
+          "path": "input.x"
+        },
+        "right": {
+          "kind": "int",
+          "value": "16",
+          "unit": "Count"
+        }
+      },
+      "then": {
+        "outcome": "Grant",
+        "fields": {}
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "R17",
+      "when": {
+        "kind": "ge",
+        "left": {
+          "kind": "ref",
+          "path": "input.x"
+        },
+        "right": {
+          "kind": "int",
+          "value": "17",
+          "unit": "Count"
+        }
+      },
+      "then": {
+        "outcome": "Grant",
+        "fields": {}
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "R18",
+      "when": {
+        "kind": "ge",
+        "left": {
+          "kind": "ref",
+          "path": "input.x"
+        },
+        "right": {
+          "kind": "int",
+          "value": "18",
+          "unit": "Count"
+        }
+      },
+      "then": {
+        "outcome": "Grant",
+        "fields": {}
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "R19",
+      "when": {
+        "kind": "ge",
+        "left": {
+          "kind": "ref",
+          "path": "input.x"
+        },
+        "right": {
+          "kind": "int",
+          "value": "19",
+          "unit": "Count"
+        }
+      },
+      "then": {
+        "outcome": "Grant",
+        "fields": {}
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "R20",
+      "when": {
+        "kind": "ge",
+        "left": {
+          "kind": "ref",
+          "path": "input.x"
+        },
+        "right": {
+          "kind": "int",
+          "value": "20",
+          "unit": "Count"
+        }
+      },
+      "then": {
+        "outcome": "Grant",
+        "fields": {}
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "R21",
+      "when": {
+        "kind": "ge",
+        "left": {
+          "kind": "ref",
+          "path": "input.x"
+        },
+        "right": {
+          "kind": "int",
+          "value": "21",
+          "unit": "Count"
+        }
+      },
+      "then": {
+        "outcome": "Grant",
+        "fields": {}
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "R22",
+      "when": {
+        "kind": "ge",
+        "left": {
+          "kind": "ref",
+          "path": "input.x"
+        },
+        "right": {
+          "kind": "int",
+          "value": "22",
+          "unit": "Count"
+        }
+      },
+      "then": {
+        "outcome": "Grant",
+        "fields": {}
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "R23",
+      "when": {
+        "kind": "ge",
+        "left": {
+          "kind": "ref",
+          "path": "input.x"
+        },
+        "right": {
+          "kind": "int",
+          "value": "23",
+          "unit": "Count"
+        }
+      },
+      "then": {
+        "outcome": "Grant",
+        "fields": {}
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "R24",
+      "when": {
+        "kind": "ge",
+        "left": {
+          "kind": "ref",
+          "path": "input.x"
+        },
+        "right": {
+          "kind": "int",
+          "value": "24",
+          "unit": "Count"
+        }
+      },
+      "then": {
+        "outcome": "Grant",
+        "fields": {}
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "R25",
+      "when": {
+        "kind": "ge",
+        "left": {
+          "kind": "ref",
+          "path": "input.x"
+        },
+        "right": {
+          "kind": "int",
+          "value": "25",
+          "unit": "Count"
+        }
+      },
+      "then": {
+        "outcome": "Grant",
+        "fields": {}
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "R26",
+      "when": {
+        "kind": "ge",
+        "left": {
+          "kind": "ref",
+          "path": "input.x"
+        },
+        "right": {
+          "kind": "int",
+          "value": "26",
+          "unit": "Count"
+        }
+      },
+      "then": {
+        "outcome": "Grant",
+        "fields": {}
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "R27",
+      "when": {
+        "kind": "ge",
+        "left": {
+          "kind": "ref",
+          "path": "input.x"
+        },
+        "right": {
+          "kind": "int",
+          "value": "27",
+          "unit": "Count"
+        }
+      },
+      "then": {
+        "outcome": "Grant",
+        "fields": {}
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "R28",
+      "when": {
+        "kind": "ge",
+        "left": {
+          "kind": "ref",
+          "path": "input.x"
+        },
+        "right": {
+          "kind": "int",
+          "value": "28",
+          "unit": "Count"
+        }
+      },
+      "then": {
+        "outcome": "Grant",
+        "fields": {}
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "R29",
+      "when": {
+        "kind": "ge",
+        "left": {
+          "kind": "ref",
+          "path": "input.x"
+        },
+        "right": {
+          "kind": "int",
+          "value": "29",
+          "unit": "Count"
+        }
+      },
+      "then": {
+        "outcome": "Grant",
+        "fields": {}
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "R30",
+      "when": {
+        "kind": "ge",
+        "left": {
+          "kind": "ref",
+          "path": "input.x"
+        },
+        "right": {
+          "kind": "int",
+          "value": "30",
+          "unit": "Count"
+        }
+      },
+      "then": {
+        "outcome": "Grant",
+        "fields": {}
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "R31",
+      "when": {
+        "kind": "ge",
+        "left": {
+          "kind": "ref",
+          "path": "input.x"
+        },
+        "right": {
+          "kind": "int",
+          "value": "31",
+          "unit": "Count"
+        }
+      },
+      "then": {
+        "outcome": "Grant",
+        "fields": {}
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "R32",
+      "when": {
+        "kind": "ge",
+        "left": {
+          "kind": "ref",
+          "path": "input.x"
+        },
+        "right": {
+          "kind": "int",
+          "value": "32",
+          "unit": "Count"
+        }
+      },
+      "then": {
+        "outcome": "Grant",
+        "fields": {}
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "R33",
+      "when": {
+        "kind": "ge",
+        "left": {
+          "kind": "ref",
+          "path": "input.x"
+        },
+        "right": {
+          "kind": "int",
+          "value": "33",
+          "unit": "Count"
+        }
+      },
+      "then": {
+        "outcome": "Grant",
+        "fields": {}
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "R34",
+      "when": {
+        "kind": "ge",
+        "left": {
+          "kind": "ref",
+          "path": "input.x"
+        },
+        "right": {
+          "kind": "int",
+          "value": "34",
+          "unit": "Count"
+        }
+      },
+      "then": {
+        "outcome": "Grant",
+        "fields": {}
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "R35",
+      "when": {
+        "kind": "ge",
+        "left": {
+          "kind": "ref",
+          "path": "input.x"
+        },
+        "right": {
+          "kind": "int",
+          "value": "35",
+          "unit": "Count"
+        }
+      },
+      "then": {
+        "outcome": "Grant",
+        "fields": {}
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "R36",
+      "when": {
+        "kind": "ge",
+        "left": {
+          "kind": "ref",
+          "path": "input.x"
+        },
+        "right": {
+          "kind": "int",
+          "value": "36",
+          "unit": "Count"
+        }
+      },
+      "then": {
+        "outcome": "Grant",
+        "fields": {}
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "R37",
+      "when": {
+        "kind": "ge",
+        "left": {
+          "kind": "ref",
+          "path": "input.x"
+        },
+        "right": {
+          "kind": "int",
+          "value": "37",
+          "unit": "Count"
+        }
+      },
+      "then": {
+        "outcome": "Grant",
+        "fields": {}
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "R38",
+      "when": {
+        "kind": "ge",
+        "left": {
+          "kind": "ref",
+          "path": "input.x"
+        },
+        "right": {
+          "kind": "int",
+          "value": "38",
+          "unit": "Count"
+        }
+      },
+      "then": {
+        "outcome": "Grant",
+        "fields": {}
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "R39",
+      "when": {
+        "kind": "ge",
+        "left": {
+          "kind": "ref",
+          "path": "input.x"
+        },
+        "right": {
+          "kind": "int",
+          "value": "39",
+          "unit": "Count"
+        }
+      },
+      "then": {
+        "outcome": "Grant",
+        "fields": {}
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    }
+  ],
+  "constraints": [],
+  "open_items": []
+}

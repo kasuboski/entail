@@ -1,0 +1,1666 @@
+{
+  "language_version": "author-model/0.1",
+  "model_id": "shared_derived_dag",
+  "sources": [],
+  "enums": [],
+  "inputs": [
+    {
+      "id": "x",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    }
+  ],
+  "derived": [
+    {
+      "id": "d0",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "input.x"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d1",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d0"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d2",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d1"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d3",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d2"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d4",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d3"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d5",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d4"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d6",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d5"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d7",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d6"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d8",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d7"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d9",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d8"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d10",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d9"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d11",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d10"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d12",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d11"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d13",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d12"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d14",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d13"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d15",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d14"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d16",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d15"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d17",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d16"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d18",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d17"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d19",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d18"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d20",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d19"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d21",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d20"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d22",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d21"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d23",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d22"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d24",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d23"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d25",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d24"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d26",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d25"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d27",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d26"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d28",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d27"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d29",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d28"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d30",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d29"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d31",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d30"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d32",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d31"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d33",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d32"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d34",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d33"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d35",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d34"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d36",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d35"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d37",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d36"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d38",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d37"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d39",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d38"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d40",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d39"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d41",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d40"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d42",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d41"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d43",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d42"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d44",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d43"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d45",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d44"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d46",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d45"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d47",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d46"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d48",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d47"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d49",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d48"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d50",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d49"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d51",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d50"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d52",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d51"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d53",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d52"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d54",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d53"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d55",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d54"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d56",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d55"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d57",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d56"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d58",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d57"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d59",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d58"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d60",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d59"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d61",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d60"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d62",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d61"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    },
+    {
+      "id": "d63",
+      "type": {
+        "kind": "int",
+        "unit": "Count"
+      },
+      "expr": {
+        "kind": "add",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d62"
+        },
+        "right": {
+          "kind": "int",
+          "value": "1",
+          "unit": "Count"
+        }
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    }
+  ],
+  "outcomes": [
+    {
+      "id": "Grant",
+      "fields": [],
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    }
+  ],
+  "domain": [],
+  "assumptions": [],
+  "rules": [
+    {
+      "id": "R0",
+      "when": {
+        "kind": "ge",
+        "left": {
+          "kind": "ref",
+          "path": "derived.d63"
+        },
+        "right": {
+          "kind": "int",
+          "value": "100",
+          "unit": "Count"
+        }
+      },
+      "then": {
+        "outcome": "Grant",
+        "fields": {}
+      },
+      "origin": {
+        "kind": "proposal",
+        "source_ids": [],
+        "review": "proposed",
+        "note": "benchmark-generated"
+      }
+    }
+  ],
+  "constraints": [],
+  "open_items": []
+}
