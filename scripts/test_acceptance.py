@@ -31,8 +31,8 @@ class AcceptanceHelpersTest(unittest.TestCase):
 
     def test_compliance_requires_exact_rule_and_constraint_ids(self) -> None:
         result = {"obligations": [
-            {"obligation": {"kind": "constraint_compliance"}, "status": "satisfied",
-             "rule_id": "R", "constraint_id": "C-extra", "source_ids": ["C"]}
+            {"obligation": {"kind": "constraint_compliance", "rule_id": "R",
+                             "constraint_id": "C-extra"}, "status": "satisfied", "source_ids": ["C"]}
         ]}
         with self.assertRaises(acceptance.AcceptanceFailure):
             acceptance._check_compliance(result, "unsafe-grant", {"ExpiryWithinContract": "violation"})

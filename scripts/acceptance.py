@@ -104,12 +104,19 @@ def expect_check_label(result: Any, check: str, label: str, context: str) -> lis
 
 def exact_ids(obj: dict[str, Any], singular: str, plural: str) -> set[str]:
     values: set[str] = set()
-    one = obj.get(singular)
-    if isinstance(one, str):
-        values.add(one)
-    many = obj.get(plural)
-    if isinstance(many, list):
-        values.update(item for item in many if isinstance(item, str))
+    # Serde may put typed obligation identifiers in the descriptor rather than
+    # repeat them at the result envelope. Search only typed ID-bearing fields.
+    for candidate in (obj, obj.get("obligation"), obj.get("descriptor")):
+        if not isinstance(candidate, dict):
+            continue
+        one = candidate.get(singular)
+        if isinstance(one, str):
+            values.add(one)
+        many = candidate.get(plural)
+        if isinstance(many, list):
+            values.update(item for item in many if isinstance(item, str))
+        if isinstance(candidate.get("declaration_ids"), list):
+            values.update(item for item in candidate["declaration_ids"] if isinstance(item, str))
     return values
 
 
@@ -330,6 +337,21 @@ def _check_constructor_payload_independently(binary: Path) -> None:
                                                 (o.get("payloads_differ") is True or o.get("constructor_payload_conflict") is True)
                                                 for o in conflicts):
         raise AcceptanceFailure("conflict-payload: conflict result must demonstrate same Grant constructor with unequal field values")
+    witness = next((o.get("witness") for o in conflicts if isinstance(o.get("witness"), dict)), None)
+    if witness is None:
+        raise AcceptanceFailure("conflict-payload: expected typed conflict witness to reconstruct independently")
+    inputs = witness.get("inputs", witness)
+    if not isinstance(inputs, dict):
+        raise AcceptanceFailure(f"conflict-payload: malformed typed witness: {witness!r}")
+    with tempfile.TemporaryDirectory(prefix="entail-payload-replay-") as directory:
+        scenario = Path(directory) / "conflict-witness.json"
+        scenario.write_text(json.dumps({"inputs": inputs}, separators=(",", ":")), encoding="utf-8")
+        replay = run_json(binary, ["evaluate", str(BUNDLE / "fixtures/valid/conflict-payload.json"), str(scenario)])
+    outcomes = [outcome for obj in objects(replay) for outcome in obj.get("outcomes", []) if isinstance(outcome, dict)]
+    grants = [outcome for outcome in outcomes if outcome.get("constructor", outcome.get("outcome", outcome.get("id"))) == "Grant"]
+    payloads = {json.dumps(outcome.get("fields", outcome.get("payload")), sort_keys=True) for outcome in grants}
+    if len(payloads) < 2:
+        raise AcceptanceFailure("conflict-payload: replay did not independently produce distinct Grant payloads")
 
 
 def _check_cli_errors(binary: Path) -> None:

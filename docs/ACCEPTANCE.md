@@ -39,4 +39,24 @@ The worker acceptance script checks the documented `author-worker/0.1` framing a
 
 ## Evidence log
 
-No real executable run has yet been recorded. The integration target was checked at task start and contained Cargo build artifacts but no `target/debug/entail` executable. This is not a pass or a final blocker: build/run the integration executable once the application is committed. If the app implementation fails a check, retain the assertion and report the exact command, observed output and a minimal reproducer to the integration owner; do not weaken the criteria to fit the implementation.
+A real integration binary was built and exercised, but this is **not application acceptance**: the integration checkout at revision `8b0def0` still has the documented stub `crates/author_worker/src/main.rs` (`fn main() { println!("entail"); }`). Build command:
+
+```sh
+cd /home/josh/projects/entail2-integration
+mise exec -- nix develop --command cargo build --workspace --bin entail
+```
+
+Build succeeded. Actual script commands and outcomes:
+
+```text
+nix shell nixpkgs#python3 -c python3 scripts/acceptance.py /home/josh/projects/entail2-integration/target/debug/entail
+exit 1: command did not print JSON for analyze; stdout was `entail`
+
+nix shell nixpkgs#python3 -c python3 scripts/worker_acceptance.py /home/josh/projects/entail2-integration/target/debug/entail
+exit 1: worker response frame exceeds client limit (1701737569 > 8388608); stdout was the stub text `entail`
+
+/home/josh/projects/entail2-integration/target/debug/entail --help
+exit 0; stdout `entail` (no CLI is implemented)
+```
+
+This is a genuine application blocker, not a validation-tool limitation: there is no CLI or worker implementation in the integration binary yet, and `entail2-integration/BUILD.md` describes component stubs. Retain all checks unchanged. Once the CLI/worker implementation is committed, rebuild and rerun both commands above; report assertion failures as app defects with the smallest failing fixture/command rather than relaxing any expected behavior. No acceptance groups passed against an application binary.
