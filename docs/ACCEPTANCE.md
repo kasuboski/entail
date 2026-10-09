@@ -1,6 +1,6 @@
 # Author engine v0 end-user acceptance
 
-**Status: final CLI and worker acceptance passed against integrated code source `3da81cee`.** These scripts are black-box checks against a built executable, not an engine mock. Fixtures and expectations in `author-engine-v0/fixtures` are test inputs, never evidence by themselves.
+**Status: final CLI and worker acceptance passed against integrated code source `9440c59`.** These scripts are black-box checks against a built executable, not an engine mock. Fixtures and expectations in `author-engine-v0/fixtures` are test inputs, never evidence by themselves.
 
 ## Run
 
@@ -14,9 +14,9 @@ mise exec -- nix develop --command python3 scripts/worker_acceptance.py /path/to
 
 Every subprocess has a finite timeout. The Python helper tests and either script's `--self-test` exercise only local assertion/framing/process utilities; none counts as application acceptance. Record the executable path/revision, build command, platform, exact commands, exit codes, pass counts, and failures in the evidence log below. Do not mark criteria passed on source inspection or helper-only output.
 
-`acceptance.py` checks all valid and invalid fixtures, stable diagnostic codes and exit 2, analysis exit 0, exact obligation kind/status/category, mandatory domain feasibility, one reachability result per rule, and each expected rule/constraint compliance result by exact IDs (never provenance substrings). It also verifies report identity/hashes/assumptions/open items, proposed-policy context and `complete=true` without claiming business verification. The conditional fixture is run both with an explicit empty assumption list and with `SponsorsAlreadyApproved`. Concrete scenarios check unknown approval remains unspecified, unsafe expiry reports the exact violated constraint, unsafe SAT witness replays through `evaluate`, and the arbitrary-precision result is a typed exact integer. CLI malformed-input and missing-file cases must return structured errors with exit 2. The payload fixture must show a conflict between unequal payloads of the same `Grant` constructor.
+`acceptance.py` checks all valid and invalid fixtures, stable diagnostic codes and exit 2, analysis exit 0, exact obligation kind/status/category, mandatory domain feasibility, one reachability result per rule, and each expected rule/constraint compliance result by exact IDs (never provenance substrings). The authoritative expectation bundle remains byte-for-byte unchanged from baseline `95d0c26`; a model regression test checks every invalid fixture against its declared diagnostic code. It also verifies report identity/hashes/assumptions/open items, proposed-policy context and `complete=true` without claiming business verification. The conditional fixture is run both with an explicit empty assumption list and with `SponsorsAlreadyApproved`. Concrete scenarios check unknown approval remains unspecified, unsafe expiry reports the exact violated constraint, unsafe SAT witness replays through `evaluate`, and the arbitrary-precision result is a typed exact integer. CLI malformed-input and missing-file cases must return structured errors with exit 2. The payload fixture must show a conflict between unequal payloads of the same `Grant` constructor.
 
-The worker acceptance script checks the documented `author-worker/0.1` framing and stable protocol error codes, fragmented frames, operation envelopes, valid/invalid compile, analysis and evaluation, exact release behavior, advertised handle capacity without eviction, malformed JSON recovery, invalid-version and invalid-length handling, kill/wait, restart and handle invalidation. It rejects a capacity bound above its explicitly safe 128-model probe rather than weakening the criterion. Every worker frame read and process wait is bounded.
+The worker acceptance script checks the documented `author-worker/0.1` framing and stable protocol error codes, fragmented frames, operation envelopes, valid/invalid compile, analysis and evaluation, exact release behavior, advertised handle capacity without eviction, malformed JSON recovery, invalid-version and invalid-length handling, kill/wait, restart and handle invalidation. On malformed JSON, request-ID recovery uses a Serde map visitor with `IgnoredAny`; only a fully parsed top-level `request_id` before parse failure is returned, without a handwritten JSON scanner. It rejects a capacity bound above its explicitly safe 128-model probe rather than weakening the criterion. Every worker frame read and process wait is bounded.
 
 ## Criteria map
 
@@ -41,7 +41,7 @@ The worker acceptance script checks the documented `author-worker/0.1` framing a
 
 ## Evidence log
 
-Final integrated acceptance was run from `/home/josh/projects/entail2-integration` against code source revision `3da81cee5fe87544eb3a5b870706881abb07b089`. Built the executable in the pinned Nix environment:
+Final integrated acceptance was run from `/home/josh/projects/entail2-integration` against code source revision `9440c597bde00ec01fac7ff10c08b6ff3dde3c32`. Built the executable in the pinned Nix environment:
 
 ```sh
 cd /home/josh/projects/entail2-integration

@@ -29,7 +29,7 @@ nix develop --command python3 scripts/acceptance.py target/debug/entail
 nix develop --command python3 scripts/worker_acceptance.py target/debug/entail
 ```
 
-Final integration commands, acceptance coverage, and benchmark evidence are tracked in [`docs/DELIVERY.md`](docs/DELIVERY.md). The archived release worker smoke includes analysis/cache/query/native-statistics and sampled RSS measurements, but is single-host smoke evidence—not a performance guarantee.
+Final integration commands and acceptance coverage are tracked in [`docs/DELIVERY.md`](docs/DELIVERY.md). The archived release worker smoke includes analysis/cache/query/native-statistics and sampled RSS measurements from an earlier source snapshot; it is single-host historical smoke evidence, not a final-revision performance claim or guarantee.
 
 ## Correctness boundary
 

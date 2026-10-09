@@ -6,13 +6,13 @@
 
 | Requirement | Evidence | Final integrated result |
 | --- | --- | --- |
-| Strict model validation, typed expressions, exact integers/dates, derived DAG, hashes, evaluation and diagnostics | `author_model` unit tests; invalid fixtures; immutable API doc test | Covered by model tests including exact nested diagnostic pointers, optional-metadata serialization round trips, and `CompiledModel` immutability (`compile_fail`). |
+| Strict model validation, typed expressions, exact integers/dates, derived DAG, hashes, evaluation and diagnostics | `author_model` unit tests; invalid fixtures; immutable API doc test | Covered by model tests including exact nested diagnostic pointers, optional-metadata serialization round trips, and `CompiledModel` immutability (`compile_fail`). Regression test checks every invalid fixture's authoritative diagnostic code; the bundle matches baseline `95d0c26` byte-for-byte. |
 | Feasibility, reachability, coverage, conflicts, compliance, assumptions, provenance and replay | `author_analysis` tests; black-box CLI acceptance | Covered by replay/cache/budget/error tests; coverage provenance includes all rules and refreshes on cached/skipped results. |
 | Exact Z3 lowering/decoding, resource limits, detached native statistics and differential behavior | `author_z3` backend tests | Covered by native solver, boundary and finite semantic-oracle tests across typed values/expressions. Z3 5.1.0 is pinned. |
 | CLI findings/errors and documented exit behavior | `scripts/acceptance.py` against the release executable | **Passed:** 20 fixture/scenario/CLI groups. Findings return 0; invalid model/file/JSON cases return 2 with structured errors. The public CLI has no backend-fault injection seam, so a black-box exit-3 case was not induced; backend error mapping is exercised at the analysis seam. |
-| Persistent worker framing, budgets, capacity, malformed-input recovery, release, restart and stale handles | `scripts/worker_acceptance.py`; Rust worker process tests | **Passed:** external protocol/lifecycle acceptance and in-process process tests. |
+| Persistent worker framing, budgets, capacity, malformed-input recovery, release, restart and stale handles | `scripts/worker_acceptance.py`; Rust worker process tests | **Passed:** external protocol/lifecycle acceptance and in-process process tests. Malformed-JSON request-ID recovery uses only a Serde visitor/`IgnoredAny`, with nested and malformed-prefix cases tested. |
 | Reproducible workload generation and measured release analysis/cache/native-statistics/RSS evidence | `scripts/benchmark.py`; [`BENCHMARKS.md`](BENCHMARKS.md); archived report | **Passed:** eight workloads, five repetitions each, no worker-family errors; explicit cache/edit/assumption probes; detached solver statistics, engine compile time and sampled Linux RSS recorded. Bounded cases that exhaust the 24-obligation smoke cap are reported as incomplete, not as successful. This is one-host smoke evidence, not an SLO. |
-| Formatting, strict lint, MSRV, Rust tests and public API compile-fail check | `mise run check`; `cargo test --workspace --doc --locked` | **Passed:** formatting, strict all-target/all-feature Clippy, Rust 1.85 locked check, **64/64** nextest tests; doc tests include one passing `CompiledModel` immutability compile-fail test. |
+| Formatting, strict lint, MSRV, Rust tests and public API compile-fail check | `mise run check`; `cargo test --workspace --doc --locked` | **Passed:** formatting, strict all-target/all-feature Clippy, Rust 1.85 locked check, **66/66** nextest tests; doc tests include one passing `CompiledModel` immutability compile-fail test. |
 | Python acceptance and benchmark helpers | Python unittest discovery; helper self-tests; generator check | **Passed:** 12 Python helper tests; both acceptance/worker helper self-tests; benchmark fixture generation/structural validation. Helper-only tests are not counted as application acceptance. |
 
 ## Exact verification commands and results
@@ -21,7 +21,7 @@ Commands were run from `/home/josh/projects/entail2-integration`, with the Nix d
 
 ```sh
 mise run check
-# passed: fmt, strict Clippy, Rust 1.85 locked check, nextest 64/64
+# passed: fmt, strict Clippy, Rust 1.85 locked check, nextest 66/66
 
 mise exec -- nix develop --command cargo test --workspace --doc --locked
 # passed: 1 compile_fail doc test; all crate doc-test targets passed
@@ -57,7 +57,7 @@ mise exec -- nix develop --command python3 scripts/benchmark.py \
   --rust-version 'rustc 1.98.0 (88d9e12ae 2026-08-18)'
 ```
 
-Full per-run reports, detached native statistic maps, cache probes, compile timings, environment and RSS sampling details are archived in [`benchmarks/smoke-release-final-2026-10-09.json`](../benchmarks/smoke-release-final-2026-10-09.json). The measured executable was built from code source revision `3da81cee5fe87544eb3a5b870706881abb07b089`; documentation-only commits do not change that measured source. See [`BENCHMARKS.md`](BENCHMARKS.md) for interpretation and selected figures.
+Full per-run reports, detached native statistic maps, cache probes, compile timings, environment and RSS sampling details are archived in [`benchmarks/smoke-release-final-2026-10-09.json`](../benchmarks/smoke-release-final-2026-10-09.json). That earlier measured executable was built from source `3da81cee5fe87544eb3a5b870706881abb07b089`; it predates the final contract-diagnostic and malformed-JSON recovery patches. Treat it as historical measurement evidence, not a full measurement of current HEAD. Native-statistics/RSS/cache data are retained, and this error-handling-only follow-up did not rerun performance tests. See [`BENCHMARKS.md`](BENCHMARKS.md) for interpretation.
 
 ## Remaining limits
 
