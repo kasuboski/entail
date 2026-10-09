@@ -440,6 +440,49 @@ fn killing_during_native_solver_analysis_reaps_process_and_invalidates_handles()
 }
 
 #[test]
+fn malformed_json_recovers_only_unambiguous_top_level_request_ids() -> TestResult<()> {
+    let (mut child, mut input, mut output) = spawn(2)?;
+    let cases: [(&[u8], &str); 7] = [
+        (br#"{"params":{"request_id":"nested"},"protocol_version":"author-worker/0.1","request_id":"outer","op":"hello",BROKEN}"#, "outer"),
+        (br#"{"note":"text \"request_id\":\"fake\"","request_id":"real","op":BROKEN}"#, "real"),
+        (br#"{"items":[{"request_id":"nested"}],"request_id":"array-root","op":BROKEN}"#, "array-root"),
+        (br#"{"request_id":"before-corruption","op":BROKEN}"#, "before-corruption"),
+        (br#"{"\u0072equest_id":"escaped-key","op":BROKEN}"#, "escaped-key"),
+        (br#"{"op":BROKEN,"request_id":"unreached"}"#, "null"),
+        (br#"{"params":{"request_id":"nested"},"op":BROKEN}"#, "null"),
+    ];
+    for (payload, expected_id) in cases {
+        let length = u32::try_from(payload.len())?;
+        input.write_all(&length.to_be_bytes())?;
+        input.write_all(payload)?;
+        let response = read_response(&mut output)?;
+        assert_eq!(
+            response
+                .get("request_id")
+                .and_then(Value::as_str)
+                .unwrap_or("null"),
+            expected_id
+        );
+        assert_eq!(
+            response_field(response_field(&response, "error")?, "code")?,
+            "malformed_json"
+        );
+    }
+    write_request(
+        &mut input,
+        &request("still-alive", "hello", json!({})),
+        false,
+    )?;
+    assert_eq!(
+        response_field(&read_response(&mut output)?, "request_id")?,
+        "still-alive"
+    );
+    drop(input);
+    assert!(child.wait()?.success());
+    Ok(())
+}
+
+#[test]
 fn malformed_json_recovers_request_id_and_worker_continues() -> TestResult<()> {
     let (mut child, mut input, mut output) = spawn(2)?;
     let payload = br#"{"protocol_version":"author-worker/0.1","request_id":"recover-me",}"#;

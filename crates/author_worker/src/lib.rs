@@ -1,7 +1,9 @@
 //! Framed JSON transport for the persistent author worker.
 
+use std::fmt;
 use std::io::{self, Read, Write};
 
+use serde::de::{Deserializer, IgnoredAny, MapAccess, Visitor};
 use serde_json::Value;
 
 pub const DEFAULT_MAX_FRAME_BYTES: usize = 8 * 1024 * 1024;
@@ -248,41 +250,38 @@ fn request_envelope(
     Ok((id.clone(), operation.to_owned(), params.clone()))
 }
 
-fn recover_request_id(payload: &[u8]) -> Value {
-    let text = String::from_utf8_lossy(payload);
-    let Some(key) = text.find("\"request_id\"") else {
-        return Value::Null;
-    };
-    let Some(rest) = key.checked_add(12).and_then(|offset| text.get(offset..)) else {
-        return Value::Null;
-    };
-    let Some(colon) = rest.find(':') else {
-        return Value::Null;
-    };
-    let Some(value) = colon.checked_add(1).and_then(|offset| rest.get(offset..)) else {
-        return Value::Null;
-    };
-    let trimmed = value.trim_start();
-    if !trimmed.starts_with('"') {
-        return Value::Null;
+#[derive(Default)]
+struct RecoveredRequestId(Option<String>);
+
+struct RequestIdVisitor<'a>(&'a mut RecoveredRequestId);
+
+impl<'de> Visitor<'de> for RequestIdVisitor<'_> {
+    type Value = ();
+
+    fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter.write_str("a JSON object")
     }
-    let mut escaped = false;
-    for (offset, character) in trimmed.char_indices().skip(1) {
-        if escaped {
-            escaped = false;
-        } else if character == '\\' {
-            escaped = true;
-        } else if character == '"' {
-            let Some(end) = offset.checked_add(1) else {
-                return Value::Null;
-            };
-            let Some(encoded) = trimmed.get(..end) else {
-                return Value::Null;
-            };
-            return serde_json::from_str::<String>(encoded).map_or(Value::Null, Value::String);
+
+    fn visit_map<M>(self, mut map: M) -> Result<Self::Value, M::Error>
+    where
+        M: MapAccess<'de>,
+    {
+        while let Some(key) = map.next_key::<String>()? {
+            if key == "request_id" {
+                self.0.0 = Some(map.next_value::<String>()?);
+            } else {
+                map.next_value::<IgnoredAny>()?;
+            }
         }
+        Ok(())
     }
-    Value::Null
+}
+
+fn recover_request_id(payload: &[u8]) -> Value {
+    let mut recovered = RecoveredRequestId::default();
+    let mut deserializer = serde_json::Deserializer::from_slice(payload);
+    let _ = deserializer.deserialize_map(RequestIdVisitor(&mut recovered));
+    recovered.0.map_or(Value::Null, Value::String)
 }
 
 fn request_id(request: &Value) -> Value {
