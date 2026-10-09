@@ -8,7 +8,7 @@
 - [x] Initialize Git on main; commit baseline and manage isolated component/review branches and worktrees.
 - [x] Establish four-crate workspace and pinned Rust/Nix/native Z3 build with SAT/UNSAT smoke evidence.
 - [x] Implement strict model ingestion, semantic compiler, exact values, scopes, derived DAG, provenance/hashes and concrete evaluation.
-- [x] Repair model date/schema/outcome-scope/resource defects; add precise diagnostics, metadata roundtrips and early borrowed preflight guards.
+- [x] Repair model date/schema/outcome-scope/resource defects; add precise diagnostics, metadata roundtrips and early borrowed preflight guards. Follow-ups 1d1c761/c450b3e resolve gaps in delayed checkpoint 6ecf58e; final model suite has 25 passing tests.
 - [x] Implement feasibility, reachability, coverage, conflicts and independent compliance; prerequisite/vacuity/conditional/proposed/open-item reporting.
 - [x] Implement exact Z3 lowering/decoding, solver limits, typed witness replay and detached native statistics.
 - [x] Implement budgets, bounded lazy planning, completed-result caching and current-content metadata reconstruction.
