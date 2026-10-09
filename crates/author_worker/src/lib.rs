@@ -357,6 +357,7 @@ fn hello_result(config: &WorkerConfig) -> Value {
         "solver_version": Z3Backend::new().solver_version(),
         "operations": ["hello", "compile", "analyze", "evaluate", "release"],
         "checks": ["domain_feasibility", "rule_reachability", "coverage", "outcome_conflict", "constraint_compliance"],
+        "capabilities": {"compile": true, "analyze": true, "evaluate": true, "release": true, "hard_cancellation": true},
         "limits": {
             "max_frame_bytes": config.max_frame_bytes,
             "max_handles": config.max_handles,
@@ -402,6 +403,17 @@ fn compile_request(
             None,
         );
     };
+    if state.handles.len() >= config.max_handles {
+        return (
+            failure(
+                request_id,
+                "capacity_exceeded",
+                "worker handle capacity reached".to_owned(),
+            ),
+            None,
+        );
+    }
+    let started = std::time::Instant::now();
     let model = match compile_json(model_json, &config.model_limits) {
         Ok(model) => model,
         Err(diagnostics) => {
@@ -414,16 +426,7 @@ fn compile_request(
             );
         }
     };
-    if state.handles.len() >= config.max_handles {
-        return (
-            failure(
-                request_id,
-                "capacity_exceeded",
-                "worker handle capacity reached".to_owned(),
-            ),
-            None,
-        );
-    }
+    let compile_elapsed_ms = u64::try_from(started.elapsed().as_millis()).unwrap_or(u64::MAX);
     let Some(handle_id) = state.next_handle.checked_add(1) else {
         return (
             failure(
@@ -436,7 +439,7 @@ fn compile_request(
     };
     state.next_handle = handle_id;
     let handle = format!("{}-{handle_id:016x}", state.nonce);
-    let result = json!({"valid": true, "handle": handle, "model_id": model.raw.model_id, "content_hash": model.content_hash, "semantic_hash": model.semantic_hash, "diagnostics": [], "readiness": if model.raw.outcomes.is_empty() || (model.raw.inputs.is_empty() && model.raw.rules.is_empty()) { "incomplete_model" } else { "ready_for_analysis" }});
+    let result = json!({"valid": true, "handle": handle, "model_id": model.raw.model_id, "content_hash": model.content_hash, "semantic_hash": model.semantic_hash, "diagnostics": [], "compile_elapsed_ms": compile_elapsed_ms, "readiness": if model.raw.outcomes.is_empty() || (model.raw.inputs.is_empty() && model.raw.rules.is_empty()) { "incomplete_model" } else { "ready_for_analysis" }});
     (success(request_id, result), Some((handle, model)))
 }
 
@@ -578,9 +581,8 @@ fn parse_budget(
     maximum: u64,
     max_obligations: usize,
 ) -> Result<AnalysisBudget, String> {
-    let Some(value) = params.get("budget") else {
-        return Ok(AnalysisBudget::default());
-    };
+    let empty_budget = Value::Object(Map::new());
+    let value = params.get("budget").unwrap_or(&empty_budget);
     let Some(object) = value.as_object() else {
         return Err("budget must be an object".to_owned());
     };
@@ -595,10 +597,32 @@ fn parse_budget(
     }) {
         return Err("budget contains an unknown field".to_owned());
     }
+    for key in [
+        "total_timeout_ms",
+        "per_obligation_timeout_ms",
+        "max_obligations",
+        "solver_resource_limit",
+    ] {
+        if value.get(key).is_some_and(Value::is_null) {
+            return Err(format!("{key} must be a nonzero integer"));
+        }
+    }
     let mut budget: AnalysisBudget =
         serde_json::from_value(value.clone()).map_err(|error| error.to_string())?;
-    budget.total_timeout_ms = budget.total_timeout_ms.map(|v| v.min(maximum));
-    budget.per_obligation_timeout_ms = budget.per_obligation_timeout_ms.map(|v| v.min(maximum));
+    if budget.total_timeout_ms == Some(0)
+        || budget.per_obligation_timeout_ms == Some(0)
+        || budget.max_obligations == Some(0)
+        || budget.solver_resource_limit == Some(0)
+    {
+        return Err("budget values must be nonzero".to_owned());
+    }
+    budget.total_timeout_ms = Some(budget.total_timeout_ms.unwrap_or(5_000).min(maximum));
+    budget.per_obligation_timeout_ms = Some(
+        budget
+            .per_obligation_timeout_ms
+            .unwrap_or(1_000)
+            .min(maximum),
+    );
     budget.max_obligations = Some(
         budget
             .max_obligations
