@@ -296,6 +296,105 @@ fn finite_integer_solver_answers_match_exhaustive_model_evaluation() {
 }
 
 #[test]
+fn all_five_obligations_match_finite_enum_and_date_evaluation_with_assumptions() {
+    let mut value = fixture("unsafe-grant.json");
+    value["rules"].as_array_mut().expect("rules array").push(json!({
+        "id": "AlwaysDifferentExpiry",
+        "when": {"kind": "bool", "value": true},
+        "then": {"outcome": "Grant", "fields": {"expiry": {"kind": "date", "value": "9999-12-31"}}},
+        "origin": {"kind": "proposal", "source_ids": [], "review": "proposed"}
+    }));
+    let Some(model) = compile(&value) else {
+        return;
+    };
+    let approvals = ["Approved", "NotApproved", "Unknown"];
+    let dates = [
+        "0001-01-01",
+        "0001-01-02",
+        "1900-02-28",
+        "1900-03-01",
+        "2000-02-28",
+        "2000-02-29",
+        "2000-03-01",
+        "9999-12-30",
+        "9999-12-31",
+    ];
+    for assumptions in [Vec::new(), vec!["SponsorsAlreadyApproved".to_owned()]] {
+        let mut expected = [false; 5];
+        for approval in approvals {
+            for contract_end in dates {
+                for requested_expiry in dates {
+                    let inputs = InputValues::from([
+                        (
+                            "sponsor_approval".to_owned(),
+                            Value::Enum {
+                                enum_name: "ApprovalStatus".to_owned(),
+                                variant: approval.to_owned(),
+                            },
+                        ),
+                        (
+                            "contract_end".to_owned(),
+                            Value::Date {
+                                value: contract_end.to_owned(),
+                            },
+                        ),
+                        (
+                            "requested_expiry".to_owned(),
+                            Value::Date {
+                                value: requested_expiry.to_owned(),
+                            },
+                        ),
+                    ]);
+                    let result = evaluate(&model, &inputs, &assumptions, None);
+                    assert!(result.is_ok(), "oracle failed: {result:?}");
+                    if let Ok(result) = result {
+                        expected[0] |= result.classification != "outside_domain";
+                        expected[1] |= result
+                            .matched_rule_ids
+                            .iter()
+                            .any(|id| id == "GrantApprovedRequest");
+                        expected[2] |= result.classification != "outside_domain"
+                            && result.matched_rule_ids.is_empty();
+                        expected[3] |= result.classification == "conflicting";
+                        expected[4] |= result
+                            .matched_rule_ids
+                            .iter()
+                            .any(|id| id == "GrantApprovedRequest")
+                            && result
+                                .violated_constraint_ids
+                                .iter()
+                                .any(|id| id == "ExpiryWithinContract");
+                    }
+                }
+            }
+        }
+        let obligations = [
+            Obligation::DomainFeasibility,
+            Obligation::RuleReachability {
+                rule_id: "GrantApprovedRequest".to_owned(),
+            },
+            Obligation::Coverage,
+            Obligation::OutcomeConflict {
+                left_rule_id: "GrantApprovedRequest".to_owned(),
+                right_rule_id: "AlwaysDifferentExpiry".to_owned(),
+            },
+            Obligation::ConstraintCompliance {
+                rule_id: "GrantApprovedRequest".to_owned(),
+                constraint_id: "ExpiryWithinContract".to_owned(),
+            },
+        ];
+        for (obligation, oracle) in obligations.iter().zip(expected) {
+            let answer = solve(&model, obligation, &assumptions);
+            assert_eq!(
+                matches!(answer, BackendAnswer::Sat { .. }),
+                oracle,
+                "{obligation:?}, assumptions={assumptions:?}, answer={answer:?}"
+            );
+        }
+    }
+}
+
+#[test]
 fn coverage_tag_conflicts_identical_outputs_and_empty_domains_are_exact() {
     let Some(complete) = compile(&fixture("complete-proposed.json")) else {
         return;
@@ -345,6 +444,53 @@ fn coverage_tag_conflicts_identical_outputs_and_empty_domains_are_exact() {
 }
 
 #[test]
+fn analysis_replays_coverage_and_conflict_counterexamples() {
+    let Some(model) = compile(&fixture("conflict-payload.json")) else {
+        return;
+    };
+    let mut backend = Z3Backend::new();
+    let report = analyze(
+        &model,
+        &AnalysisOptions {
+            checks: vec![Check::Coverage, Check::OutcomeConflict],
+            assumption_ids: Vec::new(),
+            budget: author_analysis::AnalysisBudget::default(),
+        },
+        &mut backend,
+    );
+    assert!(report.is_ok(), "analysis/replay failed: {report:?}");
+    let Ok(report) = report else {
+        return;
+    };
+    assert!(report.results.iter().any(|result| {
+        result.finding_category == Some(FindingCategory::Conflict) && result.witness.is_some()
+    }));
+
+    let Some(partial_model) = compile(&fixture("unsafe-grant.json")) else {
+        return;
+    };
+    let report = analyze(
+        &partial_model,
+        &AnalysisOptions {
+            checks: vec![Check::Coverage],
+            assumption_ids: Vec::new(),
+            budget: author_analysis::AnalysisBudget::default(),
+        },
+        &mut backend,
+    );
+    assert!(
+        report.is_ok(),
+        "coverage analysis/replay failed: {report:?}"
+    );
+    let Ok(report) = report else {
+        return;
+    };
+    assert!(report.results.iter().any(|result| {
+        result.finding_category == Some(FindingCategory::Uncovered) && result.witness.is_some()
+    }));
+}
+
+#[test]
 fn analysis_replays_z3_compliance_counterexamples() {
     let Some(model) = compile(&fixture("unsafe-grant.json")) else {
         return;
@@ -363,11 +509,58 @@ fn analysis_replays_z3_compliance_counterexamples() {
     let Ok(report) = report else {
         return;
     };
-    assert!(report.results.iter().any(|result| {
+    let violation = report.results.iter().find(|result| {
         result.status == ResultStatus::Finding
             && result.finding_category == Some(FindingCategory::Violation)
             && result.witness.is_some()
-    }));
+    });
+    assert!(violation.is_some());
+    let statistics = violation.and_then(|result| result.statistics.as_ref());
+    assert!(
+        statistics.is_some(),
+        "native solver statistics should be attached"
+    );
+    let assertion_count = statistics.and_then(|stats| stats.values.get("assertion_count"));
+    assert!(
+        assertion_count
+            .and_then(|count| count.parse::<usize>().ok())
+            .is_some_and(|count| count > 0),
+        "expected actual assertion count, got {statistics:?}"
+    );
+}
+
+#[test]
+fn low_resource_budget_returns_inconclusive_without_claiming_success() {
+    let mut value = fixture("big-integer.json");
+    value["domain"] = json!([{
+        "id": "ResourceProbe",
+        "expr": {"kind": "and", "args": [
+            {"kind": "ge", "left": {"kind": "ref", "path": "input.amount"}, "right": {"kind": "int", "value": "-1000000000000000000000000000000000000000000", "unit": "count"}},
+            {"kind": "le", "left": {"kind": "ref", "path": "input.amount"}, "right": {"kind": "int", "value": "1000000000000000000000000000000000000000000", "unit": "count"}},
+            {"kind": "ne", "left": {"kind": "ref", "path": "input.amount"}, "right": {"kind": "int", "value": "0", "unit": "count"}}
+        ]},
+        "origin": {"kind": "proposal", "source_ids": [], "review": "proposed"}
+    }]);
+    let Some(model) = compile(&value) else {
+        return;
+    };
+    let mut backend = Z3Backend::new();
+    let answer = backend.solve(
+        &model,
+        &Obligation::DomainFeasibility,
+        &[],
+        &SolveBudget {
+            timeout_ms: 2_000,
+            solver_resource_limit: Some(1),
+        },
+    );
+    assert!(
+        matches!(
+            answer,
+            BackendAnswer::Unknown { .. } | BackendAnswer::Timeout | BackendAnswer::Cancelled
+        ),
+        "a one-unit Z3 resource limit must not be treated as a completed answer: {answer:?}"
+    );
 }
 
 #[test]
