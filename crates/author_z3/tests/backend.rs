@@ -1,10 +1,10 @@
 use author_analysis::{
-    analyze, AnalysisOptions, Backend, BackendAnswer, Check, FindingCategory, Obligation,
-    ResultStatus, SolveBudget,
+    AnalysisOptions, Backend, BackendAnswer, Check, FindingCategory, Obligation, ResultStatus,
+    SolveBudget, analyze,
 };
-use author_model::{compile_json, evaluate, CompiledModel, InputValues, ModelLimits, Value};
+use author_model::{CompiledModel, InputValues, ModelLimits, Value, compile_json, evaluate};
 use author_z3::Z3Backend;
-use serde_json::{json, Value as JsonValue};
+use serde_json::{Value as JsonValue, json};
 
 fn fixture(name: &str) -> JsonValue {
     let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))

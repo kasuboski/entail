@@ -14,17 +14,29 @@ pub fn read_frame(reader: &mut impl Read, max_frame_bytes: usize) -> io::Result<
     while filled < header.len() {
         match reader.read(&mut header[filled..]) {
             Ok(0) if filled == 0 => return Ok(None),
-            Ok(0) => return Err(io::Error::new(io::ErrorKind::UnexpectedEof, "partial frame header")),
+            Ok(0) => {
+                return Err(io::Error::new(
+                    io::ErrorKind::UnexpectedEof,
+                    "partial frame header",
+                ));
+            }
             Ok(count) => filled += count,
             Err(error) if error.kind() == io::ErrorKind::Interrupted => continue,
             Err(error) => return Err(error),
         }
     }
 
-    let length = usize::try_from(u32::from_be_bytes(header))
-        .map_err(|_| io::Error::new(io::ErrorKind::InvalidData, "frame length cannot be represented"))?;
+    let length = usize::try_from(u32::from_be_bytes(header)).map_err(|_| {
+        io::Error::new(
+            io::ErrorKind::InvalidData,
+            "frame length cannot be represented",
+        )
+    })?;
     if length > max_frame_bytes {
-        return Err(io::Error::new(io::ErrorKind::InvalidData, "frame exceeds configured maximum"));
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            "frame exceeds configured maximum",
+        ));
     }
     let mut payload = vec![0; length];
     reader.read_exact(&mut payload)?;
@@ -34,14 +46,25 @@ pub fn read_frame(reader: &mut impl Read, max_frame_bytes: usize) -> io::Result<
 }
 
 /// Writes one JSON value as a complete big-endian length-prefixed frame.
-pub fn write_frame(writer: &mut impl Write, value: &Value, max_frame_bytes: usize) -> io::Result<()> {
+pub fn write_frame(
+    writer: &mut impl Write,
+    value: &Value,
+    max_frame_bytes: usize,
+) -> io::Result<()> {
     let payload = serde_json::to_vec(value)
         .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?;
     if payload.len() > max_frame_bytes || payload.len() > u32::MAX as usize {
-        return Err(io::Error::new(io::ErrorKind::InvalidInput, "frame exceeds configured maximum"));
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidInput,
+            "frame exceeds configured maximum",
+        ));
     }
-    let length = u32::try_from(payload.len())
-        .map_err(|_| io::Error::new(io::ErrorKind::InvalidInput, "frame length exceeds protocol limit"))?;
+    let length = u32::try_from(payload.len()).map_err(|_| {
+        io::Error::new(
+            io::ErrorKind::InvalidInput,
+            "frame length exceeds protocol limit",
+        )
+    })?;
     writer.write_all(&length.to_be_bytes())?;
     writer.write_all(&payload)?;
     writer.flush()
@@ -77,20 +100,38 @@ mod tests {
         let value = json!({"request_id":"fragmented", "op":"hello"});
         let mut bytes = Vec::new();
         write_frame(&mut bytes, &value, 1024).expect("writing a small frame succeeds");
-        let mut input = Fragmented { bytes: &bytes, chunk_size: 1 };
-        assert_eq!(read_frame(&mut input, 1024).expect("reading frame succeeds"), Some(value));
+        let mut input = Fragmented {
+            bytes: &bytes,
+            chunk_size: 1,
+        };
+        assert_eq!(
+            read_frame(&mut input, 1024).expect("reading frame succeeds"),
+            Some(value)
+        );
         assert_eq!(read_frame(&mut input, 1024).expect("EOF succeeds"), None);
     }
 
     #[test]
     fn oversized_length_is_rejected_before_allocating_payload() {
-        let mut input = Fragmented { bytes: &[0, 0, 0, 9], chunk_size: 4 };
-        assert_eq!(read_frame(&mut input, 8).err().map(|error| error.kind()), Some(io::ErrorKind::InvalidData));
+        let mut input = Fragmented {
+            bytes: &[0, 0, 0, 9],
+            chunk_size: 4,
+        };
+        assert_eq!(
+            read_frame(&mut input, 8).err().map(|error| error.kind()),
+            Some(io::ErrorKind::InvalidData)
+        );
     }
 
     #[test]
     fn partial_header_is_not_clean_eof() {
-        let mut input = Fragmented { bytes: &[0, 0], chunk_size: 1 };
-        assert_eq!(read_frame(&mut input, 8).err().map(|error| error.kind()), Some(io::ErrorKind::UnexpectedEof));
+        let mut input = Fragmented {
+            bytes: &[0, 0],
+            chunk_size: 1,
+        };
+        assert_eq!(
+            read_frame(&mut input, 8).err().map(|error| error.kind()),
+            Some(io::ErrorKind::UnexpectedEof)
+        );
     }
 }
