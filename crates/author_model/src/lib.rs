@@ -1,6 +1,6 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use chrono::NaiveDate;
+use chrono::{Datelike, NaiveDate};
 use num_bigint::BigInt;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -183,6 +183,7 @@ pub enum Expr {
         condition: Box<Expr>,
         #[serde(rename = "then")]
         then_expr: Box<Expr>,
+        #[serde(rename = "else")]
         else_expr: Box<Expr>,
     },
 }
@@ -266,6 +267,11 @@ pub struct Evaluation {
 fn error(code: &str, msg: impl Into<String>) -> Diagnostic {
     Diagnostic::new(code, msg)
 }
+fn valid_identifier(id: &str) -> bool {
+    let mut chars = id.chars();
+    chars.next().is_some_and(|c| c.is_ascii_alphabetic())
+        && chars.all(|c| c.is_ascii_alphanumeric() || c == '_')
+}
 fn canonical(v: &serde_json::Value) -> serde_json::Value {
     match v {
         serde_json::Value::Object(m) => {
@@ -295,6 +301,7 @@ fn canonical_integer(value: &str) -> bool {
 fn parse_date(s: &str) -> Option<NaiveDate> {
     NaiveDate::parse_from_str(s, "%Y-%m-%d")
         .ok()
+        .filter(|d| (1..=9999).contains(&d.year()))
         .filter(|d| d.format("%Y-%m-%d").to_string() == s)
 }
 fn expr_count(e: &Expr, depth: usize, count: &mut usize, maxdepth: usize) -> bool {
@@ -386,6 +393,9 @@ fn infer(e: &Expr, raw: &RawModel, allow_outcome: bool, ds: &mut Vec<Diagnostic>
     match e {
         Expr::Bool { .. } => Some(Type::Bool),
         Expr::Int { value, unit } => {
+            if !valid_identifier(unit) {
+                ds.push(error("schema_error", format!("invalid unit {unit}")));
+            }
             if !canonical_integer(value) {
                 ds.push(error(
                     "type_mismatch",
@@ -404,6 +414,9 @@ fn infer(e: &Expr, raw: &RawModel, allow_outcome: bool, ds: &mut Vec<Diagnostic>
             Some(Type::Date)
         }
         Expr::Enum { enum_name, variant } => {
+            if !valid_identifier(enum_name) || !valid_identifier(variant) {
+                ds.push(error("schema_error", "invalid enum literal identifier"));
+            }
             if !raw
                 .enums
                 .iter()
@@ -535,10 +548,127 @@ fn infer(e: &Expr, raw: &RawModel, allow_outcome: bool, ds: &mut Vec<Diagnostic>
     }
 }
 
+fn preflight(value: &serde_json::Value, limits: &ModelLimits) -> Result<(), Vec<Diagnostic>> {
+    let Some(root) = value.as_object() else {
+        return Err(vec![error("schema_error", "model must be an object")]);
+    };
+    for (key, limit) in [
+        ("inputs", limits.inputs),
+        ("derived", limits.inputs),
+        ("enums", limits.inputs),
+        ("outcomes", limits.inputs),
+        ("rules", limits.rules),
+        ("domain", limits.rules),
+        ("assumptions", limits.rules),
+        ("open_items", limits.rules),
+        ("constraints", limits.constraints),
+    ] {
+        if root
+            .get(key)
+            .and_then(serde_json::Value::as_array)
+            .is_some_and(|items| items.len() > limit)
+        {
+            return Err(vec![error(
+                "resource_limit",
+                format!("{key} declaration limit exceeded"),
+            )]);
+        }
+    }
+    let mut roots: Vec<&serde_json::Value> = Vec::new();
+    for key in ["derived", "domain", "assumptions", "rules", "constraints"] {
+        if let Some(items) = root.get(key).and_then(serde_json::Value::as_array) {
+            for item in items {
+                match key {
+                    "derived" | "domain" | "assumptions" => {
+                        if let Some(expr) = item.get("expr") {
+                            roots.push(expr);
+                        }
+                    }
+                    "rules" => {
+                        if let Some(expr) = item.get("when") {
+                            roots.push(expr);
+                        }
+                        if let Some(fields) = item
+                            .get("then")
+                            .and_then(|then| then.get("fields"))
+                            .and_then(serde_json::Value::as_object)
+                        {
+                            roots.extend(fields.values());
+                        }
+                    }
+                    "constraints" => {
+                        if let Some(expr) = item.get("must") {
+                            roots.push(expr);
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        }
+    }
+    let mut object_stack = vec![value];
+    while let Some(node) = object_stack.pop() {
+        match node {
+            serde_json::Value::Object(object) => {
+                for (key, child) in object {
+                    if matches!(key.as_str(), "locator" | "note") && child.is_null() {
+                        return Err(vec![error(
+                            "schema_error",
+                            format!("{key} must be omitted or a string"),
+                        )]);
+                    }
+                    object_stack.push(child);
+                }
+            }
+            serde_json::Value::Array(items) => object_stack.extend(items),
+            _ => {}
+        }
+    }
+    // Keep recursive serde construction and type inference bounded even if a caller
+    // supplies a looser limit than the crate's supported safety ceiling.
+    let max_depth = limits
+        .expression_depth
+        .min(ModelLimits::default().expression_depth);
+    let mut count = 0usize;
+    let mut stack: Vec<(&serde_json::Value, usize)> =
+        roots.into_iter().map(|expr| (expr, 1)).collect();
+    while let Some((expr, depth)) = stack.pop() {
+        count = count.saturating_add(1);
+        if count > limits.expression_nodes {
+            return Err(vec![error(
+                "resource_limit",
+                "expression node limit exceeded",
+            )]);
+        }
+        if depth > max_depth {
+            return Err(vec![error(
+                "resource_limit",
+                "expression depth limit exceeded",
+            )]);
+        }
+        if let Some(object) = expr.as_object() {
+            for (key, child) in object {
+                if matches!(
+                    key.as_str(),
+                    "arg" | "left" | "right" | "condition" | "then" | "else"
+                ) {
+                    stack.push((child, depth.saturating_add(1)));
+                } else if key == "args" {
+                    if let Some(args) = child.as_array() {
+                        stack.extend(args.iter().map(|arg| (arg, depth.saturating_add(1))));
+                    }
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
 pub fn compile_json(
     value: &serde_json::Value,
     limits: &ModelLimits,
 ) -> Result<CompiledModel, Vec<Diagnostic>> {
+    preflight(value, limits)?;
     let raw: RawModel = serde_json::from_value(value.clone())
         .map_err(|e| vec![error("schema_error", e.to_string())])?;
     let mut ds = vec![];
@@ -558,6 +688,12 @@ pub fn compile_json(
         chars.next().is_some_and(|c| c.is_ascii_alphabetic())
             && chars.all(|c| c.is_ascii_alphanumeric() || c == '_')
     };
+    if !valid_id(&raw.model_id) {
+        ds.push(error(
+            "schema_error",
+            format!("invalid model_id {}", raw.model_id),
+        ));
+    }
     for source in &raw.sources {
         if !valid_id(&source.id) || source.text.is_empty() {
             ds.push(error(
@@ -711,6 +847,22 @@ pub fn compile_json(
         }
     }
     for item in &raw.open_items {
+        if item.text.is_empty()
+            || !matches!(
+                item.affects.as_str(),
+                "input_domain"
+                    | "outcome_schema"
+                    | "rule_policy"
+                    | "constraint"
+                    | "lifecycle"
+                    | "interpretation"
+            )
+        {
+            ds.push(error(
+                "schema_error",
+                format!("invalid open item {}", item.id),
+            ));
+        }
         for source_id in &item.source_ids {
             if !sources.contains(source_id) {
                 ds.push(error(
@@ -826,13 +978,37 @@ pub fn compile_json(
         }
     }
     for c in &raw.constraints {
-        if !raw.outcomes.iter().any(|o| o.id == c.for_outcome) {
+        let target = raw.outcomes.iter().find(|o| o.id == c.for_outcome);
+        if target.is_none() {
             ds.push(error(
                 "unknown_reference",
                 format!("constraint {} names unknown outcome", c.id),
             ));
         }
-        if infer(&c.must, &raw, true, &mut ds) != Some(Type::Bool) {
+        let mut paths = vec![];
+        refs(&c.must, &mut paths);
+        if let Some(target) = target {
+            for path in paths
+                .iter()
+                .filter_map(|path| path.strip_prefix("outcome."))
+            {
+                match target.fields.iter().find(|field| field.id == path) {
+                    Some(_field) => {}
+                    None => ds.push(error(
+                        "unknown_reference",
+                        format!(
+                            "constraint {} references missing field outcome.{path} on {}",
+                            c.id, target.id
+                        ),
+                    )),
+                }
+            }
+        }
+        let mut scoped = raw.clone();
+        scoped
+            .outcomes
+            .retain(|outcome| outcome.id == c.for_outcome);
+        if infer(&c.must, &scoped, true, &mut ds) != Some(Type::Bool) {
             ds.push(error(
                 "type_mismatch",
                 format!("constraint {} must be boolean", c.id),
@@ -1351,5 +1527,66 @@ mod tests {
         let second = compile_json(&value, &ModelLimits::default()).unwrap();
         assert_ne!(first.content_hash, second.content_hash);
         assert_eq!(first.semantic_hash, second.semantic_hash);
+    }
+    fn fixture() -> serde_json::Value {
+        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../author-engine-v0/fixtures/valid/partial.json");
+        serde_json::from_slice(&std::fs::read(path).unwrap()).unwrap()
+    }
+    #[test]
+    fn constraint_outcome_fields_are_scoped_to_target_constructor() {
+        let mut value = fixture();
+        value["outcomes"]
+            .as_array_mut()
+            .unwrap()
+            .push(serde_json::json!({
+                "id": "Other", "fields": [{"id":"expiry", "type":{"kind":"int", "unit":"days"}}],
+                "origin":{"kind":"proposal", "source_ids":[], "review":"proposed"}
+            }));
+        let constraint = value["constraints"][1].as_object_mut().unwrap();
+        constraint.insert("for_outcome".into(), serde_json::json!("Other"));
+        constraint.insert("must".into(), serde_json::json!({"kind":"eq", "left":{"kind":"ref", "path":"outcome.expiry"}, "right":{"kind":"int", "value":"1", "unit":"days"}}));
+        assert!(compile_json(&value, &ModelLimits::default()).is_ok());
+        value["constraints"][1]["must"]["right"]["unit"] = serde_json::json!("hours");
+        assert!(compile_json(&value, &ModelLimits::default()).is_err());
+    }
+    #[test]
+    fn year_zero_date_is_rejected() {
+        let mut value = fixture();
+        value["constraints"][1]["must"]["left"] =
+            serde_json::json!({"kind":"date", "value":"0000-01-01"});
+        assert!(compile_json(&value, &ModelLimits::default()).is_err());
+    }
+    #[test]
+    fn preflight_rejects_depth_before_deserialization() {
+        let mut value = fixture();
+        let mut expr = serde_json::json!({"kind":"bool", "value":true});
+        for _ in 0..20 {
+            expr = serde_json::json!({"kind":"not", "arg":expr});
+        }
+        value["constraints"][0]["must"] = expr;
+        let limits = ModelLimits {
+            expression_depth: 8,
+            ..ModelLimits::default()
+        };
+        let errors = compile_json(&value, &limits).unwrap_err();
+        assert!(errors.iter().any(|diag| diag.code == "resource_limit"));
+    }
+    #[test]
+    fn schema_patterns_and_optional_nulls_are_enforced() {
+        let mut value = fixture();
+        value["model_id"] = serde_json::json!("1bad");
+        assert!(compile_json(&value, &ModelLimits::default()).is_err());
+        value = fixture();
+        value["sources"][0]["locator"] = serde_json::Value::Null;
+        assert!(compile_json(&value, &ModelLimits::default()).is_err());
+        value = fixture();
+        value["open_items"] = serde_json::json!([{"id":"Question", "text":"x", "source_ids":[], "affects":"unknown"}]);
+        assert!(compile_json(&value, &ModelLimits::default()).is_err());
+    }
+    #[test]
+    fn if_expression_uses_schema_else_property() {
+        let value = serde_json::json!({"kind":"if", "condition":{"kind":"bool", "value":true}, "then":{"kind":"bool", "value":true}, "else":{"kind":"bool", "value":false}});
+        assert!(serde_json::from_value::<Expr>(value).is_ok());
     }
 }
