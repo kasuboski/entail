@@ -10,3 +10,6 @@
 *.swp
 __pycache__/
 *.py[cod]
+
+# Local agent work-state tracker
+/STATUS.md
