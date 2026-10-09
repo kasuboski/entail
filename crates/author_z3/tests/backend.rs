@@ -1,10 +1,10 @@
 use author_analysis::{
-    AnalysisOptions, Backend, BackendAnswer, Check, FindingCategory, Obligation, ResultStatus,
-    SolveBudget, analyze,
+    analyze, AnalysisOptions, Backend, BackendAnswer, Check, FindingCategory, Obligation,
+    ResultStatus, SolveBudget,
 };
-use author_model::{CompiledModel, InputValues, ModelLimits, Value, compile_json, evaluate};
+use author_model::{compile_json, evaluate, CompiledModel, InputValues, ModelLimits, Value};
 use author_z3::Z3Backend;
-use serde_json::{Value as JsonValue, json};
+use serde_json::{json, Value as JsonValue};
 
 fn fixture(name: &str) -> JsonValue {
     let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -71,7 +71,7 @@ fn lowers_every_expression_operator_with_unbounded_integer_witnesses() {
                 {"kind": "gt", "left": {"kind": "ref", "path": "input.amount"}, "right": {"kind": "int", "value": previous, "unit": "count"}},
                 {"kind": "eq", "left": {"kind": "scale", "factor": "2", "arg": {"kind": "ref", "path": "input.amount"}}, "right": {"kind": "int", "value": doubled, "unit": "count"}},
                 {"kind": "eq", "left": {"kind": "ref", "path": "derived.twice"}, "right": {"kind": "int", "value": doubled, "unit": "count"}},
-                {"kind": "eq", "left": {"kind": "if", "condition": {"kind": "bool", "value": true}, "then": {"kind": "ref", "path": "input.amount"}, "else_expr": {"kind": "int", "value": next, "unit": "count"}}, "right": {"kind": "int", "value": huge, "unit": "count"}},
+                {"kind": "eq", "left": {"kind": "if", "condition": {"kind": "bool", "value": true}, "then": {"kind": "ref", "path": "input.amount"}, "else": {"kind": "int", "value": next, "unit": "count"}}, "right": {"kind": "int", "value": huge, "unit": "count"}},
                 {"kind": "or", "args": [{"kind": "bool", "value": false}, {"kind": "bool", "value": true}]},
                 {"kind": "not", "arg": {"kind": "bool", "value": false}}
             ]
@@ -243,7 +243,7 @@ fn finite_integer_solver_answers_match_exhaustive_model_evaluation() {
         "kind": "if",
         "condition": {"kind": "lt", "left": {"kind": "ref", "path": "input.amount"}, "right": {"kind": "int", "value": "0", "unit": "count"}},
         "then": {"kind": "ge", "left": {"kind": "scale", "factor": "-2", "arg": {"kind": "ref", "path": "input.amount"}}, "right": {"kind": "int", "value": "2", "unit": "count"}},
-        "else_expr": {"kind": "eq", "left": {"kind": "ref", "path": "input.amount"}, "right": {"kind": "int", "value": "2", "unit": "count"}}
+        "else": {"kind": "eq", "left": {"kind": "ref", "path": "input.amount"}, "right": {"kind": "int", "value": "2", "unit": "count"}}
     }));
     rules.push(json!({
         "id": "Impossible",
