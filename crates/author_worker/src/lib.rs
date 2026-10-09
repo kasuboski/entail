@@ -439,7 +439,7 @@ fn compile_request(
     };
     state.next_handle = handle_id;
     let handle = format!("{}-{handle_id:016x}", state.nonce);
-    let result = json!({"valid": true, "handle": handle, "model_id": model.raw.model_id, "content_hash": model.content_hash, "semantic_hash": model.semantic_hash, "diagnostics": [], "compile_elapsed_ms": compile_elapsed_ms, "readiness": if model.raw.outcomes.is_empty() || (model.raw.inputs.is_empty() && model.raw.rules.is_empty()) { "incomplete_model" } else { "ready_for_analysis" }});
+    let result = json!({"valid": true, "handle": handle, "model_id": model.raw().model_id, "content_hash": model.content_hash(), "semantic_hash": model.semantic_hash(), "diagnostics": [], "compile_elapsed_ms": compile_elapsed_ms, "readiness": if model.raw().outcomes.is_empty() || (model.raw().inputs.is_empty() && model.raw().rules.is_empty()) { "incomplete_model" } else { "ready_for_analysis" }});
     (success(request_id, result), Some((handle, model)))
 }
 

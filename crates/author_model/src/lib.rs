@@ -247,12 +247,49 @@ impl Default for ModelLimits {
         }
     }
 }
+/// A validated, immutable model snapshot produced by [`compile_json`].
+///
+/// Its raw declarations and hashes cannot be changed independently, preserving the
+/// compiler's semantic validation and cache identity guarantees.
+///
+/// ```compile_fail
+/// # use author_model::{compile_json, CompiledModel, ModelLimits};
+/// # let input = serde_json::json!({"model_id":"example"});
+/// # let mut model: CompiledModel = compile_json(&input, &ModelLimits::default()).unwrap();
+/// model.raw().domain[0].expr = serde_json::json!(true);
+/// ```
 #[derive(Clone, Debug)]
 pub struct CompiledModel {
-    pub raw: RawModel,
-    pub derived_order: Vec<String>,
-    pub content_hash: String,
-    pub semantic_hash: String,
+    raw: RawModel,
+    derived_order: Vec<String>,
+    content_hash: String,
+    semantic_hash: String,
+}
+
+impl CompiledModel {
+    /// The validated source model. This is an immutable reference, not an editing API.
+    #[must_use]
+    pub const fn raw(&self) -> &RawModel {
+        &self.raw
+    }
+
+    /// Compiler-derived topological order of derived declarations.
+    #[must_use]
+    pub fn derived_order(&self) -> &[String] {
+        &self.derived_order
+    }
+
+    /// Hash of the submitted JSON content, including non-semantic metadata.
+    #[must_use]
+    pub fn content_hash(&self) -> &str {
+        &self.content_hash
+    }
+
+    /// Hash of the model's normalized semantics.
+    #[must_use]
+    pub fn semantic_hash(&self) -> &str {
+        &self.semantic_hash
+    }
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Evaluation {
@@ -1367,7 +1404,7 @@ fn value_type(v: &Value) -> Type {
 /// Returns a diagnostic for missing, extra, malformed, or incorrectly typed values.
 pub fn validate_inputs(model: &CompiledModel, inputs: &InputValues) -> Result<(), Diagnostic> {
     let decl: BTreeMap<_, _> = model
-        .raw
+        .raw()
         .inputs
         .iter()
         .map(|x| (x.id.as_str(), &x.r#type))
@@ -1394,7 +1431,7 @@ pub fn validate_inputs(model: &CompiledModel, inputs: &InputValues) -> Result<()
             }
             Value::Enum { enum_name, variant }
                 if !model
-                    .raw
+                    .raw()
                     .enums
                     .iter()
                     .any(|e| e.id == *enum_name && e.variants.contains(variant)) =>
@@ -1612,9 +1649,9 @@ pub fn compute_derived(
 ) -> Result<BTreeMap<String, Value>, Diagnostic> {
     validate_inputs(model, inputs)?;
     let mut vals = BTreeMap::new();
-    for id in &model.derived_order {
+    for id in model.derived_order() {
         let d = model
-            .raw
+            .raw()
             .derived
             .iter()
             .find(|x| x.id == *id)
@@ -1648,7 +1685,7 @@ pub fn select_assumptions(
             ));
         }
         let p = model
-            .raw
+            .raw()
             .assumptions
             .iter()
             .find(|x| x.id == *id)
@@ -1667,7 +1704,7 @@ pub fn in_domain(
     derived: &BTreeMap<String, Value>,
     assumptions: &[String],
 ) -> Result<bool, Diagnostic> {
-    for p in &model.raw.domain {
+    for p in &model.raw().domain {
         if eval_expr(&p.expr, inputs, derived, &BTreeMap::new())? != (Value::Bool { value: true }) {
             return Ok(false);
         }
@@ -1702,7 +1739,7 @@ pub fn evaluate(
     }
     let mut matched = vec![];
     let mut outs = BTreeSet::new();
-    for r in &model.raw.rules {
+    for r in &model.raw().rules {
         if eval_expr(&r.when, inputs, &derived, &BTreeMap::new())? == (Value::Bool { value: true })
         {
             let mut fields = BTreeMap::new();
@@ -1726,7 +1763,7 @@ pub fn evaluate(
     for o in &outcomes {
         let ov = BTreeMap::from_iter(o.fields.iter().map(|(k, v)| (k.clone(), v.clone())));
         for c in model
-            .raw
+            .raw()
             .constraints
             .iter()
             .filter(|c| c.for_outcome == o.outcome)
@@ -1845,8 +1882,8 @@ mod tests {
         let first = compile_json(&value, &ModelLimits::default()).unwrap();
         value["sources"][0]["text"] = serde_json::Value::String("different provenance text".into());
         let second = compile_json(&value, &ModelLimits::default()).unwrap();
-        assert_ne!(first.content_hash, second.content_hash);
-        assert_eq!(first.semantic_hash, second.semantic_hash);
+        assert_ne!(first.content_hash(), second.content_hash());
+        assert_eq!(first.semantic_hash(), second.semantic_hash());
     }
     fn fixture() -> serde_json::Value {
         let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -2012,7 +2049,7 @@ mod tests {
             {"id":"Earlier", "type":{"kind":"int", "unit":"days"}, "expr":{"kind":"int", "value":"1", "unit":"days"}, "origin":{"kind":"proposal", "source_ids":[], "review":"proposed"}}
         ]);
         let model = compile_json(&value, &ModelLimits::default()).unwrap();
-        assert_eq!(model.derived_order, ["Earlier", "Later"]);
+        assert_eq!(model.derived_order(), ["Earlier", "Later"]);
         value["derived"][1]["expr"] = serde_json::json!({"kind":"ref", "path":"derived.Later"});
         let diagnostics = compile_json(&value, &ModelLimits::default()).unwrap_err();
         let cycle = diagnostics
@@ -2049,13 +2086,13 @@ mod tests {
 
     fn value_for_declared_inputs(model: &CompiledModel) -> serde_json::Value {
         let mut values = serde_json::Map::new();
-        for input in &model.raw.inputs {
+        for input in &model.raw().inputs {
             let value = match &input.r#type {
                 Type::Bool => serde_json::json!({"kind":"bool", "value":false}),
                 Type::Int { unit } => serde_json::json!({"kind":"int", "value":"0", "unit":unit}),
                 Type::Date => serde_json::json!({"kind":"date", "value":"2000-01-01"}),
                 Type::Enum { name } => {
-                    serde_json::json!({"kind":"enum", "enum":name, "variant":model.raw.enums.iter().find(|item| item.id == *name).unwrap().variants[0]})
+                    serde_json::json!({"kind":"enum", "enum":name, "variant":model.raw().enums.iter().find(|item| item.id == *name).unwrap().variants[0]})
                 }
             };
             values.insert(input.id.clone(), value);

@@ -85,14 +85,14 @@ fn validate_command(arguments: &[String]) -> CliResult {
         )
     })?;
     let model = compile_file(path)?;
-    let readiness = if model.raw.outcomes.is_empty()
-        || (model.raw.inputs.is_empty() && model.raw.rules.is_empty())
+    let readiness = if model.raw().outcomes.is_empty()
+        || (model.raw().inputs.is_empty() && model.raw().rules.is_empty())
     {
         "incomplete_model"
     } else {
         "ready_for_analysis"
     };
-    Ok((json!({"valid":true,"model_id":model.raw.model_id,"content_hash":model.content_hash,"semantic_hash":model.semantic_hash,"language_version":"author-model/0.1","protocol_version":"author-worker/0.1","engine_version":author_analysis::ENGINE_VERSION,"solver_version":Z3Backend::new().solver_version(),"readiness":readiness,"diagnostics":[]}).to_string(), ExitCode::SUCCESS))
+    Ok((json!({"valid":true,"model_id":model.raw().model_id,"content_hash":model.content_hash(),"semantic_hash":model.semantic_hash(),"language_version":"author-model/0.1","protocol_version":"author-worker/0.1","engine_version":author_analysis::ENGINE_VERSION,"solver_version":Z3Backend::new().solver_version(),"readiness":readiness,"diagnostics":[]}).to_string(), ExitCode::SUCCESS))
 }
 
 fn parse_list(value: &str) -> Vec<String> {

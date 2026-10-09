@@ -163,6 +163,16 @@ pub trait Backend {
         String::new()
     }
 
+    /// Stable identity for this backend's answer semantics and configuration.
+    ///
+    /// Returning `None` disables the process-global completed-result cache. A backend
+    /// opting in must ensure this namespace changes whenever any solver behavior that
+    /// can affect answers changes; `solver_version` and `solver_configuration` are
+    /// included separately in the cache key as well.
+    fn cache_namespace(&self) -> Option<String> {
+        None
+    }
+
     fn statistics(&self) -> Option<SolverStatistics> {
         None
     }
@@ -254,6 +264,8 @@ struct CacheKey {
     obligation: Obligation,
     assumptions: Vec<String>,
     engine_encoding: String,
+    backend_type: &'static str,
+    cache_namespace: String,
     solver_version: String,
     solver_configuration: String,
     budget: SolveBudget,
@@ -269,11 +281,16 @@ fn cached_solve<B: Backend>(
     assumptions: &[String],
     budget: &SolveBudget,
 ) -> (BackendAnswer, bool) {
+    let Some(cache_namespace) = backend.cache_namespace() else {
+        return (backend.solve(model, obligation, assumptions, budget), false);
+    };
     let key = CacheKey {
-        semantic_hash: model.semantic_hash.clone(),
+        semantic_hash: model.semantic_hash().to_owned(),
         obligation: obligation.clone(),
         assumptions: assumptions.to_vec(),
         engine_encoding: CACHE_ENCODING_VERSION.to_owned(),
+        backend_type: std::any::type_name::<B>(),
+        cache_namespace,
         solver_version: backend.solver_version(),
         solver_configuration: backend.solver_configuration(),
         budget: budget.clone(),
@@ -342,7 +359,8 @@ fn check_selected(options: &AnalysisOptions) -> Vec<Check> {
 
 #[allow(clippy::too_many_lines)] // The cursor state machine keeps lazy obligation ordering explicit.
 fn next_plan(
-    model: &CompiledModel,
+    rules: &[&author_model::Rule],
+    constraints: &[&author_model::Constraint],
     output_signatures: &[String],
     checks: &[Check],
     cursors: &mut PlanCursors,
@@ -358,7 +376,7 @@ fn next_plan(
                 });
             }
             Check::RuleReachability => {
-                if let Some(rule) = model.raw.rules.get(cursors.rule) {
+                if let Some(rule) = rules.get(cursors.rule).copied() {
                     cursors.rule = cursors.rule.saturating_add(1);
                     return Some(Planned {
                         obligation: Obligation::RuleReachability {
@@ -372,23 +390,21 @@ fn next_plan(
                 cursors.check = cursors.check.saturating_add(1);
                 return Some(Planned {
                     obligation: Obligation::Coverage,
-                    synthetic: model
-                        .raw
-                        .rules
+                    synthetic: rules
                         .is_empty()
                         .then_some(FindingCategory::BehaviorUnspecified),
                 });
             }
             Check::OutcomeConflict => {
-                let n = model.raw.rules.len();
+                let n = rules.len();
                 if cursors.left < n {
                     if cursors.right >= n {
                         cursors.left = cursors.left.saturating_add(1);
                         cursors.right = cursors.left.saturating_add(1);
                         continue;
                     }
-                    let left = model.raw.rules.get(cursors.left)?;
-                    let right = model.raw.rules.get(cursors.right)?;
+                    let left = rules.get(cursors.left).copied()?;
+                    let right = rules.get(cursors.right).copied()?;
                     let outputs_are_identical =
                         output_signatures.get(cursors.left) == output_signatures.get(cursors.right);
                     cursors.right = cursors.right.saturating_add(1);
@@ -408,13 +424,12 @@ fn next_plan(
                 }
             }
             Check::ConstraintCompliance => {
-                while let Some(rule) = model.raw.rules.get(cursors.compliance_rule) {
-                    let mut constraints = model
-                        .raw
-                        .constraints
+                while let Some(rule) = rules.get(cursors.compliance_rule).copied() {
+                    let mut matching_constraints = constraints
                         .iter()
+                        .copied()
                         .filter(|constraint| constraint.for_outcome == rule.then.outcome);
-                    if let Some(constraint) = constraints.nth(cursors.constraint) {
+                    if let Some(constraint) = matching_constraints.nth(cursors.constraint) {
                         cursors.constraint = cursors.constraint.saturating_add(1);
                         return Some(Planned {
                             obligation: Obligation::ConstraintCompliance {
@@ -425,9 +440,7 @@ fn next_plan(
                         });
                     }
                     if cursors.constraint == 0
-                        && !model
-                            .raw
-                            .constraints
+                        && !constraints
                             .iter()
                             .any(|constraint| constraint.for_outcome == rule.then.outcome)
                     {
@@ -497,18 +510,11 @@ pub fn analyze<B: Backend>(
     let mut assumptions = options.assumption_ids.clone();
     assumptions.sort();
     let checks = check_selected(options);
-    let mut planning_model = model.clone();
-    planning_model
-        .raw
-        .rules
-        .sort_by(|left, right| left.id.cmp(&right.id));
-    planning_model
-        .raw
-        .constraints
-        .sort_by(|left, right| left.id.cmp(&right.id));
-    let output_signatures = planning_model
-        .raw
-        .rules
+    let mut rules: Vec<_> = model.raw().rules.iter().collect();
+    rules.sort_by(|left, right| left.id.cmp(&right.id));
+    let mut constraints: Vec<_> = model.raw().constraints.iter().collect();
+    constraints.sort_by(|left, right| left.id.cmp(&right.id));
+    let output_signatures = rules
         .iter()
         .map(|rule| {
             serde_json::to_string(&rule.then)
@@ -530,8 +536,13 @@ pub fn analyze<B: Backend>(
     let mut feasibility_confirmed = false;
     let mut complete = true;
 
-    while let Some(planned) = next_plan(&planning_model, &output_signatures, &checks, &mut cursors)
-    {
+    while let Some(planned) = next_plan(
+        &rules,
+        &constraints,
+        &output_signatures,
+        &checks,
+        &mut cursors,
+    ) {
         if results.len() >= budget.max_obligations {
             complete = false;
             results.push(skipped_result(
@@ -557,8 +568,8 @@ pub fn analyze<B: Backend>(
         }
         let mut result = base_result(model, &planned.obligation, &assumptions);
         if planned.obligation != Obligation::DomainFeasibility
-            && (model.raw.outcomes.is_empty()
-                || (model.raw.inputs.is_empty() && model.raw.rules.is_empty()))
+            && (model.raw().outcomes.is_empty()
+                || (model.raw().inputs.is_empty() && model.raw().rules.is_empty()))
         {
             result.status = ResultStatus::Skipped;
             result.skip_reason = Some("incomplete_model".to_owned());
@@ -660,18 +671,18 @@ pub fn analyze<B: Backend>(
     let participating_proposed_declaration_ids =
         proposed_declarations(model, &checks, &options.assumption_ids);
     Ok(AnalysisReport {
-        language_version: model.raw.language_version.clone(),
+        language_version: model.raw().language_version.clone(),
         engine_version: ENGINE_VERSION.to_owned(),
         solver_version: backend.solver_version(),
-        model_id: model.raw.model_id.clone(),
-        content_hash: model.content_hash.clone(),
-        semantic_hash: model.semantic_hash.clone(),
+        model_id: model.raw().model_id.clone(),
+        content_hash: model.content_hash().to_owned(),
+        semantic_hash: model.semantic_hash().to_owned(),
         selected_assumption_ids: assumptions,
-        domain_predicate_ids: model.raw.domain.iter().map(|p| p.id.clone()).collect(),
+        domain_predicate_ids: model.raw().domain.iter().map(|p| p.id.clone()).collect(),
         checks,
         budget,
         participating_proposed_declaration_ids,
-        open_items: model.raw.open_items.clone(),
+        open_items: model.raw().open_items.clone(),
         results,
         complete,
         cache_hits,
@@ -809,11 +820,11 @@ fn replay_witness(
             if !matched.contains(rule_id.as_str()) {
                 return Ok(false);
             }
-            let Some(rule) = model.raw.rules.iter().find(|rule| rule.id == *rule_id) else {
+            let Some(rule) = model.raw().rules.iter().find(|rule| rule.id == *rule_id) else {
                 return Ok(false);
             };
             let Some(constraint) = model
-                .raw
+                .raw()
                 .constraints
                 .iter()
                 .find(|constraint| constraint.id == *constraint_id)
@@ -847,7 +858,7 @@ fn rule_outcome_values(
     ids.iter()
         .map(|id| {
             let rule = model
-                .raw
+                .raw()
                 .rules
                 .iter()
                 .find(|rule| rule.id == *id)
@@ -884,23 +895,23 @@ fn base_result(
         .filter_map(|id| declaration_origin(model, id))
         .flat_map(|origin| origin.source_ids.iter().cloned())
         .collect();
-    for predicate in &model.raw.domain {
+    for predicate in &model.raw().domain {
         source_ids.extend(predicate.origin.source_ids.iter().cloned());
     }
     for origin in model
-        .raw
+        .raw()
         .inputs
         .iter()
         .map(|item| &item.origin)
-        .chain(model.raw.derived.iter().map(|item| &item.origin))
-        .chain(model.raw.enums.iter().map(|item| &item.origin))
-        .chain(model.raw.outcomes.iter().map(|item| &item.origin))
+        .chain(model.raw().derived.iter().map(|item| &item.origin))
+        .chain(model.raw().enums.iter().map(|item| &item.origin))
+        .chain(model.raw().outcomes.iter().map(|item| &item.origin))
     {
         source_ids.extend(origin.source_ids.iter().cloned());
     }
     for assumption in assumptions {
         if let Some(predicate) = model
-            .raw
+            .raw()
             .assumptions
             .iter()
             .find(|item| item.id == *assumption)
@@ -933,14 +944,14 @@ fn base_result(
 
 fn declaration_origin<'a>(model: &'a CompiledModel, id: &str) -> Option<&'a author_model::Origin> {
     model
-        .raw
+        .raw()
         .inputs
         .iter()
         .find(|x| x.id == id)
         .map(|x| &x.origin)
         .or_else(|| {
             model
-                .raw
+                .raw()
                 .derived
                 .iter()
                 .find(|x| x.id == id)
@@ -948,7 +959,7 @@ fn declaration_origin<'a>(model: &'a CompiledModel, id: &str) -> Option<&'a auth
         })
         .or_else(|| {
             model
-                .raw
+                .raw()
                 .enums
                 .iter()
                 .find(|x| x.id == id)
@@ -956,7 +967,7 @@ fn declaration_origin<'a>(model: &'a CompiledModel, id: &str) -> Option<&'a auth
         })
         .or_else(|| {
             model
-                .raw
+                .raw()
                 .outcomes
                 .iter()
                 .find(|x| x.id == id)
@@ -964,7 +975,7 @@ fn declaration_origin<'a>(model: &'a CompiledModel, id: &str) -> Option<&'a auth
         })
         .or_else(|| {
             model
-                .raw
+                .raw()
                 .domain
                 .iter()
                 .find(|x| x.id == id)
@@ -972,7 +983,7 @@ fn declaration_origin<'a>(model: &'a CompiledModel, id: &str) -> Option<&'a auth
         })
         .or_else(|| {
             model
-                .raw
+                .raw()
                 .assumptions
                 .iter()
                 .find(|x| x.id == id)
@@ -980,7 +991,7 @@ fn declaration_origin<'a>(model: &'a CompiledModel, id: &str) -> Option<&'a auth
         })
         .or_else(|| {
             model
-                .raw
+                .raw()
                 .rules
                 .iter()
                 .find(|x| x.id == id)
@@ -988,7 +999,7 @@ fn declaration_origin<'a>(model: &'a CompiledModel, id: &str) -> Option<&'a auth
         })
         .or_else(|| {
             model
-                .raw
+                .raw()
                 .constraints
                 .iter()
                 .find(|x| x.id == id)
@@ -1042,7 +1053,7 @@ fn proposed_declarations(
     let include_constraints = checks.contains(&Check::ConstraintCompliance);
     ids.extend(
         model
-            .raw
+            .raw()
             .inputs
             .iter()
             .filter(|x| matches!(&x.origin.review, author_model::Review::Proposed))
@@ -1050,7 +1061,7 @@ fn proposed_declarations(
     );
     ids.extend(
         model
-            .raw
+            .raw()
             .derived
             .iter()
             .filter(|x| matches!(&x.origin.review, author_model::Review::Proposed))
@@ -1058,7 +1069,7 @@ fn proposed_declarations(
     );
     ids.extend(
         model
-            .raw
+            .raw()
             .enums
             .iter()
             .filter(|x| matches!(&x.origin.review, author_model::Review::Proposed))
@@ -1066,7 +1077,7 @@ fn proposed_declarations(
     );
     ids.extend(
         model
-            .raw
+            .raw()
             .outcomes
             .iter()
             .filter(|x| matches!(&x.origin.review, author_model::Review::Proposed))
@@ -1075,7 +1086,7 @@ fn proposed_declarations(
     if include_rules {
         ids.extend(
             model
-                .raw
+                .raw()
                 .rules
                 .iter()
                 .filter(|x| matches!(&x.origin.review, author_model::Review::Proposed))
@@ -1085,7 +1096,7 @@ fn proposed_declarations(
     if include_constraints {
         ids.extend(
             model
-                .raw
+                .raw()
                 .constraints
                 .iter()
                 .filter(|x| matches!(&x.origin.review, author_model::Review::Proposed))
@@ -1094,7 +1105,7 @@ fn proposed_declarations(
     }
     ids.extend(
         model
-            .raw
+            .raw()
             .domain
             .iter()
             .filter(|x| matches!(&x.origin.review, author_model::Review::Proposed))
@@ -1103,7 +1114,7 @@ fn proposed_declarations(
     ids.extend(
         assumption_ids
             .iter()
-            .filter_map(|id| model.raw.assumptions.iter().find(|item| item.id == *id))
+            .filter_map(|id| model.raw().assumptions.iter().find(|item| item.id == *id))
             .filter(|x| matches!(&x.origin.review, author_model::Review::Proposed))
             .map(|x| x.id.clone()),
     );
@@ -1166,6 +1177,40 @@ mod tests {
 
         fn solver_configuration(&self) -> String {
             self.configuration.clone()
+        }
+
+        fn cache_namespace(&self) -> Option<String> {
+            Some("same-namespace-on-purpose".to_owned())
+        }
+    }
+
+    struct OtherMockBackend {
+        answer: BackendAnswer,
+        calls: usize,
+    }
+
+    impl Backend for OtherMockBackend {
+        fn solve(
+            &mut self,
+            _model: &CompiledModel,
+            _obligation: &Obligation,
+            _assumptions: &[String],
+            _budget: &SolveBudget,
+        ) -> BackendAnswer {
+            self.calls = self.calls.saturating_add(1);
+            self.answer.clone()
+        }
+
+        fn solver_version(&self) -> String {
+            "mock/1".to_owned()
+        }
+
+        fn solver_configuration(&self) -> String {
+            "same-settings".to_owned()
+        }
+
+        fn cache_namespace(&self) -> Option<String> {
+            Some("same-namespace-on-purpose".to_owned())
         }
     }
 
@@ -1439,14 +1484,11 @@ mod tests {
             checks: vec![Check::OutcomeConflict],
             ..AnalysisOptions::default()
         };
-        let mut planning_model = model.clone();
-        planning_model
-            .raw
-            .rules
-            .sort_by(|left, right| left.id.cmp(&right.id));
-        let signatures = planning_model
-            .raw
-            .rules
+        let mut rules: Vec<_> = model.raw().rules.iter().collect();
+        rules.sort_by(|left, right| left.id.cmp(&right.id));
+        let mut constraints: Vec<_> = model.raw().constraints.iter().collect();
+        constraints.sort_by(|left, right| left.id.cmp(&right.id));
+        let signatures = rules
             .iter()
             .map(|rule| serde_json::to_string(&rule.then).expect("rule output serializes"))
             .collect::<Vec<_>>();
@@ -1456,7 +1498,9 @@ mod tests {
             ..PlanCursors::default()
         };
         let mut answers = Vec::new();
-        while let Some(planned) = next_plan(&planning_model, &signatures, &checks, &mut cursors) {
+        while let Some(planned) =
+            next_plan(&rules, &constraints, &signatures, &checks, &mut cursors)
+        {
             answers.push(
                 if replay_witness(&model, &planned.obligation, &conflict_witness, &[])
                     .unwrap_or(false)
@@ -1840,8 +1884,8 @@ mod tests {
             *text = serde_json::Value::String("Updated unresolved question".to_owned());
         }
         let current_model = compile_fixture(&original);
-        assert_eq!(initial_model.semantic_hash, current_model.semantic_hash);
-        assert_ne!(first_report.content_hash, current_model.content_hash);
+        assert_eq!(initial_model.semantic_hash(), current_model.semantic_hash());
+        assert_ne!(first_report.content_hash, current_model.content_hash());
         let mut second_backend = MockBackend {
             answers: Vec::new(),
             calls: Vec::new(),
@@ -1859,7 +1903,7 @@ mod tests {
         assert_eq!(current_report.solver_query_count, 0);
         assert_eq!(current_report.executed_obligation_count, 1);
         assert_eq!(current_report.planned_obligation_count, 1);
-        assert_eq!(current_report.content_hash, current_model.content_hash);
+        assert_eq!(current_report.content_hash, current_model.content_hash());
         assert_eq!(
             current_report
                 .open_items
@@ -1867,6 +1911,70 @@ mod tests {
                 .map(|item| item.text.as_str()),
             Some("Updated unresolved question")
         );
+    }
+
+    #[test]
+    fn recompiling_a_policy_edit_invalidates_cached_answers() {
+        let input = include_str!("../../../author-engine-v0/fixtures/valid/empty-domain.json");
+        let mut value: serde_json::Value = serde_json::from_str(input)
+            .unwrap_or_else(|error| panic!("fixture JSON must parse: {error}"));
+        let empty_domain = compile_fixture(&value);
+        let mut first = MockBackend {
+            answers: vec![BackendAnswer::Unsat],
+            calls: Vec::new(),
+            configuration: "recompile-policy-edit".to_owned(),
+        };
+        let options = AnalysisOptions {
+            checks: Vec::new(),
+            ..AnalysisOptions::default()
+        };
+        analyze(&empty_domain, &options, &mut first).expect("initial analysis succeeds");
+
+        value["domain"][0]["expr"] = serde_json::json!({"kind":"bool", "value":true});
+        let revised_policy = compile_fixture(&value);
+        assert_ne!(empty_domain.semantic_hash(), revised_policy.semantic_hash());
+        let mut second = MockBackend {
+            answers: vec![BackendAnswer::Error {
+                code: "recompiled_model_queried".to_owned(),
+                message: "recompiled policy must not reuse the old UNSAT".to_owned(),
+            }],
+            calls: Vec::new(),
+            configuration: "recompile-policy-edit".to_owned(),
+        };
+        let report = analyze(&revised_policy, &options, &mut second)
+            .expect("revised policy analysis succeeds");
+
+        assert_eq!(first.calls, vec![Obligation::DomainFeasibility]);
+        assert_eq!(second.calls, vec![Obligation::DomainFeasibility]);
+        assert_eq!(report.results[0].status, ResultStatus::Error);
+    }
+
+    #[test]
+    fn different_backend_types_cannot_share_cached_answers() {
+        let model = unsafe_model();
+        let mut first = MockBackend {
+            answers: vec![BackendAnswer::Unsat],
+            calls: Vec::new(),
+            configuration: "same-settings".to_owned(),
+        };
+        let options = AnalysisOptions {
+            checks: Vec::new(),
+            ..AnalysisOptions::default()
+        };
+        analyze(&model, &options, &mut first).expect("first analysis succeeds");
+
+        let mut second = OtherMockBackend {
+            answer: BackendAnswer::Error {
+                code: "second_backend_called".to_owned(),
+                message: "must not reuse the first backend's UNSAT".to_owned(),
+            },
+            calls: 0,
+        };
+        let report = analyze(&model, &options, &mut second).expect("second analysis succeeds");
+
+        assert_eq!(first.calls, vec![Obligation::DomainFeasibility]);
+        assert_eq!(second.calls, 1);
+        assert_eq!(report.results[0].status, ResultStatus::Error);
     }
 
     #[test]
