@@ -2,7 +2,7 @@
 
 Entail v0 is a Rust engine for validating and analyzing an explicitly authored model of one business decision. Its intended input is the versioned JSON AST in [`author-engine-v0/schema/model-v0.schema.json`](author-engine-v0/schema/model-v0.schema.json); the language and result semantics are specified in [`author-engine-v0/author-engine-v0-spec.md`](author-engine-v0/author-engine-v0-spec.md).
 
-**This integration is in progress.** The model compiler/evaluator and framed transport have initial implementations, but the analysis backend, Z3 lowering, and usable CLI/worker are not yet integrated. The `entail` binary is still a foundation stub: do not use it to evaluate policy or treat a successful build as a decision result. Current component and end-to-end evidence is tracked in [`docs/DELIVERY.md`](docs/DELIVERY.md).
+**This integration is in progress.** The model compiler/evaluator, analysis planner, native Z3 backend, and framed transport are integrated. The `entail` binary is still a foundation stub; the CLI and persistent worker implementation are not yet committed to this integration branch. Do not use the current binary to evaluate policy or treat a successful library build as a decision result. Current component and end-to-end evidence is tracked in [`docs/DELIVERY.md`](docs/DELIVERY.md).
 
 ## Build and test
 
