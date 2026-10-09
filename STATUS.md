@@ -10,21 +10,24 @@
 - [x] Publish model and analysis API contracts; worker has a committed framed-transport checkpoint.
 - [x] Model implementation committed (`da1f1b0`); 4 fixture/evaluator tests passed in temporary workspace.
 - [x] Model review repairs committed (`6ecf58e`): target outcome fields, dates, schema `else`, schema gaps and iterative resource preflight; workspace 10 tests passed.
-- [ ] Model quality agent (`fix/model-quality`): finish diagnostic context, deep boundary/schema tests and strict Clippy.
+- [x] Model quality checkpoint (`be209ce`): 15 model tests, strict model Clippy and formatting pass.
+- [ ] Model diagnostic/serialization follow-up: precise traversal context, optional metadata roundtrips and targeted regressions (running).
 - [x] Analysis implementation (`041e443`) and review repairs (`eddcee4`) committed; 12 analysis tests and crate-local strict Clippy pass.
 - [x] Z3 implementation (`45cfab6`) committed; 24 workspace tests passed; independent review found no backend soundness defect.
-- [ ] Differential/statistics agent (`test/differential`): broaden exhaustive/generated checks across all obligations, types and operators; native statistics/resource evidence.
-- [ ] Worker agent: CLI, persistent protocol/handles/capacity and lifecycle tests (`feature/worker`, running).
+- [x] Native statistics and broad finite-oracle checks committed (`89685b6` through `dd437da`); 13 Z3 tests and crate-local Clippy pass.
+- [ ] Differential follow-up: align finite date domains exactly and add generated fixed-assignment expression comparisons (running).
+- [x] CLI/persistent worker committed (`98ea437`); 9 CLI/process tests and worker Clippy pass.
+- [ ] Worker review fixes (`fix/worker-review`): clamp omitted timeout defaults, reject null budgets, capacity precheck, compile timing and active-job/truncation process tests (running).
 - [x] External CLI/worker acceptance scripts strengthened (`de86460`), 5 helper tests pass; initial integrated executable was still stub, so no application acceptance pass claimed.
-- [ ] Run enhanced external acceptance against fully integrated CLI/worker.
+- [x] Enhanced external acceptance against integrated revision `758d32d`: 20 CLI groups, worker protocol/lifecycle suite, and 8 Python regression tests pass (`a254f0e`).
 - [x] Benchmark generator/harness and workload families committed/integrated (`3a8a9ed`); generator checks pass.
-- [ ] Collect actual end-to-end benchmark, budget and cache measurements once binary is available.
+- [ ] Benchmark agent recording real five-run release measurements across all families and semantic/cache/metadata/assumption probes; draft evidence available, final commit pending.
 - [ ] Integration engineer (`integration/v0`) integrating component commits, root manifests/lock, README and full check evidence.
 - [ ] Require passing cargo-nextest, formatting, strict Clippy/MSRV, external acceptance, worker recovery and differential tests.
 - [ ] Independent spec/quality review and repair; final feature-completeness evidence.
 
 ## Unknowns
-- Model, analysis and Z3 are integrated in `integration/v0`; full CLI/worker commit and final quality/test integration remain pending.
+- Full initial engine/CLI/worker is integrated on main (`d1509f8`); latest quality/test/review follow-ups still need final integration.
 - Practical interactive budget defaults await measurements; no performance claims yet.
 - Record draft/constant-decision prerequisites, field namespace and malformed-frame recovery interpretations in final documentation.
 
@@ -35,4 +38,6 @@
 - Initial model review defects repaired in `6ecf58e`; strict model Clippy and diagnostic context still block delivery and are delegated.
 - Initial analysis caching/vacuity/provenance/order/pruning defects repaired in `eddcee4`; integration validation still required.
 - Independent Z3 review found narrow differential coverage and missing native statistics; broader validation/statistics work delegated.
-- Acceptance scripts correctly failed against integration's stub CLI; rerun after full worker implementation, not helper-only evidence.
+- Stub acceptance failure is resolved: real integrated CLI/worker acceptance now passes.
+- Worker independent review reproduced omitted-budget defaults bypassing configured timeout caps and late capacity checking; fixes delegated.
+- Deterministic external CLI backend-fault exit-code-3 injection is unavailable; backend error mapping is tested through analysis seams, final evidence docs note boundary.
