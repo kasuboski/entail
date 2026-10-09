@@ -6,7 +6,12 @@ license.workspace = true
 rust-version.workspace = true
 
 [dependencies]
+author_analysis.workspace = true
+author_model.workspace = true
 z3.workspace = true
+
+[dev-dependencies]
+serde_json = "1.0"
 
 [lints]
 workspace = true

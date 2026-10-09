@@ -31,6 +31,8 @@ name = "author_analysis"
 version = "0.1.0"
 dependencies = [
  "author_model",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -58,6 +60,9 @@ dependencies = [
 name = "author_z3"
 version = "0.1.0"
 dependencies = [
+ "author_analysis",
+ "author_model",
+ "serde_json",
  "z3",
 ]
 
