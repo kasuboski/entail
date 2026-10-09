@@ -1,35 +1,34 @@
 # Status
 
 ## Current Goal
-- Deliver feature-complete Author decision engine v0 in entail2 through delegated implementation/validation; remove handwritten worker JSON recovery in favor of Serde as requested.
+- Completed: deliver the Author decision engine v0 in entail2 through delegated implementation and independent validation. Worker JSON syntax parsing and malformed-frame ID recovery use Serde only.
 
 ## Steps & Progress
-- [x] Read full spec/plan/schema/fixtures; initialize Git on main, commit baseline and isolate component worktrees.
-- [x] Establish pinned Rust/Nix/Z3 workspace and native SAT/UNSAT smoke build (`47746e4`).
-- [x] Implement model/compiler/evaluator and repair schema, date, outcome-scope and preconstruction-limit bugs.
-- [x] Complete model diagnostic/serialization follow-up (`1d1c761`): precise context, metadata roundtrips; 23 model tests, Clippy, format and MSRV pass.
-- [x] Implement analysis catalog, feasibility/prerequisites/vacuity, budgets, witness replay, conditional/proposed/open-item reporting and completed-answer caching (`041e443`, `eddcee4`).
-- [x] Repair coverage rule provenance (`cc81705`), including metadata-cache and skipped-result tests.
-- [x] Implement Z3 exact lowering/decoding; native statistics and finite/generated differential checks (`45cfab6` through `8f79b9a`); 14 Z3 tests including 29 expressions/58 fixed-assignment comparisons.
-- [x] Implement CLI/persistent worker; timeout/default clamping, null rejection, capacity precheck, compile timing, active-analysis kill/reap/restart and truncation tests (`98ea437`, `b2a2260`).
-- [x] Protect library invariants (`a007a1e`): immutable compiler-only CompiledModel, opt-in namespaced/type-separated caching; 55 workspace tests plus compile-fail doctest pass at that checkpoint.
-- [x] External integrated acceptance: 20 CLI groups, real worker lifecycle/protocol suite and 8 Python regression tests pass (`a254f0e`).
-- [x] Measure release workload/cache/edit/assumption behavior; native stats/compile timing/Linux VmHWM measured in five-run evidence (`4359d3f`, `3f7ee1b`); historical evidence preserved.
-- [x] Independent semantic/API reviews; all reported semantic/cache/provenance defects assigned and committed.
-- [ ] Worker recovery follow-up: cancelled handwritten JSON scanner approach; agent replacing it with a minimal Serde top-level Visitor and IgnoredAny, with malformed-frame routing tests.
-- [ ] Fresh final integration agent: combine final patches, clean docs/lock/ignores, and run complete nextest/doctest/MSRV/format/Clippy/external acceptance gates.
-- [ ] Merge final validated integration on main and record final delivery evidence.
+- [x] Read the full specification, plan, schema and acceptance fixtures; delegate architecture/tooling reconnaissance.
+- [x] Initialize Git on main; commit baseline and manage isolated component/review branches and worktrees.
+- [x] Establish four-crate workspace and pinned Rust/Nix/native Z3 build with SAT/UNSAT smoke evidence.
+- [x] Implement strict model ingestion, semantic compiler, exact values, scopes, derived DAG, provenance/hashes and concrete evaluation.
+- [x] Repair model date/schema/outcome-scope/resource defects; add precise diagnostics, metadata roundtrips and early borrowed preflight guards.
+- [x] Implement feasibility, reachability, coverage, conflicts and independent compliance; prerequisite/vacuity/conditional/proposed/open-item reporting.
+- [x] Implement exact Z3 lowering/decoding, solver limits, typed witness replay and detached native statistics.
+- [x] Implement budgets, bounded lazy planning, completed-result caching and current-content metadata reconstruction.
+- [x] Protect compiler-only immutable models and opt-in, namespaced/type-separated backend caches; prove external mutation/construction fail with E0596/E0451.
+- [x] Implement JSON CLI and persistent framed worker: hello/compile/analyze/evaluate/release, handle capacity/lifetime, strict protocol and normalized budget caps.
+- [x] Prove fragmented/truncated/malformed frames, capacity/release, active native-analysis termination/reaping, restart invalidation and recompilation.
+- [x] Remove handwritten JSON recovery; Serde Visitor/IgnoredAny retain only a root ID parsed before corruption, otherwise return null.
+- [x] Differentially check exact finite domains and 29 generated typed expression cases/58 fixed-assignment Z3 comparisons.
+- [x] Run release end-user acceptance: 20 CLI groups and real worker protocol/lifecycle suite.
+- [x] Measure release workload families, edit/cache/assumption behavior, native stats, compile timing and Linux peak RSS; preserve source-pinned historical evidence and provisional budget caveats.
+- [x] Complete independent spec/API reviews, repair defects and preserve the supplied acceptance bundle byte-for-byte against baseline 95d0c26.
+- [x] Integrate on main and independently verify source 0698b2a: format, strict Clippy, Rust 1.85 locked check, 67 nextest tests, 2 compile-fail doctests and release build all pass.
+- [x] Verify 12 Python helpers via both standard module/discovery commands; finalize README and delivery/acceptance/benchmark/worker docs (1886a36).
 
 ## Unknowns
-- Final all-patches test count and clean main commit await integration gates.
-- Malformed request IDs are recoverable only when Serde parses the root ID before the error; otherwise return null, never infer nested/string IDs.
-- No latency guarantee: measured smoke supports retaining provisional 5s total / 1s query / 10,000-obligation defaults, not a performance SLO.
+- (none)
 
 ## Discovered Issues
-- Initial checkout contained spec/tooling only; Git and application foundation established.
-- Earlier tracker omission/restoration corrected; parent-owned tracker is committed on main.
-- Earlier model scope/date/schema/resource/diagnostic and analysis replay/cache/vacuity/provenance defects repaired; final integrated retest pending.
-- Earlier public CompiledModel mutability could poison UNSAT cache identity; immutable accessors and compiler-only construction now committed.
-- Earlier worker omitted-budget defaults bypassed caps and capacity was checked too late; both repaired.
-- Best-effort malformed-frame ID recovery originally matched nested IDs; my follow-up instruction led to needless handwritten JSON parsing. User objection accepted; scanner cancelled and Serde-based replacement delegated.
-- External CLI native-backend-fault injection is unavailable; backend-error mapping is covered through analysis seams and documented honestly.
+- No unresolved v0 delivery blockers. Earlier model, cache, provenance, resource and worker-budget defects are repaired and regression-tested.
+- My malformed-frame recovery instruction led to unnecessary handwritten JSON parsing; removed entirely in favor of Serde.
+- An integration agent changed a fixture expectation to match implementation; reverted and fixed the engine instead. The original author-engine-v0 bundle is unchanged.
+- Native backend failure was not induced through the public CLI; injected backend error handling is tested at the analysis seam and this black-box evidence boundary is documented.
+- Explicit v0 boundaries remain: no business execution, lifecycle verification, production Gleam client, text DSL or independently checked proof certificates; modeled snapshot results do not verify business truth. Benchmarks are single-host smoke evidence, not a latency guarantee.
