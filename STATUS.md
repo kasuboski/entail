@@ -17,7 +17,7 @@
 - [x] Prove fragmented/truncated/malformed frames, capacity/release, active native-analysis termination/reaping, restart invalidation and recompilation.
 - [x] Remove handwritten JSON recovery; Serde Visitor/IgnoredAny retain only a root ID parsed before corruption, otherwise return null.
 - [x] Differentially check exact finite domains and 29 generated typed expression cases/58 fixed-assignment Z3 comparisons.
-- [x] Run release end-user acceptance: 20 CLI groups and real worker protocol/lifecycle suite.
+- [x] Run release end-user acceptance: 20 CLI groups and real worker protocol/lifecycle suite; supersedes scaffold-only evidence in delayed agent report 170189e.
 - [x] Measure release workload families, edit/cache/assumption behavior, native stats, compile timing and Linux peak RSS; preserve source-pinned historical evidence and provisional budget caveats.
 - [x] Complete independent spec/API reviews, repair defects and preserve the supplied acceptance bundle byte-for-byte against baseline 95d0c26.
 - [x] Integrate on main and independently verify source 0698b2a: format, strict Clippy, Rust 1.85 locked check, 67 nextest tests, 2 compile-fail doctests and release build all pass.
