@@ -1,45 +1,42 @@
 # Author engine v0 end-user acceptance
 
-**Status: pending.** No application implementation or `entail` binary exists in this branch. The assets below are black-box checks against the real CLI/worker; helper self-tests do not constitute application evidence. Do not report any criterion as passed until a built binary has been run and its output/exit status recorded.
+**Status: pending real application runs.** These scripts are black-box checks against the integration executable, not an engine mock. The fixtures and expected outcomes live in `author-engine-v0/fixtures`; they are test inputs, never evidence by themselves.
 
-## Running the checks
+## Run
 
 ```sh
+python3 -m unittest scripts.test_acceptance -v
 python3 scripts/acceptance.py /path/to/entail
 python3 scripts/worker_acceptance.py /path/to/entail
 ```
 
-Both scripts invoke the supplied executable directly. They do not substitute a mock, interpret the model themselves, or claim that fixtures prove the application works. They find results dynamically in JSON envelopes and assert stable check status/finding category, declaration IDs, diagnostic codes, selected assumptions, and process error fields rather than comparing whole-result snapshots. `--self-test` only tests Python framing/traversal/process helpers and is explicitly not application acceptance.
+Every subprocess has a finite timeout. The Python helper tests and either script's `--self-test` exercise only local assertion/framing/process utilities; none counts as application acceptance. Record the executable path/revision, build command, platform, exact commands, exit codes, pass counts, and failures in the evidence log below. Do not mark criteria passed on source inspection or helper-only output.
 
-Fixture definitions and expected semantic outcomes are in `author-engine-v0/fixtures/expectations.json`; scenario inputs are in `author-engine-v0/scenarios/`. The fixture expectations are contracts, not recorded engine results. Worker request shapes and framing are defined in the v0 spec and `author-engine-v0/protocol/`.
+`acceptance.py` checks all valid and invalid fixtures, stable diagnostic codes and exit 2, analysis exit 0, exact obligation kind/status/category, mandatory domain feasibility, one reachability result per rule, and each expected rule/constraint compliance result by exact IDs (never provenance substrings). It also verifies report identity/hashes/assumptions/open items, proposed-policy context and `complete=true` without claiming business verification. The conditional fixture is run both with an explicit empty assumption list and with `SponsorsAlreadyApproved`. Concrete scenarios check unknown approval remains unspecified, unsafe expiry reports the exact violated constraint, unsafe SAT witness replays through `evaluate`, and the arbitrary-precision result is a typed exact integer. CLI malformed-input and missing-file cases must return structured errors with exit 2. The payload fixture must show a conflict between unequal payloads of the same `Grant` constructor.
 
-## Spec acceptance-criteria map
+The worker acceptance script checks the documented `author-worker/0.1` framing and stable protocol error codes, fragmented frames, operation envelopes, valid/invalid compile, analysis and evaluation, exact release behavior, advertised handle capacity without eviction, malformed JSON recovery, invalid-version and invalid-length handling, kill/wait, restart and handle invalidation. It rejects a capacity bound above its explicitly safe 128-model probe rather than weakening the criterion. Every worker frame read and process wait is bounded.
 
-| Spec criterion | End-user check / evidence | Status |
+## Criteria map
+
+| Spec criterion | Evidence in scripts | Status |
 | --- | --- | --- |
-| §9.1 Partial constraints compile; coverage is `behavior_unspecified` | `acceptance.py`: `partial` validate/analyze against fixture expectation | Pending binary run |
-| §9.2 Unsafe grant violates expiry independently of guard | `acceptance.py`: `unsafe-grant`; compliance for `ExpiryWithinContract` must be a `violation` | Pending binary run |
-| §9.3 Guarded repair removes compliance violation but leaves uncovered inputs | `acceptance.py`: `repaired-partial`; compliance and coverage categories | Pending binary run |
-| §9.4 Complete proposed policy is covered and compatible, not confirmed business policy | `acceptance.py`: `complete-proposed`; structured check results and open items remain visible in output | Pending binary run |
-| §9.5 Simultaneous Grant/Deny conflict | `acceptance.py`: `conflict-tag`; `outcome_conflict=conflict` | Pending binary run |
-| §9.6 Identical overlapping outcomes deduplicate | `acceptance.py`: `duplicate-output`; `outcome_conflict=compatible` | Pending binary run |
-| §9.7 Same constructor with different payloads conflicts | `acceptance.py`: `conflict-payload`; conflict finding must identify `Grant` | Pending binary run |
-| §9.8 Assumptions are opt-in and reported | `acceptance.py`: `conditional-assumption` analyzed both without assumption and with `SponsorsAlreadyApproved`; conditional scope and selected ID checked | Pending binary run |
-| §9.9 Empty domain skips dependent checks, never claims success | `acceptance.py`: `empty-domain`; `empty_domain` plus skipped dependent checks | Pending binary run |
-| §9.10 Unknown approval is an ordinary enum value, not approval | `acceptance.py`: `unknown-approval` concrete evaluation expects `unspecified` | Pending binary run |
-| §9.11 Arbitrary precision survives JSON/evaluator/solver boundary | `acceptance.py`: `big-integer` analysis plus concrete scenario expects exact `18446744073709551616` | Pending binary run |
-| §9.12 Reference, units, dates, cycles, unsupported node fail before solving | `acceptance.py`: all five invalid fixtures; exit 2 and expected stable diagnostic code | Pending binary run |
-| §9.13 SAT witnesses replay in evaluator; mismatch is engine error | Not deterministically forced by public fixture without a test fault-injection interface. The unsafe compliance witness is checked as a finding; witness replay's internal test remains implementation evidence required by plan §3/Verification. | Pending implementation evidence |
-| §9.14 Timeouts, obligation limits, restart don't produce false success | Worker script verifies process restart invalidates handles and recompile works. CLI/worker budget truncation and timeout behavior require a deterministic configured backend or fixture hook and remain an implementation-level pending test. | Pending implementation evidence |
-| §7 worker frame: 4-byte big-endian, UTF-8 JSON, partial reads/writes | `worker_acceptance.py`: real worker; fragmented one-byte hello request and framed responses | Pending binary run |
-| Worker hello, compile, analyze, evaluate, release lifecycle | `worker_acceptance.py`: same persistent process runs all five operations and checks response envelopes | Pending binary run |
-| Invalid compile is normal compile result, not transport error | `worker_acceptance.py`: unknown-reference compile returns diagnostics and no handle | Pending binary run |
-| Malformed JSON and invalid protocol version are protocol errors | `worker_acceptance.py`: malformed request / unsupported version preserve request ID where recoverable and return error envelope | Pending binary run |
-| Invalid frame length closes worker nonzero | `worker_acceptance.py`: isolated worker gets length above reported/default frame bound; must exit nonzero | Pending binary run |
-| Capacity does not silently evict live handles | `worker_acceptance.py`: probes live-model capacity and verifies existing handle remains usable if capacity is observed; bounds probe to 128 models | Pending binary run; high capacity may exceed probe |
-| OS termination is reaped; restart rejects old handle and accepts recompilation | `worker_acceptance.py`: terminate/wait, restart, `unknown_handle`, then compile/release | Pending binary run |
-| CLI validate/analyze/evaluate output JSON and exit codes | `acceptance.py`: validates invalid fixtures with exit 2 and analyzes/evaluates valid fixtures with exit 0 | Pending binary run |
+| §9.1 Partial model: `behavior_unspecified` | `partial`, exact coverage category | Pending real run |
+| §9.2 Unsafe Grant violates expiry independently of guard | `unsafe-grant`, exact rule/constraint result and evaluator replay | Pending real run |
+| §9.3 Guard repair removes violation but leaves uncovered inputs | `repaired-partial`, each per-rule constraint plus coverage | Pending real run |
+| §9.4 Complete proposed policy | `complete-proposed`: exact coverage/conflict, report complete, proposed IDs/open items; rejects `business_verified=true` | Pending real run |
+| §9.5 Simultaneous Grant/Deny conflicts | `conflict-tag`: exact conflict category | Pending real run |
+| §9.6 Identical outcomes deduplicate | `duplicate-output`: compatible | Pending real run |
+| §9.7 Same constructor with distinct payloads conflicts | `conflict-payload`: expected conflict constructor and unequal Grant payload evidence | Pending real run |
+| §9.8 Assumptions are opt-in and visible | Baseline with explicit `[]`, selected assumption run, report IDs and conditional result | Pending real run |
+| §9.9 Impossible domain | `empty-domain`: feasibility empty; every dependent result skipped, no vacuous success | Pending real run |
+| §9.10 Unknown is an ordinary enum, not approval | `unknown-approval` concrete evaluation is unspecified | Pending real run |
+| §9.11 Arbitrary precision | Typed evaluated integer exactly `18446744073709551616`; no floating-point/text-only match | Pending real run |
+| §9.12 Invalid references/units/date/cycle/node | All invalid fixtures, exact diagnostic and exit 2 | Pending real run |
+| §9.13 SAT witness replay | Typed `ExpiryWithinContract` violation witness is evaluated through CLI; exact violation must recur | Pending real run |
+| §9.14 Limits/restart | Worker advertised capacity, no live-handle eviction, kill/wait/restart invalidates old handle | Pending real run |
+| §7 framed worker protocol | Worker script exercises hello/compile/analyze/evaluate/release and transport errors | Pending real run |
+| CLI malformed input and file errors | Acceptance script requires structured JSON error and exit 2 | Pending real run |
 
 ## Evidence log
 
-No `entail` implementation is present yet. Record binary path, source revision, build command, platform, command lines, exit codes and a concise result summary here after actual runs. Keep captured output externally or attach it to the implementation/CI job; do not convert these pending rows into passes based only on helper self-tests or source inspection.
+No real executable run has yet been recorded. The integration target was checked at task start and contained Cargo build artifacts but no `target/debug/entail` executable. This is not a pass or a final blocker: build/run the integration executable once the application is committed. If the app implementation fails a check, retain the assertion and report the exact command, observed output and a minimal reproducer to the integration owner; do not weaken the criteria to fit the implementation.
