@@ -885,7 +885,7 @@ fn base_result(
 ) -> ObligationResult {
     let mut ids = obligation.declaration_ids();
     if obligation == &Obligation::Coverage {
-        ids.extend(model.raw.rules.iter().map(|rule| rule.id.clone()));
+        ids.extend(model.raw().rules.iter().map(|rule| rule.id.clone()));
         ids.sort();
         ids.dedup();
     }
@@ -1686,12 +1686,14 @@ mod tests {
     fn empty_domain_skips_dependents_and_ruleless_coverage_is_unspecified() {
         let empty_input =
             include_str!("../../../author-engine-v0/fixtures/valid/empty-domain.json");
-        let empty_value: serde_json::Value = serde_json::from_str(empty_input)
+        let mut empty_value: serde_json::Value = serde_json::from_str(empty_input)
             .unwrap_or_else(|error| panic!("fixture JSON must parse: {error}"));
-        let mut empty_model = compile_fixture(&empty_value);
-        for rule in &mut empty_model.raw.rules {
-            rule.origin.source_ids = vec!["EMPTY_DOMAIN_RULE_SOURCE".to_owned()];
+        if let Some(rules) = empty_value["rules"].as_array_mut() {
+            for rule in rules {
+                rule["origin"]["source_ids"] = serde_json::json!(["S1"]);
+            }
         }
+        let empty_model = compile_fixture(&empty_value);
         let options = AnalysisOptions {
             checks: vec![Check::Coverage],
             ..AnalysisOptions::default()
@@ -1720,19 +1722,19 @@ mod tests {
         assert_eq!(empty_backend.calls, vec![Obligation::DomainFeasibility]);
         let skipped_coverage = empty_report.results.get(1).expect("coverage skip exists");
         let mut expected_rule_ids: Vec<_> = empty_model
-            .raw
+            .raw()
             .rules
             .iter()
             .map(|rule| rule.id.clone())
             .collect();
         expected_rule_ids.sort();
         assert_eq!(skipped_coverage.declaration_ids, expected_rule_ids);
-        if !empty_model.raw.rules.is_empty() {
+        if !empty_model.raw().rules.is_empty() {
             assert!(
                 skipped_coverage
                     .source_ids
                     .iter()
-                    .any(|source| source == "EMPTY_DOMAIN_RULE_SOURCE")
+                    .any(|source| source == "S1")
             );
         }
 
@@ -1763,10 +1765,20 @@ mod tests {
 
     #[test]
     fn coverage_provenance_tracks_all_rules_and_refreshes_on_cached_and_skipped_results() {
-        let mut original = unsafe_model();
-        for rule in &mut original.raw.rules {
-            rule.origin.source_ids = vec!["RULE_SOURCE_OLD".to_owned()];
+        let mut original_json: serde_json::Value = serde_json::from_str(include_str!(
+            "../../../author-engine-v0/fixtures/valid/unsafe-grant.json"
+        ))
+        .unwrap_or_else(|error| panic!("fixture JSON must parse: {error}"));
+        if let Some(sources) = original_json["sources"].as_array_mut() {
+            sources.push(serde_json::json!({"id":"RULE_SOURCE_OLD", "text":"Old rule provenance"}));
+            sources.push(serde_json::json!({"id":"RULE_SOURCE_NEW", "text":"New rule provenance"}));
         }
+        if let Some(rules) = original_json["rules"].as_array_mut() {
+            for rule in rules {
+                rule["origin"]["source_ids"] = serde_json::json!(["RULE_SOURCE_OLD"]);
+            }
+        }
+        let original = compile_fixture(&original_json);
         let options = AnalysisOptions {
             checks: vec![Check::Coverage],
             ..AnalysisOptions::default()
@@ -1786,7 +1798,7 @@ mod tests {
             .find(|result| result.obligation == Obligation::Coverage)
             .expect("coverage result exists");
         let mut expected_rule_ids: Vec<_> = original
-            .raw
+            .raw()
             .rules
             .iter()
             .map(|rule| rule.id.clone())
@@ -1800,11 +1812,13 @@ mod tests {
                 .any(|source| source == "RULE_SOURCE_OLD")
         );
 
-        let mut updated = original.clone();
-        for rule in &mut updated.raw.rules {
-            rule.origin.source_ids = vec!["RULE_SOURCE_NEW".to_owned()];
+        if let Some(rules) = original_json["rules"].as_array_mut() {
+            for rule in rules {
+                rule["origin"]["source_ids"] = serde_json::json!(["RULE_SOURCE_NEW"]);
+            }
         }
-        assert_eq!(original.semantic_hash, updated.semantic_hash);
+        let updated = compile_fixture(&original_json);
+        assert_eq!(original.semantic_hash(), updated.semantic_hash());
         let mut second_backend = MockBackend {
             answers: Vec::new(),
             calls: Vec::new(),

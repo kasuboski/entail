@@ -70,7 +70,7 @@
       "expected_diagnostic": "derived_cycle"
     },
     "unsupported-node": {
-      "expected_diagnostic": "schema_error"
+      "expected_diagnostic": "unsupported_node"
     }
   }
 }
