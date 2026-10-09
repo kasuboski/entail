@@ -1,6 +1,6 @@
 import unittest
 
-from benchmark import parse_vm_hwm_kb, stats
+from scripts.benchmark import parse_vm_hwm_kb, stats
 
 
 class BenchmarkHelpersTest(unittest.TestCase):

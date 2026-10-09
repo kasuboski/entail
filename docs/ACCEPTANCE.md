@@ -1,6 +1,6 @@
 # Author engine v0 end-user acceptance
 
-**Status: final CLI and worker acceptance passed against integrated code source `9440c59`.** These scripts are black-box checks against a built executable, not an engine mock. Fixtures and expectations in `author-engine-v0/fixtures` are test inputs, never evidence by themselves.
+**Status: final CLI and worker acceptance passed against source `0698b2a`.** These scripts are black-box checks against a built executable, not an engine mock. Fixtures and expectations in `author-engine-v0/fixtures` are test inputs, never evidence by themselves.
 
 ## Run
 
@@ -41,17 +41,17 @@ The worker acceptance script checks the documented `author-worker/0.1` framing a
 
 ## Evidence log
 
-Final integrated acceptance was run from `/home/josh/projects/entail2-integration` against code source revision `9440c597bde00ec01fac7ff10c08b6ff3dde3c32`. Built the executable in the pinned Nix environment:
+Final integrated acceptance was run from `/home/josh/projects/entail2` against code source revision `0698b2a`. Built the executable in the pinned Nix environment:
 
 ```sh
-cd /home/josh/projects/entail2-integration
+cd /home/josh/projects/entail2
 mise exec -- nix develop --command cargo build --workspace --bin entail --locked
 ```
 
 Build exited 0. Run both black-box suites inside the pinned Nix environment because the executable dynamically links the pinned Z3 library:
 
 ```sh
-cd /home/josh/projects/entail2-integration
+cd /home/josh/projects/entail2
 mise exec -- nix develop --command python3 scripts/acceptance.py target/release/entail
 # exit 0: PASS: 20 fixture/scenario/CLI acceptance groups
 

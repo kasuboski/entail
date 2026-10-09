@@ -1,6 +1,6 @@
 # V0 delivery evidence
 
-**Status: final integration gates and application acceptance passed.** This document distinguishes tests of engine behavior from evidence about solver performance. Passing results establish behavior for the encoded model and tested execution; they do not certify a business policy.
+**Status: final production gates and application acceptance passed at source `0698b2a`.** This document distinguishes tests of engine behavior from evidence about solver performance. Passing results establish behavior for the encoded model and tested execution; they do not certify a business policy.
 
 ## Requirements and evidence map
 
@@ -12,19 +12,19 @@
 | CLI findings/errors and documented exit behavior | `scripts/acceptance.py` against the release executable | **Passed:** 20 fixture/scenario/CLI groups. Findings return 0; invalid model/file/JSON cases return 2 with structured errors. The public CLI has no backend-fault injection seam, so a black-box exit-3 case was not induced; backend error mapping is exercised at the analysis seam. |
 | Persistent worker framing, budgets, capacity, malformed-input recovery, release, restart and stale handles | `scripts/worker_acceptance.py`; Rust worker process tests | **Passed:** external protocol/lifecycle acceptance and in-process process tests. Malformed-JSON request-ID recovery uses only a Serde visitor/`IgnoredAny`, with nested and malformed-prefix cases tested. |
 | Reproducible workload generation and measured release analysis/cache/native-statistics/RSS evidence | `scripts/benchmark.py`; [`BENCHMARKS.md`](BENCHMARKS.md); archived report | **Passed:** eight workloads, five repetitions each, no worker-family errors; explicit cache/edit/assumption probes; detached solver statistics, engine compile time and sampled Linux RSS recorded. Bounded cases that exhaust the 24-obligation smoke cap are reported as incomplete, not as successful. This is one-host smoke evidence, not an SLO. |
-| Formatting, strict lint, MSRV, Rust tests and public API compile-fail check | `mise run check`; `cargo test --workspace --doc --locked` | **Passed:** formatting, strict all-target/all-feature Clippy, Rust 1.85 locked check, **66/66** nextest tests; doc tests include one passing `CompiledModel` immutability compile-fail test. |
+| Formatting, strict lint, MSRV, Rust tests and public API compile-fail check | `mise run check`; `cargo test --workspace --doc --locked` | **Passed:** formatting, strict all-target/all-feature Clippy, Rust 1.85 locked check, **67/67** nextest tests; doc tests include two passing type-correct compile-fail tests, including `CompiledModel` immutability. |
 | Python acceptance and benchmark helpers | Python unittest discovery; helper self-tests; generator check | **Passed:** 12 Python helper tests; both acceptance/worker helper self-tests; benchmark fixture generation/structural validation. Helper-only tests are not counted as application acceptance. |
 
 ## Exact verification commands and results
 
-Commands were run from `/home/josh/projects/entail2-integration`, with the Nix development shell providing the pinned native Z3 runtime:
+Commands were run from `/home/josh/projects/entail2` at source `0698b2a`, with the Nix development shell providing the pinned native Z3 runtime:
 
 ```sh
 mise run check
-# passed: fmt, strict Clippy, Rust 1.85 locked check, nextest 66/66
+# passed at source 0698b2a: fmt, strict Clippy, Rust 1.85 locked check, nextest 67/67
 
 mise exec -- nix develop --command cargo test --workspace --doc --locked
-# passed: 1 compile_fail doc test; all crate doc-test targets passed
+# passed: 2 type-correct compile_fail doc tests; all crate doc-test targets passed
 
 mise exec -- nix develop --command cargo build --workspace --bin entail --locked
 # passed
@@ -57,7 +57,7 @@ mise exec -- nix develop --command python3 scripts/benchmark.py \
   --rust-version 'rustc 1.98.0 (88d9e12ae 2026-08-18)'
 ```
 
-Full per-run reports, detached native statistic maps, cache probes, compile timings, environment and RSS sampling details are archived in [`benchmarks/smoke-release-final-2026-10-09.json`](../benchmarks/smoke-release-final-2026-10-09.json). That earlier measured executable was built from source `3da81cee5fe87544eb3a5b870706881abb07b089`; it predates the final contract-diagnostic and malformed-JSON recovery patches. Treat it as historical measurement evidence, not a full measurement of current HEAD. Native-statistics/RSS/cache data are retained, and this error-handling-only follow-up did not rerun performance tests. See [`BENCHMARKS.md`](BENCHMARKS.md) for interpretation.
+Full per-run reports, detached native statistic maps, cache probes, compile timings, environment and RSS sampling details are archived in [`benchmarks/smoke-release-final-2026-10-09.json`](../benchmarks/smoke-release-final-2026-10-09.json). That earlier measured executable was built from source `3da81cee5fe87544eb3a5b870706881abb07b089`; it predates later diagnostic and malformed-JSON recovery changes. Treat it as historical measurement evidence, not a full measurement of source `0698b2a`. Native-statistics/RSS/cache data are retained, and no performance rebenchmark is claimed for this final source. See [`BENCHMARKS.md`](BENCHMARKS.md) for interpretation.
 
 ## Remaining limits
 
