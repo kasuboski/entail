@@ -260,10 +260,24 @@ impl Default for ModelLimits {
 /// compiler's semantic validation and cache identity guarantees.
 ///
 /// ```compile_fail
-/// # use author_model::{compile_json, CompiledModel, ModelLimits};
-/// # let input = serde_json::json!({"model_id":"example"});
-/// # let mut model: CompiledModel = compile_json(&input, &ModelLimits::default()).unwrap();
-/// model.raw().domain[0].expr = serde_json::json!(true);
+/// # use author_model::{CompiledModel, Expr};
+/// fn attempt_edit(model: &mut CompiledModel) {
+///     model.raw().domain[0].expr = Expr::Bool { value: true };
+/// }
+/// ```
+///
+/// Construction is also private, even with otherwise correctly typed fields:
+///
+/// ```compile_fail
+/// # use author_model::{CompiledModel, RawModel};
+/// fn attempt_construct(raw: RawModel) {
+///     let _model = CompiledModel {
+///         raw,
+///         derived_order: Vec::new(),
+///         content_hash: String::new(),
+///         semantic_hash: String::new(),
+///     };
+/// }
 /// ```
 #[derive(Clone, Debug)]
 pub struct CompiledModel {
@@ -1212,12 +1226,16 @@ fn validate_model_shapes(
         "constraints",
         "open_items",
     ];
-    validate_object_shape(
-        &serde_json::Value::Object(root.clone()),
-        "",
-        ROOT_FIELDS,
-        ROOT_FIELDS,
-    )?;
+    if let Some(key) = root.keys().find(|key| !ROOT_FIELDS.contains(&key.as_str())) {
+        return Err(error("schema_error", format!("unknown field {key}"))
+            .with_pointer(format!("/{}", pointer_segment(key))));
+    }
+    if let Some(field) = ROOT_FIELDS.iter().find(|field| !root.contains_key(**field)) {
+        return Err(
+            error("schema_error", format!("missing required field {field}"))
+                .with_pointer(format!("/{field}")),
+        );
+    }
     for (collection, fields, required) in [
         (
             "sources",
@@ -1367,6 +1385,7 @@ fn preflight(value: &serde_json::Value, limits: &ModelLimits) -> Result<(), Vec<
             error("schema_error", "model must be an object").with_pointer(String::new()),
         ]);
     };
+    check_declaration_limits(root, limits).map_err(|diagnostic| vec![diagnostic])?;
     validate_model_shapes(root).map_err(|diagnostic| vec![diagnostic])?;
     for field in ["language_version", "model_id"] {
         if !root.get(field).is_some_and(serde_json::Value::is_string) {
@@ -1376,7 +1395,6 @@ fn preflight(value: &serde_json::Value, limits: &ModelLimits) -> Result<(), Vec<
             ]);
         }
     }
-    check_declaration_limits(root, limits).map_err(|diagnostic| vec![diagnostic])?;
     let roots = expression_roots(root);
     let mut object_stack = vec![(value, String::new())];
     while let Some((node, pointer)) = object_stack.pop() {
@@ -2670,16 +2688,29 @@ mod tests {
     fn preflight_rejects_depth_before_deserialization() {
         let mut value = fixture();
         let mut expr = serde_json::json!({"kind":"bool", "value":true});
-        for _ in 0..20 {
+        for _ in 0..256 {
             expr = serde_json::json!({"kind":"not", "arg":expr});
         }
         value["constraints"][0]["must"] = expr;
+        let errors = compile_json(&value, &ModelLimits::default()).unwrap_err();
+        assert_eq!(errors[0].code, "resource_limit");
+        assert_eq!(
+            errors[0].pointer.as_deref(),
+            Some(format!("/constraints/0/must{}", "/arg".repeat(128)).as_str())
+        );
+    }
+
+    #[test]
+    fn declaration_count_limit_precedes_declaration_shape_validation() {
+        let mut value = fixture();
+        value["inputs"] = serde_json::json!([{"unexpected":true}, {"unexpected":true}]);
         let limits = ModelLimits {
-            expression_depth: 8,
+            inputs: 1,
             ..ModelLimits::default()
         };
-        let errors = compile_json(&value, &limits).unwrap_err();
-        assert!(errors.iter().any(|diag| diag.code == "resource_limit"));
+        let diagnostic = compile_json(&value, &limits).unwrap_err().remove(0);
+        assert_eq!(diagnostic.code, "resource_limit");
+        assert_eq!(diagnostic.pointer.as_deref(), Some("/inputs"));
     }
     #[test]
     fn schema_patterns_and_optional_nulls_are_enforced() {
