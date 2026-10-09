@@ -10,7 +10,7 @@ use author_model::{
 use serde::{Deserialize, Serialize};
 
 pub const ENGINE_VERSION: &str = "author-analysis/0.1";
-const CACHE_ENCODING_VERSION: &str = "author-analysis-obligations/1";
+const CACHE_ENCODING_VERSION: &str = "author-analysis-obligations/2";
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -162,6 +162,10 @@ pub trait Backend {
     fn solver_configuration(&self) -> String {
         String::new()
     }
+
+    fn statistics(&self) -> Option<SolverStatistics> {
+        None
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -230,6 +234,18 @@ pub struct AnalysisReport {
     pub open_items: Vec<author_model::OpenItem>,
     pub results: Vec<ObligationResult>,
     pub complete: bool,
+    #[serde(default)]
+    pub cache_hits: usize,
+    #[serde(default)]
+    pub solver_query_count: usize,
+    #[serde(default)]
+    pub planned_obligation_count: usize,
+    #[serde(default)]
+    pub executed_obligation_count: usize,
+    #[serde(default)]
+    pub elapsed_ms: u64,
+    #[serde(default)]
+    pub remaining_work: bool,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
@@ -252,7 +268,7 @@ fn cached_solve<B: Backend>(
     obligation: &Obligation,
     assumptions: &[String],
     budget: &SolveBudget,
-) -> BackendAnswer {
+) -> (BackendAnswer, bool) {
     let key = CacheKey {
         semantic_hash: model.semantic_hash.clone(),
         obligation: obligation.clone(),
@@ -265,11 +281,26 @@ fn cached_solve<B: Backend>(
     let cache = COMPLETED_CACHE.get_or_init(|| Mutex::new(HashMap::new()));
     if let Ok(guard) = cache.lock() {
         if let Some(answer) = guard.get(&key) {
-            return answer.clone();
+            let validated = match answer {
+                BackendAnswer::Sat { inputs } => {
+                    replay_witness(model, obligation, inputs, assumptions).unwrap_or(false)
+                }
+                BackendAnswer::Unsat => true,
+                _ => false,
+            };
+            if validated {
+                return (answer.clone(), true);
+            }
         }
     }
     let answer = backend.solve(model, obligation, assumptions, budget);
-    if matches!(answer, BackendAnswer::Sat { .. } | BackendAnswer::Unsat) {
+    let validated_sat = match &answer {
+        BackendAnswer::Sat { inputs } => {
+            replay_witness(model, obligation, inputs, assumptions).unwrap_or(false)
+        }
+        _ => false,
+    };
+    if validated_sat || matches!(answer, BackendAnswer::Unsat) {
         if let Ok(mut guard) = cache.lock() {
             if guard.len() >= MAX_CACHE_ENTRIES {
                 guard.clear();
@@ -277,7 +308,7 @@ fn cached_solve<B: Backend>(
             guard.insert(key, answer.clone());
         }
     }
-    answer
+    (answer, false)
 }
 
 #[derive(Clone)]
@@ -290,7 +321,15 @@ fn check_selected(options: &AnalysisOptions) -> Vec<Check> {
     let mut checks = Vec::new();
     // Feasibility is unconditional and occupies the first slot in every report.
     checks.push(Check::DomainFeasibility);
-    for check in &options.checks {
+    let mut requested = options.checks.clone();
+    requested.sort_by_key(|check| match check {
+        Check::DomainFeasibility => 0,
+        Check::RuleReachability => 1,
+        Check::Coverage => 2,
+        Check::OutcomeConflict => 3,
+        Check::ConstraintCompliance => 4,
+    });
+    for check in &requested {
         if *check == Check::ConstraintCompliance && !checks.contains(&Check::RuleReachability) {
             checks.push(Check::RuleReachability);
         }
@@ -455,8 +494,19 @@ pub fn analyze<B: Backend>(
         ));
     }
     let _ = select_assumptions(model, &options.assumption_ids)?;
+    let mut assumptions = options.assumption_ids.clone();
+    assumptions.sort();
     let checks = check_selected(options);
-    let output_signatures = model
+    let mut planning_model = model.clone();
+    planning_model
+        .raw
+        .rules
+        .sort_by(|left, right| left.id.cmp(&right.id));
+    planning_model
+        .raw
+        .constraints
+        .sort_by(|left, right| left.id.cmp(&right.id));
+    let output_signatures = planning_model
         .raw
         .rules
         .iter()
@@ -468,6 +518,10 @@ pub fn analyze<B: Backend>(
     let budget = options.budget.normalized();
     let started = Instant::now();
     let mut results = Vec::new();
+    let mut cache_hits = 0_usize;
+    let mut solver_query_count = 0_usize;
+    let mut executed_obligation_count = 0_usize;
+    let mut remaining_work = false;
     let mut cursors = PlanCursors {
         right: 1,
         ..PlanCursors::default()
@@ -476,19 +530,32 @@ pub fn analyze<B: Backend>(
     let mut feasibility_confirmed = false;
     let mut complete = true;
 
-    while let Some(planned) = next_plan(model, &output_signatures, &checks, &mut cursors) {
+    while let Some(planned) = next_plan(&planning_model, &output_signatures, &checks, &mut cursors)
+    {
         if results.len() >= budget.max_obligations {
             complete = false;
-            results.push(skipped_result(&planned.obligation, "max_obligations"));
+            results.push(skipped_result(
+                model,
+                &planned.obligation,
+                &assumptions,
+                "max_obligations",
+            ));
+            remaining_work = true;
             break;
         }
         let elapsed = started.elapsed();
         if elapsed >= Duration::from_millis(budget.total_timeout_ms) {
             complete = false;
-            results.push(skipped_result(&planned.obligation, "total_timeout"));
+            results.push(skipped_result(
+                model,
+                &planned.obligation,
+                &assumptions,
+                "total_timeout",
+            ));
+            remaining_work = true;
             break;
         }
-        let mut result = base_result(model, &planned.obligation, &options.assumption_ids);
+        let mut result = base_result(model, &planned.obligation, &assumptions);
         if planned.obligation != Obligation::DomainFeasibility
             && (model.raw.outcomes.is_empty()
                 || (model.raw.inputs.is_empty() && model.raw.rules.is_empty()))
@@ -536,13 +603,20 @@ pub fn analyze<B: Backend>(
             continue;
         }
         let solve_started = Instant::now();
-        let answer = cached_solve(
+        let (answer, cache_hit) = cached_solve(
             backend,
             model,
             &planned.obligation,
-            &options.assumption_ids,
+            &assumptions,
             &solve_budget,
         );
+        executed_obligation_count = executed_obligation_count.saturating_add(1);
+        if cache_hit {
+            cache_hits = cache_hits.saturating_add(1);
+        } else {
+            solver_query_count = solver_query_count.saturating_add(1);
+            result.statistics = backend.statistics();
+        }
         result.elapsed_ms =
             Some(u64::try_from(solve_started.elapsed().as_millis()).unwrap_or(u64::MAX));
         map_answer(
@@ -550,7 +624,7 @@ pub fn analyze<B: Backend>(
             &planned.obligation,
             answer,
             &mut result,
-            &options.assumption_ids,
+            &assumptions,
         );
         if planned.obligation == Obligation::DomainFeasibility {
             feasibility_empty = result.finding_category == Some(FindingCategory::EmptyDomain);
@@ -581,6 +655,8 @@ pub fn analyze<B: Backend>(
     }
 
     annotate_compliance_reachability(&mut results);
+    let planned_obligation_count = results.len();
+    let elapsed_ms = u64::try_from(started.elapsed().as_millis()).unwrap_or(u64::MAX);
     let participating_proposed_declaration_ids =
         proposed_declarations(model, &checks, &options.assumption_ids);
     Ok(AnalysisReport {
@@ -590,7 +666,7 @@ pub fn analyze<B: Backend>(
         model_id: model.raw.model_id.clone(),
         content_hash: model.content_hash.clone(),
         semantic_hash: model.semantic_hash.clone(),
-        selected_assumption_ids: options.assumption_ids.clone(),
+        selected_assumption_ids: assumptions,
         domain_predicate_ids: model.raw.domain.iter().map(|p| p.id.clone()).collect(),
         checks,
         budget,
@@ -598,6 +674,12 @@ pub fn analyze<B: Backend>(
         open_items: model.raw.open_items.clone(),
         results,
         complete,
+        cache_hits,
+        solver_query_count,
+        planned_obligation_count,
+        executed_obligation_count,
+        elapsed_ms,
+        remaining_work,
     })
 }
 
@@ -916,10 +998,7 @@ fn annotate_compliance_reachability(results: &mut [ObligationResult]) {
             if let Obligation::RuleReachability { rule_id } = &result.obligation {
                 Some((
                     rule_id.clone(),
-                    result
-                        .finding_category
-                        .clone()
-                        .map(|category| (category, result.status.clone())),
+                    (result.finding_category.clone(), result.status.clone()),
                 ))
             } else {
                 None
@@ -928,9 +1007,9 @@ fn annotate_compliance_reachability(results: &mut [ObligationResult]) {
         .collect();
     for result in results {
         if let Obligation::ConstraintCompliance { rule_id, .. } = &result.obligation {
-            if let Some(Some((category, status))) = reachability.get(rule_id) {
+            if let Some((category, status)) = reachability.get(rule_id) {
                 result.rule_reachability_status = Some(status.clone());
-                if matches!(category, FindingCategory::Unreachable)
+                if *category == Some(FindingCategory::Unreachable)
                     && result.finding_category == Some(FindingCategory::Compliant)
                 {
                     result.labels.push("vacuous_unreachable_rule".to_owned());
@@ -1026,24 +1105,16 @@ fn proposed_declarations(
     ids.into_iter().collect()
 }
 
-fn skipped_result(obligation: &Obligation, reason: &str) -> ObligationResult {
-    ObligationResult {
-        obligation_id: obligation.id(),
-        obligation: obligation.clone(),
-        declaration_ids: obligation.declaration_ids(),
-        status: ResultStatus::Skipped,
-        finding_category: None,
-        witness: None,
-        source_ids: Vec::new(),
-        conditional: false,
-        labels: Vec::new(),
-        rule_reachability_status: None,
-        elapsed_ms: None,
-        statistics: None,
-        skip_reason: Some(reason.to_owned()),
-        diagnostic_code: None,
-        message: None,
-    }
+fn skipped_result(
+    model: &CompiledModel,
+    obligation: &Obligation,
+    assumptions: &[String],
+    reason: &str,
+) -> ObligationResult {
+    let mut result = base_result(model, obligation, assumptions);
+    result.status = ResultStatus::Skipped;
+    result.skip_reason = Some(reason.to_owned());
+    result
 }
 
 fn diagnostic(code: &str, message: &str) -> Diagnostic {
@@ -1253,6 +1324,48 @@ mod tests {
     }
 
     #[test]
+    fn compliance_only_tracks_unknown_reachability_within_the_obligation_budget() {
+        let options = AnalysisOptions {
+            checks: vec![Check::ConstraintCompliance],
+            budget: AnalysisBudget {
+                max_obligations: Some(2),
+                ..AnalysisBudget::default()
+            },
+            ..AnalysisOptions::default()
+        };
+        let mut backend = MockBackend {
+            answers: vec![
+                BackendAnswer::Sat { inputs: witness() },
+                BackendAnswer::Unknown {
+                    reason: "reachability undecided".to_owned(),
+                },
+            ],
+            calls: Vec::new(),
+            configuration: "compliance-unknown-reachability-budget".to_owned(),
+        };
+        let report = analyze(&unsafe_model(), &options, &mut backend).expect("analysis succeeds");
+        assert_eq!(backend.calls.len(), 2);
+        assert_eq!(report.solver_query_count, 2);
+        assert!(report.remaining_work);
+        assert!(!report.complete);
+        let compliance = report
+            .results
+            .last()
+            .expect("budgeted compliance result exists");
+        assert_eq!(compliance.status, ResultStatus::Skipped);
+        assert_eq!(
+            compliance.rule_reachability_status,
+            Some(ResultStatus::Unknown)
+        );
+        assert!(
+            !compliance
+                .labels
+                .iter()
+                .any(|label| label == "vacuous_unreachable_rule")
+        );
+    }
+
+    #[test]
     fn unreachable_rule_compliance_is_explicitly_vacuous() {
         let options = AnalysisOptions {
             checks: vec![Check::ConstraintCompliance],
@@ -1317,22 +1430,44 @@ mod tests {
                 },
             ),
         ]);
-        let mut backend = MockBackend {
-            answers: vec![
-                BackendAnswer::Sat {
-                    inputs: conflict_witness.clone(),
-                },
-                BackendAnswer::Unsat,
-                BackendAnswer::Sat {
-                    inputs: conflict_witness,
-                },
-            ],
-            calls: Vec::new(),
-            configuration: "conflict-replay".to_owned(),
-        };
         let options = AnalysisOptions {
             checks: vec![Check::OutcomeConflict],
             ..AnalysisOptions::default()
+        };
+        let mut planning_model = model.clone();
+        planning_model
+            .raw
+            .rules
+            .sort_by(|left, right| left.id.cmp(&right.id));
+        let signatures = planning_model
+            .raw
+            .rules
+            .iter()
+            .map(|rule| serde_json::to_string(&rule.then).expect("rule output serializes"))
+            .collect::<Vec<_>>();
+        let checks = check_selected(&options);
+        let mut cursors = PlanCursors {
+            right: 1,
+            ..PlanCursors::default()
+        };
+        let mut answers = Vec::new();
+        while let Some(planned) = next_plan(&planning_model, &signatures, &checks, &mut cursors) {
+            answers.push(
+                if replay_witness(&model, &planned.obligation, &conflict_witness, &[])
+                    .unwrap_or(false)
+                {
+                    BackendAnswer::Sat {
+                        inputs: conflict_witness.clone(),
+                    }
+                } else {
+                    BackendAnswer::Unsat
+                },
+            );
+        }
+        let mut backend = MockBackend {
+            answers,
+            calls: Vec::new(),
+            configuration: "conflict-replay-canonical".to_owned(),
         };
         let report = analyze(&model, &options, &mut backend).expect("analysis succeeds");
 
@@ -1341,26 +1476,15 @@ mod tests {
             3,
             "identical-output pair is pruned without solver invocation"
         );
-        assert_eq!(
-            report
-                .results
-                .get(1)
-                .map(|result| result.finding_category.clone()),
-            Some(Some(FindingCategory::Compatible))
-        );
-        assert_eq!(
-            report
-                .results
-                .get(2)
-                .map(|result| result.finding_category.clone()),
-            Some(Some(FindingCategory::Conflict))
-        );
         assert!(
             report
                 .results
-                .get(2)
-                .is_some_and(|result| result.witness.is_some())
+                .iter()
+                .any(|result| { result.finding_category == Some(FindingCategory::Compatible) })
         );
+        assert!(report.results.iter().any(|result| {
+            result.finding_category == Some(FindingCategory::Conflict) && result.witness.is_some()
+        }));
     }
 
     #[test]
@@ -1612,6 +1736,10 @@ mod tests {
         .expect("cached analysis succeeds");
 
         assert!(second_backend.calls.is_empty());
+        assert_eq!(current_report.cache_hits, 1);
+        assert_eq!(current_report.solver_query_count, 0);
+        assert_eq!(current_report.executed_obligation_count, 1);
+        assert_eq!(current_report.planned_obligation_count, 1);
         assert_eq!(current_report.content_hash, current_model.content_hash);
         assert_eq!(
             current_report
@@ -1619,6 +1747,33 @@ mod tests {
                 .first()
                 .map(|item| item.text.as_str()),
             Some("Updated unresolved question")
+        );
+    }
+
+    #[test]
+    fn malformed_sat_witness_is_not_cached_before_a_valid_retry() {
+        let model = unsafe_model();
+        let options = AnalysisOptions::default();
+        let mut bad = MockBackend {
+            answers: vec![BackendAnswer::Sat {
+                inputs: InputValues::new(),
+            }],
+            calls: Vec::new(),
+            configuration: "bad-then-good-witness-cache-regression".to_owned(),
+        };
+        let first = analyze(&model, &options, &mut bad).expect("first analysis succeeds");
+        assert_eq!(first.results[0].status, ResultStatus::Error);
+
+        let mut recovered = MockBackend {
+            answers: vec![BackendAnswer::Sat { inputs: witness() }],
+            calls: Vec::new(),
+            configuration: "bad-then-good-witness-cache-regression".to_owned(),
+        };
+        let second = analyze(&model, &options, &mut recovered).expect("retry succeeds");
+        assert_eq!(recovered.calls, vec![Obligation::DomainFeasibility]);
+        assert_eq!(
+            second.results[0].finding_category,
+            Some(FindingCategory::Feasible)
         );
     }
 

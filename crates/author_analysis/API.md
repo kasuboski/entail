@@ -41,7 +41,7 @@ OutcomeConflict { left_rule_id: String, right_rule_id: String },
 ConstraintCompliance { rule_id: String, constraint_id: String },
 ```
 
-`BackendAnswer` is the enum `Sat { inputs: InputValues }`, `Unsat`, `Unknown { reason }`, `Timeout`, `Cancelled`, or `Error { code, message }`. Analysis records wall-clock elapsed time for each query; solver statistics remain absent unless a future backend response wrapper exposes them. Every SAT input assignment is independently replayed through `author_model` before it can be reported as a finding.
+`BackendAnswer` is the enum `Sat { inputs: InputValues }`, `Unsat`, `Unknown { reason }`, `Timeout`, `Cancelled`, or `Error { code, message }`. Analysis records per-obligation and report elapsed time, cache hits, solver query count, and planned/executed obligation counts. Backends may return `SolverStatistics` through the defaulted `Backend::statistics` hook. Every SAT input assignment is independently replayed through `author_model` before it can be reported or cached.
 
 `SolveBudget` contains the effective per-query timeout and optional solver resource limit. `AnalysisBudget` contains total timeout, per-obligation timeout, maximum obligations and optional solver resource limit. Resolved defaults and effective values are reported.
 
@@ -53,4 +53,4 @@ Compliance options also schedule rule-reachability obligations so each complianc
 
 Completed SAT/UNSAT answers alone may be cached. A bounded process-local cache keys semantic hash, exact obligation, assumption IDs, engine/encoding version, backend solver configuration/version, and effective solve budget. UNKNOWN, timeout, cancellation and errors are not cached. Current report metadata is rebuilt on every analysis.
 
-Pair and compliance obligations are generated lazily; no complete quadratic pair list is materialized. Identical rule conclusions and literal-false guards are soundly pruned from pair queries. Exhausted total time, query/resource budgets or obligation count preserve completed results, mark remaining work skipped, and set `complete=false`. A SAT witness that does not replay as satisfying the exact obligation is reported as `error` with stable code `witness_mismatch`.
+Pair and compliance obligations are generated lazily; no complete quadratic pair list is materialized. Identical rule conclusions and literal-false guards are soundly pruned from pair queries. Work is ordered canonically by declaration IDs, independent of source-array order. Exhausted total time or obligation count preserves completed results, emits a skipped-work marker, sets `remaining_work=true`, and sets `complete=false`. A SAT witness that does not replay as satisfying the exact obligation is reported as `error` with stable code `witness_mismatch` and is not cached.
