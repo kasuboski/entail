@@ -12,7 +12,7 @@
 | Witness replay before findings; budgets, cache keys/invalidation, and incomplete-result behavior | Analysis replay/cache/budget tests; worker behavior | Pending. Do not infer these from a satisfiable solver result. |
 | CLI validate/analyze/evaluate behavior and exit codes | `scripts/acceptance.py` against the integrated executable | Acceptance assets are integrated; no usable integrated CLI run recorded. |
 | Framed persistent worker, lifecycle, capacity, restart, malformed input, and recovery | `scripts/worker_acceptance.py` against the integrated executable | Three isolated transport framing tests passed; complete worker operations/restart acceptance is pending. |
-| Reproducible workload generation and measured performance/cache evidence | `scripts/benchmark.py`, `docs/BENCHMARKS.md`, archived report | Workload generator/harness is integrated. No end-to-end measurements or budget/cache claims recorded. |
+| Reproducible workload generation and measured performance/cache evidence | `scripts/benchmark.py`, `docs/BENCHMARKS.md`, archived report | Workload generator/harness is integrated. Its Python 3 runtime is supplied by the pinned Nix development shell. No end-to-end measurements or budget/cache claims recorded. |
 | Reproducible tooling, pinned native solver, lint policy, and MSRV | `BUILD.md`; `mise run check` | Rust 1.85 `cargo check --workspace --all-targets --all-features --locked` passed after integrating model/worker dependencies. The full check currently fails formatting and strict Clippy for imported component code; see blockers. |
 
 ### Current test evidence
@@ -31,7 +31,7 @@ The complete required gate is:
 mise run check
 ```
 
-Do not mark the release gate passed until this completes successfully on the integrated revisions and the acceptance/worker scripts run against the actual executable. No end-to-end acceptance or benchmark result is currently claimed.
+Do not mark the release gate passed until this completes successfully on the integrated revisions and the acceptance/worker scripts run against the actual executable. The acceptance and worker helper self-tests passed under `nix develop` (these test only Python framing/process helpers, not the application). The benchmark generator ran and structurally validated its fixtures; no measurements were collected because no integrated executable was specified. No end-to-end acceptance or benchmark result is currently claimed.
 
 ## Known blockers and open evidence
 

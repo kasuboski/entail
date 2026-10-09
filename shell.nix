@@ -6,7 +6,7 @@ let
   pkgs = import nixpkgs { };
 in
 pkgs.mkShell {
-  packages = with pkgs; [ gcc pkg-config z3 llvmPackages.libclang ];
+  packages = with pkgs; [ gcc pkg-config z3 llvmPackages.libclang python3 ];
   LIBCLANG_PATH = "${pkgs.llvmPackages.libclang.lib}/lib";
   LD_LIBRARY_PATH = "${pkgs.z3.lib}/lib";
 }

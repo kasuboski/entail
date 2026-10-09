@@ -51,7 +51,7 @@ mise x rust@1.85.0 -- nix develop --command cargo test -p author_z3 --locked
 
 `nix develop` uses `flake.nix` and `flake.lock`; `nix-shell shell.nix` is also supported and uses the same pinned Nixpkgs revision. Cargo dependencies are locked by `Cargo.lock` and commands above use `--locked` where dependency resolution matters.
 
-The Nix shell supplies `gcc`, `pkg-config`, Z3 headers/library, and `libclang` (required by `z3-sys` bindgen). `LD_LIBRARY_PATH` points to the Nix store's Z3 runtime library so test binaries and `entail` can run outside their build command. Keep development and execution inside `nix develop` (or `nix-shell shell.nix`) when using Z3.
+The Nix shell supplies `gcc`, `pkg-config`, Z3 headers/library, `libclang` (required by `z3-sys` bindgen), and Python 3 for the acceptance and benchmark scripts. `LD_LIBRARY_PATH` points to the Nix store's Z3 runtime library so test binaries and `entail` can run outside their build command. Keep development and execution inside `nix develop` (or `nix-shell shell.nix`) when using Z3.
 
 ## Workspace shape
 
