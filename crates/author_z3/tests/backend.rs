@@ -462,6 +462,14 @@ fn all_five_obligations_match_finite_enum_and_date_evaluation_with_assumptions()
 
 #[test]
 fn coverage_tag_conflicts_identical_outputs_and_empty_domains_are_exact() {
+    let Some(no_rules) = compile(&fixture("partial.json")) else {
+        return;
+    };
+    assert!(matches!(
+        solve(&no_rules, &Obligation::Coverage, &[]),
+        BackendAnswer::Sat { .. }
+    ));
+
     let Some(complete) = compile(&fixture("complete-proposed.json")) else {
         return;
     };
