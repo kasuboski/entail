@@ -872,7 +872,12 @@ fn base_result(
     obligation: &Obligation,
     assumptions: &[String],
 ) -> ObligationResult {
-    let ids = obligation.declaration_ids();
+    let mut ids = obligation.declaration_ids();
+    if obligation == &Obligation::Coverage {
+        ids.extend(model.raw.rules.iter().map(|rule| rule.id.clone()));
+        ids.sort();
+        ids.dedup();
+    }
     let conditional = !assumptions.is_empty();
     let mut source_ids: BTreeSet<_> = ids
         .iter()
@@ -1639,7 +1644,10 @@ mod tests {
             include_str!("../../../author-engine-v0/fixtures/valid/empty-domain.json");
         let empty_value: serde_json::Value = serde_json::from_str(empty_input)
             .unwrap_or_else(|error| panic!("fixture JSON must parse: {error}"));
-        let empty_model = compile_fixture(&empty_value);
+        let mut empty_model = compile_fixture(&empty_value);
+        for rule in &mut empty_model.raw.rules {
+            rule.origin.source_ids = vec!["EMPTY_DOMAIN_RULE_SOURCE".to_owned()];
+        }
         let options = AnalysisOptions {
             checks: vec![Check::Coverage],
             ..AnalysisOptions::default()
@@ -1666,6 +1674,23 @@ mod tests {
             Some("empty_domain")
         );
         assert_eq!(empty_backend.calls, vec![Obligation::DomainFeasibility]);
+        let skipped_coverage = empty_report.results.get(1).expect("coverage skip exists");
+        let mut expected_rule_ids: Vec<_> = empty_model
+            .raw
+            .rules
+            .iter()
+            .map(|rule| rule.id.clone())
+            .collect();
+        expected_rule_ids.sort();
+        assert_eq!(skipped_coverage.declaration_ids, expected_rule_ids);
+        if !empty_model.raw.rules.is_empty() {
+            assert!(
+                skipped_coverage
+                    .source_ids
+                    .iter()
+                    .any(|source| source == "EMPTY_DOMAIN_RULE_SOURCE")
+            );
+        }
 
         let mut draft_value: serde_json::Value = serde_json::from_str(include_str!(
             "../../../author-engine-v0/fixtures/valid/unsafe-grant.json"
@@ -1690,6 +1715,100 @@ mod tests {
             Some(FindingCategory::BehaviorUnspecified)
         );
         assert_eq!(draft_backend.calls, vec![Obligation::DomainFeasibility]);
+    }
+
+    #[test]
+    fn coverage_provenance_tracks_all_rules_and_refreshes_on_cached_and_skipped_results() {
+        let mut original = unsafe_model();
+        for rule in &mut original.raw.rules {
+            rule.origin.source_ids = vec!["RULE_SOURCE_OLD".to_owned()];
+        }
+        let options = AnalysisOptions {
+            checks: vec![Check::Coverage],
+            ..AnalysisOptions::default()
+        };
+        let mut first_backend = MockBackend {
+            answers: vec![
+                BackendAnswer::Sat { inputs: witness() },
+                BackendAnswer::Unsat,
+            ],
+            calls: Vec::new(),
+            configuration: "coverage-provenance-cache-refresh".to_owned(),
+        };
+        let first = analyze(&original, &options, &mut first_backend).expect("first run succeeds");
+        let first_coverage = first
+            .results
+            .iter()
+            .find(|result| result.obligation == Obligation::Coverage)
+            .expect("coverage result exists");
+        let mut expected_rule_ids: Vec<_> = original
+            .raw
+            .rules
+            .iter()
+            .map(|rule| rule.id.clone())
+            .collect();
+        expected_rule_ids.sort();
+        assert_eq!(first_coverage.declaration_ids, expected_rule_ids);
+        assert!(
+            first_coverage
+                .source_ids
+                .iter()
+                .any(|source| source == "RULE_SOURCE_OLD")
+        );
+
+        let mut updated = original.clone();
+        for rule in &mut updated.raw.rules {
+            rule.origin.source_ids = vec!["RULE_SOURCE_NEW".to_owned()];
+        }
+        assert_eq!(original.semantic_hash, updated.semantic_hash);
+        let mut second_backend = MockBackend {
+            answers: Vec::new(),
+            calls: Vec::new(),
+            configuration: "coverage-provenance-cache-refresh".to_owned(),
+        };
+        let second = analyze(&updated, &options, &mut second_backend).expect("cached run succeeds");
+        let cached_coverage = second
+            .results
+            .iter()
+            .find(|result| result.obligation == Obligation::Coverage)
+            .expect("cached coverage result exists");
+        assert_eq!(cached_coverage.declaration_ids, expected_rule_ids);
+        assert!(
+            cached_coverage
+                .source_ids
+                .iter()
+                .any(|source| source == "RULE_SOURCE_NEW")
+        );
+        assert!(
+            !cached_coverage
+                .source_ids
+                .iter()
+                .any(|source| source == "RULE_SOURCE_OLD")
+        );
+        assert_eq!(second.cache_hits, 2);
+
+        let skipped_options = AnalysisOptions {
+            checks: vec![Check::Coverage],
+            budget: AnalysisBudget {
+                max_obligations: Some(1),
+                ..AnalysisBudget::default()
+            },
+            ..AnalysisOptions::default()
+        };
+        let skipped = analyze(&updated, &skipped_options, &mut second_backend)
+            .expect("budgeted run succeeds");
+        let skipped_coverage = skipped
+            .results
+            .iter()
+            .find(|result| result.obligation == Obligation::Coverage)
+            .expect("budgeted coverage marker exists");
+        assert_eq!(skipped_coverage.declaration_ids, expected_rule_ids);
+        assert!(
+            skipped_coverage
+                .source_ids
+                .iter()
+                .any(|source| source == "RULE_SOURCE_NEW")
+        );
     }
 
     #[test]
