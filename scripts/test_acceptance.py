@@ -37,27 +37,28 @@ class AcceptanceHelpersTest(unittest.TestCase):
         with self.assertRaises(acceptance.AcceptanceFailure):
             acceptance._check_compliance(result, "unsafe-grant", {"ExpiryWithinContract": "violation"})
 
-    def test_compliance_targets_rule_by_constraint_outcome_and_exact_result(self) -> None:
-        result = {"results": [
-            {"obligation": {"kind": "constraint_compliance", "rule_id": "GrantApprovedRequest",
-                             "constraint_id": "ApprovalRequired"}, "status": "satisfied",
-             "finding_category": "compliant"},
-            {"obligation": {"kind": "constraint_compliance", "rule_id": "GrantApprovedRequest",
-                             "constraint_id": "ExpiryWithinContract"}, "status": "finding",
-             "finding_category": "violation"},
-        ]}
-        acceptance._check_compliance(result, "unsafe-grant", {
-            "ApprovalRequired": "compliant", "ExpiryWithinContract": "violation"
-        })
+    def test_behavior_unspecified_is_a_skipped_no_rules_obligation(self) -> None:
+        result = {"obligation": {"kind": "coverage"}, "status": "skipped",
+                  "finding_category": "behavior_unspecified", "skip_reason": "no_rules"}
+        acceptance.expect_check_label([result], "coverage", "behavior_unspecified", "partial")
 
-    def test_check_label_accepts_one_matching_typed_obligation_in_a_set(self) -> None:
-        result = {"results": [
-            {"obligation": {"kind": "outcome_conflict", "left_rule_id": "A", "right_rule_id": "B"},
-             "status": "finding", "finding_category": "conflict"},
-            {"obligation": {"kind": "outcome_conflict", "left_rule_id": "A", "right_rule_id": "C"},
-             "status": "satisfied", "finding_category": "compatible"},
-        ]}
-        acceptance.expect_check_label(result, "outcome_conflict", "conflict", "multi-pair")
+    def test_conflict_check_can_contain_both_conflict_and_compatible_pairs(self) -> None:
+        result = [
+            {"obligation": {"kind": "outcome_conflict"}, "status": "finding", "finding_category": "conflict"},
+            {"obligation": {"kind": "outcome_conflict"}, "status": "satisfied", "finding_category": "compatible"},
+        ]
+        acceptance.expect_check_label(result, "outcome_conflict", "conflict", "mixed pairs")
+
+    def test_compliance_uses_nested_obligation_ids_and_exact_status_category(self) -> None:
+        result = {"results": [{"obligation": {"kind": "constraint_compliance",
+                                                  "rule_id": "GrantApprovedRequest",
+                                                  "constraint_id": "ExpiryWithinContract"},
+                               "declaration_ids": ["GrantApprovedRequest", "ExpiryWithinContract"],
+                               "status": "finding", "finding_category": "violation"}]}
+        acceptance._check_compliance(result, "unsafe-grant", {"ExpiryWithinContract": "violation"})
+        result["results"][0]["status"] = "satisfied"
+        with self.assertRaises(acceptance.AcceptanceFailure):
+            acceptance._check_compliance(result, "unsafe-grant", {"ExpiryWithinContract": "violation"})
 
     def test_subprocess_timeout_is_bounded(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

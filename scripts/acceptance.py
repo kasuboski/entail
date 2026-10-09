@@ -95,12 +95,17 @@ def _category(obj: dict[str, Any]) -> str | None:
 
 def expect_check_label(result: Any, check: str, label: str, context: str) -> list[dict[str, Any]]:
     matches = statuses_for(result, check)
-    observed = [value for item in matches for value in (_status(item), _category(item)) if value is not None]
+    observed_statuses = {_status(item) for item in matches if _status(item) is not None}
+    observed_categories = {_category(item) for item in matches if _category(item) is not None}
     wanted = label.lower()
-    # A check can contain many typed obligations (for example several rule
-    # pairs); an expected finding does not require every unrelated pair to find.
-    if not matches or not any(wanted in (_status(item), _category(item)) for item in matches):
-        raise AcceptanceFailure(f"{context}: expected typed {check} status/category {label!r}; observed {observed!r}")
+    valid_statuses = {"finding", "satisfied", "skipped"}
+    valid_categories = {wanted}
+    if check == "outcome_conflict":
+        valid_categories.add("compatible")
+    if (not matches or wanted not in observed_categories | observed_statuses
+            or not observed_statuses.issubset(valid_statuses)
+            or not observed_categories.issubset(valid_categories)):
+        raise AcceptanceFailure(f"{context}: expected exact {check} status/category {label!r}; statuses={observed_statuses}, categories={observed_categories}")
     return matches
 
 
@@ -141,23 +146,18 @@ def _check_compliance(result: Any, fixture: str, expected: dict[str, str]) -> No
         target_outcome = constraints[constraint_id]
         expected_rules = {rule_id for rule_id, rule_outcome in rules.items() if rule_outcome == target_outcome}
         if not expected_rules:
-            raise AcceptanceFailure(f"{fixture}: no rules target expected constraint outcome {outcome}")
+            raise AcceptanceFailure(f"{fixture}: no rules target constraint constructor {target_outcome}")
         for rule_id in sorted(expected_rules):
             matches = [o for o in entries
                        if constraint_id in exact_ids(o, "constraint_id", "constraint_ids")
                        and rule_id in exact_ids(o, "rule_id", "rule_ids")]
             if not matches:
                 raise AcceptanceFailure(f"{fixture}: missing compliance result for exact rule={rule_id}, constraint={constraint_id}; got {entries!r}")
-            observed = {_category(o) for o in matches}
-            observed_statuses = {_status(o) for o in matches}
             wanted = expected[constraint_id]
-            wanted_status = "finding" if wanted == "violation" else "satisfied"
-            # Compliance is obligation-specific; category and status must both agree.
-            if observed != {wanted} or observed_statuses != {wanted_status}:
-                raise AcceptanceFailure(
-                    f"{fixture}: {rule_id}/{constraint_id} expected {wanted_status}/{wanted}, "
-                    f"got {observed_statuses}/{observed}"
-                )
+            expected_status = {"compliant": "satisfied", "violation": "finding"}.get(wanted)
+            if expected_status is None or any(_status(o) != expected_status or _category(o) != wanted for o in matches):
+                observed = [(_status(o), _category(o)) for o in matches]
+                raise AcceptanceFailure(f"{fixture}: {rule_id}/{constraint_id} expected exact ({expected_status}, {wanted}), got {observed}")
 
 
 def _selected_ids(result: Any) -> set[str]:
@@ -172,22 +172,18 @@ def _selected_ids(result: Any) -> set[str]:
 
 def _validate_readiness(result: Any, fixture: str, expected: dict[str, Any]) -> None:
     if fixture == "complete-proposed":
-        reports = [obj for obj in objects(result) if "complete" in obj and "results" in obj]
+        reports = [obj for obj in objects(result) if "complete" in obj and ("results" in obj or "obligations" in obj)]
         if not reports or any(obj.get("complete") is not True for obj in reports):
             raise AcceptanceFailure("complete-proposed: expected complete=true on the analysis report")
         if any(obj.get("business_verified") is True for obj in objects(result)):
             raise AcceptanceFailure("complete-proposed: a solver result must not claim business_verified=true")
         if not any(isinstance(obj.get("open_items"), list) and obj["open_items"] for obj in objects(result)):
             raise AcceptanceFailure("complete-proposed: expected unresolved open items to remain visible")
-        if not any(
-            any(
-                isinstance(obj.get(key), list) and obj[key]
-                for key in ("proposed_declarations", "participating_proposed_declaration_ids")
-            )
-            for obj in objects(result)
-        ):
+        if not any(isinstance(obj.get("participating_proposed_declaration_ids"), list)
+                   and obj["participating_proposed_declaration_ids"] for obj in objects(result)):
             raise AcceptanceFailure("complete-proposed: expected proposed declaration IDs in context")
-    report = next((obj for obj in objects(result) if "results" in obj and "selected_assumption_ids" in obj), None)
+    report = next((obj for obj in objects(result) if ("results" in obj or "obligations" in obj)
+                   and "selected_assumption_ids" in obj), None)
     if report is None:
         raise AcceptanceFailure(f"{fixture}: analysis report context is missing")
     model = load(BUNDLE / "fixtures/valid" / f"{fixture}.json")
@@ -243,24 +239,13 @@ def check_fixture(binary: Path, fixture: str, expected: dict[str, Any], assumpti
             raise AcceptanceFailure(f"{fixture}: selected context not explicitly marked conditional")
         expect_check_label(result, "coverage", expected["coverage"], fixture)
     if "conflict_constructor" in expected:
-        conflicts = statuses_for(result, "outcome_conflict")
-        rules_by_id = {rule["id"]: rule["then"] for rule in model.get("rules", [])}
-        expected_constructor = expected["conflict_constructor"]
-        exact_pair = any(
-            expected_constructor in exact_ids(o, "outcome_id", "outcome_ids")
-            or expected_constructor in exact_ids(o, "constructor", "constructors")
-            or (
-                isinstance(o.get("obligation"), dict)
-                and rules_by_id.get(o["obligation"].get("left_rule_id"), {}).get("outcome")
-                == expected_constructor
-                and rules_by_id.get(o["obligation"].get("right_rule_id"), {}).get("outcome")
-                == expected_constructor
-                and _status(o) == "finding"
-            )
-            for o in conflicts
-        )
-        if not exact_pair:
-            raise AcceptanceFailure(f"{fixture}: conflict must name exact constructor {expected_constructor}")
+        model_by_rule = {rule["id"]: rule["then"]["outcome"] for rule in model.get("rules", [])}
+        conflicts = [o for o in statuses_for(result, "outcome_conflict") if _category(o) == "conflict"]
+        if not any(all(model_by_rule.get(rule_id) == expected["conflict_constructor"]
+                       for rule_id in exact_ids(o, "left_rule_id", "left_rule_ids") | exact_ids(o, "right_rule_id", "right_rule_ids"))
+                   and len(exact_ids(o, "left_rule_id", "left_rule_ids") | exact_ids(o, "right_rule_id", "right_rule_ids")) == 2
+                   for o in conflicts):
+            raise AcceptanceFailure(f"{fixture}: an actual conflicting rule pair must construct {expected['conflict_constructor']}")
     _validate_readiness(result, fixture, expected)
     return result
 
@@ -283,7 +268,9 @@ def run_acceptance(binary: Path) -> int:
                 raise AcceptanceFailure("conditional-assumption: assumptions selected implicitly for empty assumption list")
             check_fixture(binary, fixture, expected, assumptions=expected["assumption_ids"])
         else:
-            check_fixture(binary, fixture, expected)
+            analyzed = check_fixture(binary, fixture, expected)
+            if fixture == "conflict-tag":
+                _replay_tag_conflict(binary, analyzed)
             if fixture == "big-integer":
                 evaluated = run_json(binary, ["evaluate", str(BUNDLE / "fixtures/valid/big-integer.json"),
                                               str(BUNDLE / "scenarios/large-integer.json")])
@@ -355,30 +342,14 @@ def _check_constructor_payload_independently(binary: Path) -> None:
         raise AcceptanceFailure("conflict-payload fixture lacks independent distinct Grant field payloads")
     result = check_fixture(binary, "conflict-payload", load(BUNDLE / "fixtures/expectations.json")["valid"]["conflict-payload"])
     conflicts = statuses_for(result, "outcome_conflict")
-    exact_payload_conflict = False
-    rules = {rule["id"]: rule["then"] for rule in fixture.get("rules", [])}
+    rule_outcomes = {rule["id"]: rule["then"]["outcome"] for rule in fixture["rules"]}
+    payload_conflicts = []
     for obj in conflicts:
-        left = obj.get("left_outcome", obj.get("outcome_a"))
-        right = obj.get("right_outcome", obj.get("outcome_b"))
-        if not (isinstance(left, dict) and isinstance(right, dict)):
-            obligation = obj.get("obligation")
-            if isinstance(obligation, dict):
-                left = rules.get(obligation.get("left_rule_id"))
-                right = rules.get(obligation.get("right_rule_id"))
-        if (
-            isinstance(left, dict)
-            and isinstance(right, dict)
-            and left.get("outcome", left.get("constructor"))
-            == right.get("outcome", right.get("constructor"))
-            == "Grant"
-            and left.get("fields", left.get("payload"))
-            != right.get("fields", right.get("payload"))
-        ):
-            exact_payload_conflict = True
-    if not exact_payload_conflict and not any("Grant" in exact_ids(o, "outcome_id", "outcome_ids") and
-                                                (o.get("payloads_differ") is True or o.get("constructor_payload_conflict") is True)
-                                                for o in conflicts):
-        raise AcceptanceFailure("conflict-payload: conflict result must demonstrate same Grant constructor with unequal field values")
+        pair = exact_ids(obj, "left_rule_id", "left_rule_ids") | exact_ids(obj, "right_rule_id", "right_rule_ids")
+        if _category(obj) == "conflict" and len(pair) == 2 and all(rule_outcomes.get(rule_id) == "Grant" for rule_id in pair):
+            payload_conflicts.append(obj)
+    if not payload_conflicts:
+        raise AcceptanceFailure("conflict-payload: no conflict obligation joins two distinct Grant-producing rules")
     witness = next((o.get("witness") for o in conflicts if isinstance(o.get("witness"), dict)), None)
     if witness is None:
         raise AcceptanceFailure("conflict-payload: expected typed conflict witness to reconstruct independently")
@@ -392,8 +363,25 @@ def _check_constructor_payload_independently(binary: Path) -> None:
     outcomes = [outcome for obj in objects(replay) for outcome in obj.get("outcomes", []) if isinstance(outcome, dict)]
     grants = [outcome for outcome in outcomes if outcome.get("constructor", outcome.get("outcome", outcome.get("id"))) == "Grant"]
     payloads = {json.dumps(outcome.get("fields", outcome.get("payload")), sort_keys=True) for outcome in grants}
-    if len(payloads) < 2:
-        raise AcceptanceFailure("conflict-payload: replay did not independently produce distinct Grant payloads")
+    if len(payloads) < 2 or not any(obj.get("classification") == "conflicting" for obj in objects(replay)):
+        raise AcceptanceFailure("conflict-payload: replay did not independently produce distinct Grant payloads in a conflicting evaluation")
+
+
+def _replay_tag_conflict(binary: Path, analysis: Any) -> None:
+    conflicts = [obj for obj in statuses_for(analysis, "outcome_conflict")
+                 if _status(obj) == "finding" and _category(obj) == "conflict"]
+    witness = next((obj.get("witness") for obj in conflicts if isinstance(obj.get("witness"), dict)), None)
+    if witness is None:
+        raise AcceptanceFailure("conflict-tag: conflict finding needs typed witness for evaluator replay")
+    inputs = witness.get("inputs", witness)
+    with tempfile.TemporaryDirectory(prefix="entail-tag-conflict-") as directory:
+        scenario = Path(directory) / "conflict-witness.json"
+        scenario.write_text(json.dumps({"inputs": inputs}, separators=(",", ":")), encoding="utf-8")
+        replay = run_json(binary, ["evaluate", str(BUNDLE / "fixtures/valid/conflict-tag.json"), str(scenario)])
+    outcomes = [outcome for obj in objects(replay) for outcome in obj.get("outcomes", []) if isinstance(outcome, dict)]
+    constructors = {outcome.get("constructor", outcome.get("outcome", outcome.get("id"))) for outcome in outcomes}
+    if not any(obj.get("classification") == "conflicting" for obj in objects(replay)) or constructors != {"Grant", "Deny"}:
+        raise AcceptanceFailure(f"conflict-tag: evaluator replay did not reconstruct Grant/Deny conflict: {replay!r}")
 
 
 def _check_cli_errors(binary: Path) -> None:

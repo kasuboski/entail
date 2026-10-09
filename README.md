@@ -29,7 +29,7 @@ nix develop --command python3 scripts/acceptance.py target/debug/entail
 nix develop --command python3 scripts/worker_acceptance.py target/debug/entail
 ```
 
-At integration revision `758d32d`, all 46 workspace tests and the CLI/worker acceptance scripts passed. Current command evidence, benchmark smoke measurements, and remaining evidence gaps are in [`docs/DELIVERY.md`](docs/DELIVERY.md). The benchmark harness is not a substitute for analysis-performance or cache measurements.
+Final integration commands, acceptance coverage, and benchmark evidence are tracked in [`docs/DELIVERY.md`](docs/DELIVERY.md). The archived release worker smoke includes analysis/cache/query/native-statistics and sampled RSS measurements, but is single-host smoke evidence—not a performance guarantee.
 
 ## Correctness boundary
 

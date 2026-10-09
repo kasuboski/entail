@@ -85,21 +85,28 @@ class Worker:
         assert self.process.stdin is not None and self.process.stdout is not None
         self.next_id = 1
 
+    def raw_request(self, request: dict[str, Any], expected_id: Any) -> dict[str, Any]:
+        write_fragmented(self.process.stdin, encode_frame(request))
+        response = read_frame(self.process.stdout)
+        if not isinstance(response, dict) or response.get("protocol_version") != PROTOCOL or response.get("request_id") != expected_id:
+            raise AcceptanceFailure(f"invalid response envelope for raw request: {response!r}")
+        if ("result" in response) == ("error" in response):
+            raise AcceptanceFailure(f"response must contain exactly one of result/error: {response!r}")
+        return response
+
     def request(self, op: str, params: dict[str, Any] | None = None, fragmented: bool = False) -> dict[str, Any]:
         request_id = f"acceptance-{self.next_id}"
         self.next_id += 1
         request = {"protocol_version": PROTOCOL, "request_id": request_id, "op": op, "params": params or {}}
-        frame = encode_frame(request)
         if fragmented:
-            write_fragmented(self.process.stdin, frame, 1)
-        else:
-            write_fragmented(self.process.stdin, frame)
-        response = read_frame(self.process.stdout)
-        if not isinstance(response, dict) or response.get("protocol_version") != PROTOCOL or response.get("request_id") != request_id:
-            raise AcceptanceFailure(f"invalid response envelope for {op}: {response!r}")
-        if ("result" in response) == ("error" in response):
-            raise AcceptanceFailure(f"response must contain exactly one of result/error: {response!r}")
-        return response
+            write_fragmented(self.process.stdin, encode_frame(request), 1)
+            response = read_frame(self.process.stdout)
+            if not isinstance(response, dict) or response.get("protocol_version") != PROTOCOL or response.get("request_id") != request_id:
+                raise AcceptanceFailure(f"invalid response envelope for {op}: {response!r}")
+            if ("result" in response) == ("error" in response):
+                raise AcceptanceFailure(f"response must contain exactly one of result/error: {response!r}")
+            return response
+        return self.raw_request(request, request_id)
 
     def close(self, timeout: float = 5.0) -> int:
         if self.process.poll() is None:
@@ -161,6 +168,19 @@ def run_worker_acceptance(binary: Path) -> None:
         analyzed = result(worker.request("analyze", {"handle": handle, "checks": ["coverage", "constraint_compliance"], "assumption_ids": [], "budget": {}}), "analyze")
         if not isinstance(analyzed, dict) or not any(k in analyzed for k in ("obligations", "results", "checks")):
             raise AcceptanceFailure(f"analyze did not return ordered check results: {analyzed!r}")
+        limited = result(worker.request("analyze", {"handle": handle, "checks": ["coverage", "constraint_compliance"],
+                                                       "assumption_ids": [], "budget": {"max_obligations": 1}}), "limited analyze")
+        limited_results = limited.get("results", limited.get("obligations", []))
+        if limited.get("complete") is not False or not any(item.get("status") == "skipped" for item in limited_results):
+            raise AcceptanceFailure(f"obligation budget must preserve incomplete/skipped state, got {limited!r}")
+        expect_error(worker.request("analyze", {"handle": handle, "unexpected": True}), "invalid_params", "unknown analyze parameter")
+        expect_error(worker.request("analyze", {"handle": handle, "checks": "coverage"}), "invalid_params", "non-list checks")
+        expect_error(worker.request("analyze", {"handle": handle, "assumption_ids": [None]}), "invalid_params", "non-string assumption")
+        expect_error(worker.request("analyze", {"handle": "absent-handle"}), "unknown_handle", "unknown handle")
+        invalid_envelope = worker.raw_request({"protocol_version": PROTOCOL, "request_id": "null-params", "op": "hello", "params": None}, "null-params")
+        expect_error(invalid_envelope, "invalid_envelope", "null params")
+        invalid_id = worker.raw_request({"protocol_version": PROTOCOL, "request_id": None, "op": "hello", "params": {}}, None)
+        expect_error(invalid_id, "invalid_envelope", "null request ID")
         scenario = json.loads((BUNDLE / "scenarios" / "unsafe-expiry.json").read_text(encoding="utf-8"))
         evaluated = result(worker.request("evaluate", {"handle": handle, "inputs": scenario["inputs"], "assumption_ids": []}), "evaluate")
         evaluated_objects = list(_objects(evaluated))
