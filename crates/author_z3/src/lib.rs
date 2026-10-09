@@ -1,6 +1,6 @@
 //! Native Z3 backend for Author's typed decision analysis.
 
-use author_analysis::{Backend, BackendAnswer, Obligation, SolveBudget};
+use author_analysis::{Backend, BackendAnswer, Obligation, SolveBudget, SolverStatistics};
 use author_model::{CompiledModel, Expr, InputValues, Type, Value};
 use std::{collections::BTreeMap, str::FromStr};
 use z3::{
@@ -25,14 +25,16 @@ impl Clone for Term {
     }
 }
 
-/// Stateful-free backend; each obligation receives an isolated Z3 solver.
+/// Each obligation gets an isolated Z3 solver; only detached statistics are retained.
 #[derive(Clone, Debug, Default)]
-pub struct Z3Backend;
+pub struct Z3Backend {
+    statistics: Option<SolverStatistics>,
+}
 
 impl Z3Backend {
     #[must_use]
     pub const fn new() -> Self {
-        Self
+        Self { statistics: None }
     }
 }
 
@@ -44,7 +46,18 @@ impl Backend for Z3Backend {
         assumption_ids: &[String],
         budget: &SolveBudget,
     ) -> BackendAnswer {
-        solve_query(model, obligation, assumption_ids, budget)
+        self.statistics = None;
+        solve_query(
+            model,
+            obligation,
+            assumption_ids,
+            budget,
+            &mut self.statistics,
+        )
+    }
+
+    fn statistics(&self) -> Option<SolverStatistics> {
+        self.statistics.clone()
     }
 
     fn solver_version(&self) -> String {
@@ -62,6 +75,7 @@ fn solve_query(
     obligation: &Obligation,
     assumption_ids: &[String],
     budget: &SolveBudget,
+    statistics: &mut Option<SolverStatistics>,
 ) -> BackendAnswer {
     let solver = Solver::new();
     let mut params = z3::Params::new();
@@ -237,7 +251,7 @@ fn solve_query(
     };
     solver.assert(&query);
 
-    match solver.check() {
+    let answer = match solver.check() {
         SatResult::Sat => solver.get_model().map_or_else(
             || BackendAnswer::Error {
                 code: "model_unavailable".to_owned(),
@@ -250,7 +264,21 @@ fn solve_query(
         ),
         SatResult::Unsat => BackendAnswer::Unsat,
         SatResult::Unknown => unknown_answer(solver.get_reason_unknown()),
+    };
+    let mut values = BTreeMap::new();
+    values.insert(
+        "assertion_count".to_owned(),
+        solver.get_assertions().len().to_string(),
+    );
+    for entry in solver.get_statistics().entries() {
+        let value = match entry.value {
+            z3::StatisticsValue::UInt(value) => value.to_string(),
+            z3::StatisticsValue::Double(value) => value.to_string(),
+        };
+        values.insert(entry.key, value);
     }
+    *statistics = Some(SolverStatistics { values });
+    answer
 }
 
 fn unknown_answer(reason: Option<String>) -> BackendAnswer {
