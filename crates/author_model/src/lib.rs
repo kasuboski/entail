@@ -858,7 +858,7 @@ fn expression_shape_error(expression: &serde_json::Value, pointer: &str) -> Opti
         _ => {
             return Some(
                 error(
-                    "unsupported_node",
+                    "schema_error",
                     format!("unsupported expression kind {kind}"),
                 )
                 .with_pointer(format!("{pointer}/kind")),
@@ -2537,6 +2537,51 @@ mod tests {
             assert!(compile_json(&v, &ModelLimits::default()).is_err(), "{name}");
         }
     }
+
+    #[test]
+    fn invalid_fixtures_match_authoritative_expected_diagnostic_codes() {
+        let base = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../author-engine-v0/fixtures");
+        let expectations: serde_json::Value =
+            serde_json::from_slice(&std::fs::read(base.join("expectations.json")).unwrap())
+                .unwrap();
+
+        for (fixture, expectation) in expectations["invalid"].as_object().unwrap() {
+            let value: serde_json::Value = serde_json::from_slice(
+                &std::fs::read(base.join(format!("invalid/{fixture}.json"))).unwrap(),
+            )
+            .unwrap();
+            let expected_code = expectation["expected_diagnostic"].as_str().unwrap();
+            let diagnostics = compile_json(&value, &ModelLimits::default())
+                .expect_err(&format!("invalid fixture {fixture} compiled successfully"));
+            let diagnostic = diagnostics
+                .iter()
+                .find(|diagnostic| diagnostic.code == expected_code)
+                .unwrap_or_else(|| {
+                    panic!(
+                        "{fixture}: expected diagnostic code {expected_code}, got {:?}",
+                        diagnostics
+                            .iter()
+                            .map(|diagnostic| &diagnostic.code)
+                            .collect::<Vec<_>>()
+                    )
+                });
+            if fixture == "unsupported-node" {
+                assert!(
+                    diagnostic
+                        .message
+                        .contains("unsupported expression kind python")
+                );
+                assert_eq!(diagnostic.pointer.as_deref(), Some("/rules/0/when/kind"));
+                assert_eq!(
+                    diagnostic.declaration_id.as_deref(),
+                    Some("GrantApprovedRequest")
+                );
+                assert!(diagnostic.source_ids.is_empty());
+            }
+        }
+    }
+
     #[test]
     fn exact_big_integer_expression() {
         let expr = Expr::Add {
