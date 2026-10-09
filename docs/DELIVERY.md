@@ -13,7 +13,7 @@
 | CLI validate/analyze/evaluate behavior and exit codes | `scripts/acceptance.py` against the integrated executable | Acceptance assets are integrated; no usable integrated CLI run recorded. |
 | Framed persistent worker, lifecycle, capacity, restart, malformed input, and recovery | `scripts/worker_acceptance.py` against the integrated executable | Three isolated transport framing tests passed; complete worker operations/restart acceptance is pending. |
 | Reproducible workload generation and measured performance/cache evidence | `scripts/benchmark.py`, `docs/BENCHMARKS.md`, archived report | Workload generator/harness is integrated. Its Python 3 runtime is supplied by the pinned Nix development shell. No end-to-end measurements or budget/cache claims recorded. |
-| Reproducible tooling, pinned native solver, lint policy, and MSRV | `BUILD.md`; `mise run check` | Rust 1.85 `cargo check --workspace --all-targets --all-features --locked` passes. The 34-test workspace nextest suite passes. Full `mise run check` still fails formatting and strict Clippy for imported model/transport code; see blockers. |
+| Reproducible tooling, pinned native solver, lint policy, and MSRV | `BUILD.md`; `mise run check` | Rust 1.85 `cargo check --workspace --all-targets --all-features --locked` passes. The 34-test workspace nextest suite passes. Formatting passes after integration formatting cleanup; strict workspace Clippy remains blocked by model and transport findings. |
 
 ### Current test evidence
 
@@ -36,7 +36,7 @@ Do not mark the release gate passed until this completes successfully on the int
 ## Known blockers and open evidence
 
 - Integrated model review repairs address target-specific outcome-field validation, year-zero date rejection, schema parity, and bounded preflight concerns. The model still fails the workspace's unchanged pedantic Clippy policy (documentation, arithmetic, `Self`, function-size, and related findings); the targeted model quality/diagnostics agent owns those repairs. No integration-side lint weakening is acceptable.
-- The imported framed transport checkpoint is not rustfmt/Clippy clean under workspace policy. Its interrupted-read loop and length handling also need strict-lint fixes. This belongs with the worker owner; keep root Clippy policies intact.
+- The imported framed transport checkpoint's format issues were cleaned up in integration, but it still fails strict Clippy for public `# Errors` docs, interrupted-read control flow, safe slicing, and checked arithmetic/conversion. The worker owner has analogous fixes in progress; keep root Clippy policies intact.
 - The analysis and Z3 library implementations are integrated and their tests pass. CLI/worker dispatch and lifecycle, external application acceptance, and measured budget/cache/performance evidence remain pending.
 - Before declaring feature completion, reconcile the full specification's process/restart, differential, budgets/cache/provenance, witness replay, and complete-policy behavioral tests. Document any genuinely deferred requirement explicitly rather than implying completion.
 
