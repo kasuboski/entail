@@ -4,12 +4,12 @@ Entail v0 validates and analyzes an explicitly authored model of one business de
 
 ## Build and run
 
-The reproducible development environment is pinned in [`BUILD.md`](BUILD.md). The supported/tested route is x86_64 Linux with Nix and mise; stay inside `nix develop` when running the dynamically linked Z3 executable.
+The supported/tested development route is x86_64 Linux with mise and Nix. `mise.toml` pins Rust 1.98.0 and cargo-nextest; `flake.nix` supplies GCC, pkg-config, Z3, libclang and Python, with the Z3 library path configured for the dynamically linked executable. Stay inside `nix develop` when building or running it.
 
 ```sh
 mise install
 mise run check
-nix develop --command cargo build --workspace --bin entail --locked
+mise exec -- nix develop --command cargo build --workspace --bin entail --locked
 ```
 
 Example commands using the included partial-policy fixture:
@@ -29,7 +29,7 @@ nix develop --command python3 scripts/acceptance.py target/debug/entail
 nix develop --command python3 scripts/worker_acceptance.py target/debug/entail
 ```
 
-Final integration commands and acceptance coverage are tracked in [`docs/DELIVERY.md`](docs/DELIVERY.md). The archived release worker smoke includes analysis/cache/query/native-statistics and sampled RSS measurements from an earlier source snapshot; it is single-host historical smoke evidence, not a final-revision performance claim or guarantee.
+The CLI returns 0 for findings and 2 for invalid model/file/JSON input. Backend internal errors map to exit 3, but black-box acceptance cannot induce that path because the public CLI has no deterministic backend-fault injection seam; mapping is tested at the analysis boundary. `scripts/acceptance.py` and `scripts/worker_acceptance.py` provide black-box checks against the built executable. Python helpers can be tested with `mise exec -- nix develop --command python3 -m unittest discover -s scripts -p 'test_*.py' -v`; see [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md) for workload regeneration and historical measurement interpretation.
 
 ## Correctness boundary
 
@@ -39,6 +39,6 @@ The engine checks a formalization; it does not discover or establish business tr
 - Rules participate in analysis whether marked proposed or confirmed. Review metadata is not business approval.
 - Findings are relative to the declared inputs, domain, rules, constraints, and explicitly selected assumptions. Conditional conclusions must retain that scope.
 - No findings do not establish model completeness, fairness, legal sufficiency, or safety. Partial models and unresolved items remain material.
-- V0 analyzes a single snapshot; it does not prove lifecycle behavior or execute business effects, and it cannot silently infer omitted requirements or external facts.
+- V0 accepts explicitly authored JSON snapshots; it has no text DSL, production Gleam integration, effects execution, lifecycle modeling, or Lean proof layer. It does not prove lifecycle behavior or execute business effects, and it cannot silently infer omitted requirements or external facts.
 
 Use results as evidence for human review, not as business authorization. Fixtures and benchmarks test the engine, not the truth or appropriateness of a policy.

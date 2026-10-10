@@ -13,3 +13,8 @@ __pycache__/
 
 # Local agent work-state tracker
 /STATUS.md
+
+# Generated benchmark inputs and transient reports; keep curated historical baselines
+/benchmarks/*.json
+!/benchmarks/smoke-release-final-2026-10-09.json
+!/benchmarks/smoke-release-native-2026-10-22.json
