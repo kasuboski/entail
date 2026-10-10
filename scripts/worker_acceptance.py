@@ -18,7 +18,9 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-BUNDLE = ROOT / "author-engine-v0"
+MODELS = ROOT / "docs/examples/models"
+SCENARIOS = ROOT / "docs/examples/scenarios"
+FIXTURES = ROOT / "docs/fixtures"
 PROTOCOL = "author-worker/0.1"
 MAX_DEFAULT = 8 * 1024 * 1024
 IO_TIMEOUT_SECONDS = 10
@@ -141,7 +143,7 @@ def result(response: dict[str, Any], context: str) -> dict[str, Any]:
 
 
 def compile_model(worker: Worker, fixture: str) -> dict[str, Any]:
-    model = json.loads((BUNDLE / "fixtures" / "valid" / f"{fixture}.json").read_text(encoding="utf-8"))
+    model = json.loads((MODELS / f"{fixture}.json").read_text(encoding="utf-8"))
     value = result(worker.request("compile", {"model": model}), "compile")
     if value.get("handle") is None:
         raise AcceptanceFailure(f"valid fixture {fixture} compiled without a handle: {value!r}")
@@ -181,7 +183,7 @@ def run_worker_acceptance(binary: Path) -> None:
         expect_error(invalid_envelope, "invalid_envelope", "null params")
         invalid_id = worker.raw_request({"protocol_version": PROTOCOL, "request_id": None, "op": "hello", "params": {}}, None)
         expect_error(invalid_id, "invalid_envelope", "null request ID")
-        scenario = json.loads((BUNDLE / "scenarios" / "unsafe-expiry.json").read_text(encoding="utf-8"))
+        scenario = json.loads((SCENARIOS / "unsafe-expiry.json").read_text(encoding="utf-8"))
         evaluated = result(worker.request("evaluate", {"handle": handle, "inputs": scenario["inputs"], "assumption_ids": []}), "evaluate")
         evaluated_objects = list(_objects(evaluated))
         violations = [
@@ -194,7 +196,7 @@ def run_worker_acceptance(binary: Path) -> None:
             raise AcceptanceFailure(f"unsafe scenario evaluation did not report the violated expiry constraint: {evaluated!r}")
 
         # Compile validation failures are normal compile results (no handle), not transport errors.
-        invalid_model = json.loads((BUNDLE / "fixtures/invalid/unknown-reference.json").read_text(encoding="utf-8"))
+        invalid_model = json.loads((FIXTURES / "invalid/unknown-reference.json").read_text(encoding="utf-8"))
         invalid_response = worker.request("compile", {"model": invalid_model})
         invalid = result(invalid_response, "invalid compile")
         if invalid.get("handle") is not None or not any(k in invalid for k in ("diagnostics", "errors")):
@@ -215,7 +217,7 @@ def run_worker_acceptance(binary: Path) -> None:
         if max_handles > 128:
             raise AcceptanceFailure(f"advertised capacity {max_handles} exceeds safe acceptance bound 128")
         for _ in range(max_handles):
-            response = worker.request("compile", {"model": json.loads((BUNDLE / "fixtures/valid/partial.json").read_text(encoding="utf-8"))})
+            response = worker.request("compile", {"model": json.loads((MODELS / "partial.json").read_text(encoding="utf-8"))})
             if "error" in response:
                 code = response["error"].get("code")
                 if code != "capacity_exceeded":

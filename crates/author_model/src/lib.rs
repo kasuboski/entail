@@ -2525,30 +2525,29 @@ mod tests {
     use super::*;
     #[test]
     fn fixtures_compile_or_fail_as_expected() {
-        let base = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("../../author-engine-v0/fixtures");
+        let base = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../docs");
         for name in [
-            "valid/partial.json",
-            "valid/repaired-partial.json",
-            "valid/unsafe-grant.json",
-            "valid/empty-domain.json",
-            "valid/duplicate-output.json",
-            "valid/conflict-tag.json",
-            "valid/conflict-payload.json",
-            "valid/conditional-assumption.json",
-            "valid/complete-proposed.json",
-            "valid/big-integer.json",
+            "examples/models/partial.json",
+            "examples/models/repaired-partial.json",
+            "examples/models/unsafe-grant.json",
+            "examples/models/empty-domain.json",
+            "examples/models/duplicate-output.json",
+            "examples/models/conflict-tag.json",
+            "examples/models/conflict-payload.json",
+            "examples/models/conditional-assumption.json",
+            "examples/models/complete-proposed.json",
+            "examples/models/big-integer.json",
         ] {
             let v: serde_json::Value =
                 serde_json::from_slice(&std::fs::read(base.join(name)).unwrap()).unwrap();
             assert!(compile_json(&v, &ModelLimits::default()).is_ok(), "{name}");
         }
         for name in [
-            "invalid/unsupported-node.json",
-            "invalid/unknown-reference.json",
-            "invalid/unit-mismatch.json",
-            "invalid/invalid-date.json",
-            "invalid/derived-cycle.json",
+            "fixtures/invalid/unsupported-node.json",
+            "fixtures/invalid/unknown-reference.json",
+            "fixtures/invalid/unit-mismatch.json",
+            "fixtures/invalid/invalid-date.json",
+            "fixtures/invalid/derived-cycle.json",
         ] {
             let v: serde_json::Value =
                 serde_json::from_slice(&std::fs::read(base.join(name)).unwrap()).unwrap();
@@ -2558,15 +2557,15 @@ mod tests {
 
     #[test]
     fn invalid_fixtures_match_authoritative_expected_diagnostic_codes() {
-        let base = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("../../author-engine-v0/fixtures");
-        let expectations: serde_json::Value =
-            serde_json::from_slice(&std::fs::read(base.join("expectations.json")).unwrap())
-                .unwrap();
+        let base = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../docs");
+        let expectations: serde_json::Value = serde_json::from_slice(
+            &std::fs::read(base.join("fixtures/expectations.json")).unwrap(),
+        )
+        .unwrap();
 
         for (fixture, expectation) in expectations["invalid"].as_object().unwrap() {
             let value: serde_json::Value = serde_json::from_slice(
-                &std::fs::read(base.join(format!("invalid/{fixture}.json"))).unwrap(),
+                &std::fs::read(base.join(format!("fixtures/invalid/{fixture}.json"))).unwrap(),
             )
             .unwrap();
             let expected_code = expectation["expected_diagnostic"].as_str().unwrap();
@@ -2623,14 +2622,14 @@ mod tests {
     }
     #[test]
     fn unsafe_scenario_replays_constraint_violation() {
-        let base = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../author-engine-v0");
+        let base = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../docs");
         let model_value: serde_json::Value = serde_json::from_slice(
-            &std::fs::read(base.join("fixtures/valid/unsafe-grant.json")).unwrap(),
+            &std::fs::read(base.join("examples/models/unsafe-grant.json")).unwrap(),
         )
         .unwrap();
         let model = compile_json(&model_value, &ModelLimits::default()).unwrap();
         let scenario: serde_json::Value = serde_json::from_slice(
-            &std::fs::read(base.join("scenarios/unsafe-expiry.json")).unwrap(),
+            &std::fs::read(base.join("examples/scenarios/unsafe-expiry.json")).unwrap(),
         )
         .unwrap();
         let inputs: InputValues = serde_json::from_value(scenario["inputs"].clone()).unwrap();
@@ -2646,7 +2645,7 @@ mod tests {
     #[test]
     fn metadata_changes_content_but_not_semantics() {
         let base = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("../../author-engine-v0/fixtures/valid/partial.json");
+            .join("../../docs/examples/models/partial.json");
         let mut value: serde_json::Value =
             serde_json::from_slice(&std::fs::read(base).unwrap()).unwrap();
         let first = compile_json(&value, &ModelLimits::default()).unwrap();
@@ -2657,7 +2656,7 @@ mod tests {
     }
     fn fixture() -> serde_json::Value {
         let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("../../author-engine-v0/fixtures/valid/partial.json");
+            .join("../../docs/examples/models/partial.json");
         serde_json::from_slice(&std::fs::read(path).unwrap()).unwrap()
     }
     #[test]
@@ -2964,19 +2963,18 @@ mod tests {
 
     #[test]
     fn raw_model_serialization_round_trips_without_null_optional_metadata() {
-        let base = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("../../author-engine-v0/fixtures");
+        let base = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../docs");
         for name in [
-            "valid/partial.json",
-            "valid/repaired-partial.json",
-            "valid/unsafe-grant.json",
-            "valid/empty-domain.json",
-            "valid/duplicate-output.json",
-            "valid/conflict-tag.json",
-            "valid/conflict-payload.json",
-            "valid/conditional-assumption.json",
-            "valid/complete-proposed.json",
-            "valid/big-integer.json",
+            "examples/models/partial.json",
+            "examples/models/repaired-partial.json",
+            "examples/models/unsafe-grant.json",
+            "examples/models/empty-domain.json",
+            "examples/models/duplicate-output.json",
+            "examples/models/conflict-tag.json",
+            "examples/models/conflict-payload.json",
+            "examples/models/conditional-assumption.json",
+            "examples/models/complete-proposed.json",
+            "examples/models/big-integer.json",
         ] {
             let value: serde_json::Value =
                 serde_json::from_slice(&std::fs::read(base.join(name)).unwrap()).unwrap();

@@ -8,7 +8,7 @@ use serde_json::{Value as JsonValue, json};
 
 fn fixture(name: &str) -> JsonValue {
     let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../../author-engine-v0/fixtures/valid")
+        .join("../../docs/examples/models")
         .join(name);
     let bytes = std::fs::read(path).unwrap_or_default();
     serde_json::from_slice(&bytes).unwrap_or(JsonValue::Null)

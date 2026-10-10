@@ -91,7 +91,7 @@ fn request(request_id: &str, op: &str, params: Value) -> Value {
 
 fn model() -> TestResult<Value> {
     let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../../author-engine-v0/fixtures/valid/partial.json");
+        .join("../../docs/examples/models/partial.json");
     let bytes = std::fs::read(path)?;
     Ok(serde_json::from_slice(&bytes)?)
 }
@@ -354,7 +354,7 @@ fn killing_during_native_solver_analysis_reaps_process_and_invalidates_handles()
         .to_owned();
 
     let complete_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../../author-engine-v0/fixtures/valid/complete-proposed.json");
+        .join("../../docs/examples/models/complete-proposed.json");
     let mut stress_model: Value = serde_json::from_slice(&std::fs::read(complete_path)?)?;
     let rules = stress_model
         .get_mut("rules")

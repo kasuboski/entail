@@ -1215,7 +1215,7 @@ mod tests {
     }
 
     fn unsafe_model() -> CompiledModel {
-        let input = include_str!("../../../author-engine-v0/fixtures/valid/unsafe-grant.json");
+        let input = include_str!("../../../docs/examples/models/unsafe-grant.json");
         let value: serde_json::Value = serde_json::from_str(input)
             .unwrap_or_else(|error| panic!("fixture JSON must parse: {error}"));
         author_model::compile_json(&value, &author_model::ModelLimits::default())
@@ -1455,7 +1455,7 @@ mod tests {
 
     #[test]
     fn conflict_witness_requires_two_applicable_rules_with_distinct_outputs() {
-        let input = include_str!("../../../author-engine-v0/fixtures/valid/conflict-tag.json");
+        let input = include_str!("../../../docs/examples/models/conflict-tag.json");
         let value: serde_json::Value = serde_json::from_str(input)
             .unwrap_or_else(|error| panic!("fixture JSON must parse: {error}"));
         let model = compile_fixture(&value);
@@ -1618,7 +1618,7 @@ mod tests {
 
     #[test]
     fn zero_input_constant_decision_is_analyzed_not_treated_as_a_draft() {
-        let input = include_str!("../../../author-engine-v0/fixtures/valid/unsafe-grant.json");
+        let input = include_str!("../../../docs/examples/models/unsafe-grant.json");
         let mut value: serde_json::Value = serde_json::from_str(input)
             .unwrap_or_else(|error| panic!("fixture JSON must parse: {error}"));
         let constant_rule = serde_json::json!({
@@ -1684,8 +1684,7 @@ mod tests {
 
     #[test]
     fn empty_domain_skips_dependents_and_ruleless_coverage_is_unspecified() {
-        let empty_input =
-            include_str!("../../../author-engine-v0/fixtures/valid/empty-domain.json");
+        let empty_input = include_str!("../../../docs/examples/models/empty-domain.json");
         let mut empty_value: serde_json::Value = serde_json::from_str(empty_input)
             .unwrap_or_else(|error| panic!("fixture JSON must parse: {error}"));
         if let Some(rules) = empty_value["rules"].as_array_mut() {
@@ -1739,7 +1738,7 @@ mod tests {
         }
 
         let mut draft_value: serde_json::Value = serde_json::from_str(include_str!(
-            "../../../author-engine-v0/fixtures/valid/unsafe-grant.json"
+            "../../../docs/examples/models/unsafe-grant.json"
         ))
         .unwrap_or_else(|error| panic!("fixture JSON must parse: {error}"));
         if let Some(object) = draft_value.as_object_mut() {
@@ -1766,7 +1765,7 @@ mod tests {
     #[test]
     fn coverage_provenance_tracks_all_rules_and_refreshes_on_cached_and_skipped_results() {
         let mut original_json: serde_json::Value = serde_json::from_str(include_str!(
-            "../../../author-engine-v0/fixtures/valid/unsafe-grant.json"
+            "../../../docs/examples/models/unsafe-grant.json"
         ))
         .unwrap_or_else(|error| panic!("fixture JSON must parse: {error}"));
         if let Some(sources) = original_json["sources"].as_array_mut() {
@@ -1871,7 +1870,7 @@ mod tests {
 
     #[test]
     fn cache_reuses_semantics_but_rebuilds_current_metadata() {
-        let input = include_str!("../../../author-engine-v0/fixtures/valid/unsafe-grant.json");
+        let input = include_str!("../../../docs/examples/models/unsafe-grant.json");
         let mut original: serde_json::Value = serde_json::from_str(input)
             .unwrap_or_else(|error| panic!("fixture JSON must parse: {error}"));
         let initial_model = compile_fixture(&original);
@@ -1929,7 +1928,7 @@ mod tests {
 
     #[test]
     fn recompiling_a_policy_edit_invalidates_cached_answers() {
-        let input = include_str!("../../../author-engine-v0/fixtures/valid/empty-domain.json");
+        let input = include_str!("../../../docs/examples/models/empty-domain.json");
         let mut value: serde_json::Value = serde_json::from_str(input)
             .unwrap_or_else(|error| panic!("fixture JSON must parse: {error}"));
         let empty_domain = compile_fixture(&value);

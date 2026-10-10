@@ -11,7 +11,9 @@ from pathlib import Path
 from typing import Any, Iterable
 
 ROOT = Path(__file__).resolve().parents[1]
-BUNDLE = ROOT / "author-engine-v0"
+MODELS = ROOT / "docs/examples/models"
+SCENARIOS = ROOT / "docs/examples/scenarios"
+FIXTURES = ROOT / "docs/fixtures"
 CHECKS = ["domain_feasibility", "rule_reachability", "coverage", "outcome_conflict", "constraint_compliance"]
 TIMEOUT_SECONDS = 20
 
@@ -128,7 +130,7 @@ def exact_ids(obj: dict[str, Any], singular: str, plural: str) -> set[str]:
 
 
 def analyze(binary: Path, fixture: str, checks: list[str] | None = None, assumptions: list[str] | None = None) -> Any:
-    model = BUNDLE / "fixtures" / "valid" / f"{fixture}.json"
+    model = MODELS / f"{fixture}.json"
     args = ["analyze", str(model), "--checks", ",".join(checks or CHECKS)]
     if assumptions is not None:
         args += ["--assumptions", ",".join(assumptions)]
@@ -136,7 +138,7 @@ def analyze(binary: Path, fixture: str, checks: list[str] | None = None, assumpt
 
 
 def _check_compliance(result: Any, fixture: str, expected: dict[str, str]) -> None:
-    model = load(BUNDLE / "fixtures" / "valid" / f"{fixture}.json")
+    model = load(MODELS / f"{fixture}.json")
     constraints = {c["id"]: c["for_outcome"] for c in model.get("constraints", [])}
     rules = {r["id"]: r["then"]["outcome"] for r in model.get("rules", [])}
     entries = statuses_for(result, "constraint_compliance")
@@ -186,7 +188,7 @@ def _validate_readiness(result: Any, fixture: str, expected: dict[str, Any]) -> 
                    and "selected_assumption_ids" in obj), None)
     if report is None:
         raise AcceptanceFailure(f"{fixture}: analysis report context is missing")
-    model = load(BUNDLE / "fixtures/valid" / f"{fixture}.json")
+    model = load(MODELS / f"{fixture}.json")
     if report.get("model_id") != model["model_id"]:
         raise AcceptanceFailure(f"{fixture}: report model_id does not match submitted model")
     if not isinstance(report.get("content_hash"), str) or not report["content_hash"] or not isinstance(report.get("semantic_hash"), str) or not report["semantic_hash"]:
@@ -196,9 +198,9 @@ def _validate_readiness(result: Any, fixture: str, expected: dict[str, Any]) -> 
 
 
 def check_fixture(binary: Path, fixture: str, expected: dict[str, Any], assumptions: list[str] | None = None) -> Any:
-    invalid = load(BUNDLE / "fixtures" / "expectations.json")["invalid"]
+    invalid = load(FIXTURES / "expectations.json")["invalid"]
     if fixture in invalid:
-        result = run_json(binary, ["validate", str(BUNDLE / "fixtures" / "invalid" / f"{fixture}.json")], expected_exit=2)
+        result = run_json(binary, ["validate", str(FIXTURES / "invalid" / f"{fixture}.json")], expected_exit=2)
         expect_diagnostic(result, invalid[fixture]["expected_diagnostic"], fixture)
         return result
     result = analyze(binary, fixture, assumptions=assumptions)
@@ -208,7 +210,7 @@ def check_fixture(binary: Path, fixture: str, expected: dict[str, Any], assumpti
         feasible = expect_check_label(result, "domain_feasibility", "feasible", fixture)
         if any(_status(item) != "satisfied" or _category(item) != "feasible" for item in feasible):
             raise AcceptanceFailure(f"{fixture}: domain feasibility must be satisfied/feasible exactly")
-    model = load(BUNDLE / "fixtures/valid" / f"{fixture}.json")
+    model = load(MODELS / f"{fixture}.json")
     reachability = statuses_for(result, "rule_reachability")
     for rule in model.get("rules", []):
         rule_results = [item for item in reachability if rule["id"] in exact_ids(item, "rule_id", "rule_ids")]
@@ -259,7 +261,7 @@ def expect_diagnostic(result: Any, code: str, context: str) -> None:
 def run_acceptance(binary: Path) -> int:
     if not binary.is_file():
         raise AcceptanceFailure(f"binary does not exist or is not a file: {binary}")
-    expectations = load(BUNDLE / "fixtures" / "expectations.json")
+    expectations = load(FIXTURES / "expectations.json")
     completed = 0
     for fixture, expected in expectations["valid"].items():
         if fixture == "conditional-assumption":
@@ -272,8 +274,8 @@ def run_acceptance(binary: Path) -> int:
             if fixture == "conflict-tag":
                 _replay_tag_conflict(binary, analyzed)
             if fixture == "big-integer":
-                evaluated = run_json(binary, ["evaluate", str(BUNDLE / "fixtures/valid/big-integer.json"),
-                                              str(BUNDLE / "scenarios/large-integer.json")])
+                evaluated = run_json(binary, ["evaluate", str(MODELS / "big-integer.json"),
+                                              str(SCENARIOS / "large-integer.json")])
                 _expect_exact_integer(evaluated, expected["large_scenario_output"])
         completed += 1
     for fixture, expected in expectations["invalid"].items():
@@ -281,7 +283,7 @@ def run_acceptance(binary: Path) -> int:
         completed += 1
 
     for fixture, scenario in (("unsafe-grant", "unsafe-expiry"), ("unsafe-grant", "unknown-approval")):
-        evaluation = run_json(binary, ["evaluate", str(BUNDLE / "fixtures/valid" / f"{fixture}.json"), str(BUNDLE / "scenarios" / f"{scenario}.json")])
+        evaluation = run_json(binary, ["evaluate", str(MODELS / f"{fixture}.json"), str(SCENARIOS / f"{scenario}.json")])
         if scenario == "unknown-approval":
             _expect_evaluation_outcome(evaluation, "unspecified")
         else:
@@ -330,17 +332,17 @@ def _replay_unsafe_witness(binary: Path) -> None:
     with tempfile.TemporaryDirectory(prefix="entail-acceptance-") as directory:
         scenario = Path(directory) / "witness.json"
         scenario.write_text(json.dumps({"inputs": inputs}, separators=(",", ":")), encoding="utf-8")
-        evaluated = run_json(binary, ["evaluate", str(BUNDLE / "fixtures/valid/unsafe-grant.json"), str(scenario)])
+        evaluated = run_json(binary, ["evaluate", str(MODELS / "unsafe-grant.json"), str(scenario)])
     _expect_evaluation_violation(evaluated, "ExpiryWithinContract")
 
 
 def _check_constructor_payload_independently(binary: Path) -> None:
-    fixture = load(BUNDLE / "fixtures/valid/conflict-payload.json")
+    fixture = load(MODELS / "conflict-payload.json")
     outcomes = [rule["then"] for rule in fixture["rules"] if rule["then"]["outcome"] == "Grant"]
     distinct = {json.dumps(outcome.get("fields", {}), sort_keys=True) for outcome in outcomes}
     if len(distinct) < 2:
         raise AcceptanceFailure("conflict-payload fixture lacks independent distinct Grant field payloads")
-    result = check_fixture(binary, "conflict-payload", load(BUNDLE / "fixtures/expectations.json")["valid"]["conflict-payload"])
+    result = check_fixture(binary, "conflict-payload", load(FIXTURES / "expectations.json")["valid"]["conflict-payload"])
     conflicts = statuses_for(result, "outcome_conflict")
     rule_outcomes = {rule["id"]: rule["then"]["outcome"] for rule in fixture["rules"]}
     payload_conflicts = []
@@ -359,7 +361,7 @@ def _check_constructor_payload_independently(binary: Path) -> None:
     with tempfile.TemporaryDirectory(prefix="entail-payload-replay-") as directory:
         scenario = Path(directory) / "conflict-witness.json"
         scenario.write_text(json.dumps({"inputs": inputs}, separators=(",", ":")), encoding="utf-8")
-        replay = run_json(binary, ["evaluate", str(BUNDLE / "fixtures/valid/conflict-payload.json"), str(scenario)])
+        replay = run_json(binary, ["evaluate", str(MODELS / "conflict-payload.json"), str(scenario)])
     outcomes = [outcome for obj in objects(replay) for outcome in obj.get("outcomes", []) if isinstance(outcome, dict)]
     grants = [outcome for outcome in outcomes if outcome.get("constructor", outcome.get("outcome", outcome.get("id"))) == "Grant"]
     payloads = {json.dumps(outcome.get("fields", outcome.get("payload")), sort_keys=True) for outcome in grants}
@@ -377,7 +379,7 @@ def _replay_tag_conflict(binary: Path, analysis: Any) -> None:
     with tempfile.TemporaryDirectory(prefix="entail-tag-conflict-") as directory:
         scenario = Path(directory) / "conflict-witness.json"
         scenario.write_text(json.dumps({"inputs": inputs}, separators=(",", ":")), encoding="utf-8")
-        replay = run_json(binary, ["evaluate", str(BUNDLE / "fixtures/valid/conflict-tag.json"), str(scenario)])
+        replay = run_json(binary, ["evaluate", str(MODELS / "conflict-tag.json"), str(scenario)])
     outcomes = [outcome for obj in objects(replay) for outcome in obj.get("outcomes", []) if isinstance(outcome, dict)]
     constructors = {outcome.get("constructor", outcome.get("outcome", outcome.get("id"))) for outcome in outcomes}
     if not any(obj.get("classification") == "conflicting" for obj in objects(replay)) or constructors != {"Grant", "Deny"}:

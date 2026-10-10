@@ -233,7 +233,7 @@ No latency guarantee precedes benchmarking. Record compilation time separately f
 
 ## 9. Reference acceptance cases
 
-The bundle contains a language schema, valid and invalid model fixtures, scenario examples and expected findings. They are contract examples, not evidence that an engine already exists.
+The [documentation examples](README.md#examples-and-fixtures) include the language schema, valid and invalid model fixtures, scenarios and expected findings. They define acceptance cases; their policy content is not evidence of business truth.
 
 1. Partial constraints with no rules compile; coverage is `behavior_unspecified`.
 2. Grant-on-approval without an expiry guard violates the expiry requirement.

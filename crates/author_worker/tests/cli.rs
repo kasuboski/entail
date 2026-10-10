@@ -9,7 +9,7 @@ type TestResult<T> = Result<T, Box<dyn Error>>;
 
 fn fixture(relative_path: &str) -> String {
     std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../../author-engine-v0")
+        .join("../../docs")
         .join(relative_path)
         .to_string_lossy()
         .into_owned()
@@ -32,7 +32,7 @@ fn help_and_validate_emit_json_with_documented_exit_codes() -> TestResult<()> {
     assert!(help.get("usage").is_some());
     assert!(help_stderr.is_empty());
 
-    let valid_path = fixture("fixtures/valid/partial.json");
+    let valid_path = fixture("examples/models/partial.json");
     let (valid_status, valid, valid_stderr) = run(&["validate", &valid_path])?;
     assert!(valid_status.success());
     assert_eq!(valid.get("valid"), Some(&Value::Bool(true)));
@@ -71,8 +71,8 @@ fn help_and_validate_emit_json_with_documented_exit_codes() -> TestResult<()> {
 
 #[test]
 fn evaluate_and_analyze_return_structured_findings_without_failure_exit() -> TestResult<()> {
-    let model = fixture("fixtures/valid/unsafe-grant.json");
-    let scenario = fixture("scenarios/unsafe-expiry.json");
+    let model = fixture("examples/models/unsafe-grant.json");
+    let scenario = fixture("examples/scenarios/unsafe-expiry.json");
     let (evaluate_status, evaluation, _) = run(&["evaluate", &model, &scenario])?;
     assert!(evaluate_status.success());
     assert_eq!(
