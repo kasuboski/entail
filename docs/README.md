@@ -5,6 +5,7 @@ This documentation describes Entail's first Rust implementation of an explicitly
 ## Start here
 
 - [Specification](SPEC.md): normative v0.1 language, semantics, checks, results, Rust components, worker/CLI contract, resource behavior, acceptance cases, and extension boundaries.
+- [JSON-to-Z3 worked example](JSON-TO-Z3.md): follow the contractor-access fixture through compilation, check planning, symbolic queries, witness replay, and report fields; no SMT background required.
 - [Worker protocol](WORKER.md): framed request/response and process lifecycle.
 - [Benchmark report and methodology](BENCHMARKS.md): workloads, regeneration, and interpretation of historical measurements.
 - [JSON Schema](schema/model-v0.schema.json): structural JSON contract. Schema validity does not imply successful semantic compilation.
