@@ -173,7 +173,7 @@
             },
             "unit": {
               "type": "string",
-              "pattern": "^[A-Za-z][A-Za-z0-9_]*$"
+              "pattern": "^[A-Za-z][A-Za-z0-9_]*(/[A-Za-z][A-Za-z0-9_]*)?$"
             }
           },
           "required": [
@@ -226,7 +226,7 @@
             },
             "unit": {
               "type": "string",
-              "pattern": "^[A-Za-z][A-Za-z0-9_]*$"
+              "pattern": "^[A-Za-z][A-Za-z0-9_]*(/[A-Za-z][A-Za-z0-9_]*)?$"
             }
           },
           "required": [
@@ -326,6 +326,26 @@
             "kind",
             "factor",
             "arg"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "apply_rate"
+            },
+            "rate": {
+              "$ref": "#/$defs/expr"
+            },
+            "quantity": {
+              "$ref": "#/$defs/expr"
+            }
+          },
+          "required": [
+            "kind",
+            "rate",
+            "quantity"
           ],
           "additionalProperties": false
         },

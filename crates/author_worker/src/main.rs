@@ -1,7 +1,11 @@
+use std::io::{Read, Write};
 use std::process::ExitCode;
 
 use author_analysis::{AnalysisBudget, AnalysisOptions, Backend, Check, analyze};
-use author_model::{InputValues, ModelLimits, OutcomeValue, compile_json, evaluate};
+use author_model::{
+    InputValues, ModelLimits, OutcomeValue, compile_json, compile_text, evaluate, format_text,
+    parse_text,
+};
 use author_worker::{WorkerConfig, run_worker};
 use author_z3::Z3Backend;
 use serde_json::{Value, json};
@@ -23,6 +27,9 @@ fn main() -> ExitCode {
             }
         };
     }
+    if arguments.first().is_some_and(|argument| argument == "fmt") {
+        return fmt_command(arguments.get(1..).unwrap_or_default());
+    }
     match execute(&arguments) {
         Ok((output, code)) | Err((output, code)) => {
             println!("{output}");
@@ -43,6 +50,7 @@ fn execute(arguments: &[String]) -> CliResult {
             "entail validate MODEL",
             "entail analyze MODEL --checks comma-list --assumptions comma-list --budget-ms N",
             "entail evaluate MODEL SCENARIO",
+            "entail fmt [--check] [FILE ...] (reads stdin when no files are given)",
             "entail worker [--max-frame-bytes N] [--max-handles N] [--max-budget-ms N] [--max-obligations N] [--max-inputs N] [--max-rules N]"
         ], "worker_environment": ["ENTAIL_MAX_FRAME_BYTES", "ENTAIL_MAX_HANDLES", "ENTAIL_MAX_BUDGET_MS", "ENTAIL_MAX_OBLIGATIONS", "ENTAIL_MAX_INPUTS", "ENTAIL_MAX_RULES", "ENTAIL_MAX_CONSTRAINTS", "ENTAIL_MAX_EXPRESSION_NODES", "ENTAIL_MAX_EXPRESSION_DEPTH"]}).to_string(), ExitCode::SUCCESS));
     }
@@ -61,13 +69,123 @@ fn load_json(path: &str) -> Result<Value, (String, ExitCode)> {
 }
 
 fn compile_file(path: &str) -> Result<author_model::CompiledModel, (String, ExitCode)> {
-    let value = load_json(path)?;
-    compile_json(&value, &ModelLimits::default()).map_err(|diagnostics| {
-        (
-            json!({"valid":false,"diagnostics":diagnostics}).to_string(),
-            ExitCode::from(2),
-        )
-    })
+    let bytes = std::fs::read(path).map_err(|error| (json!({"error":{"code":"invalid_input","message":format!("cannot read {path}: {error}")}}).to_string(), ExitCode::from(2)))?;
+    compile_model_source(&bytes, path)
+}
+
+fn compile_model_source(
+    bytes: &[u8],
+    label: &str,
+) -> Result<author_model::CompiledModel, (String, ExitCode)> {
+    let source = std::str::from_utf8(bytes).map_err(|error| (json!({"error":{"code":"invalid_input","message":format!("{label} is not UTF-8: {error}")}}).to_string(), ExitCode::from(2)))?;
+    if source.trim_start().starts_with('{') {
+        serde_json::from_str::<Value>(source)
+            .map_err(|error| (json!({"error":{"code":"invalid_input","message":format!("invalid JSON in {label}: {error}")}}).to_string(), ExitCode::from(2)))
+            .and_then(|value| compile_json(&value, &ModelLimits::default()).map_err(|diagnostics| {
+                (json!({"valid":false,"diagnostics":diagnostics}).to_string(), ExitCode::from(2))
+            }))
+    } else {
+        compile_text(source, &ModelLimits::default()).map_err(|diagnostics| {
+            (
+                json!({"valid":false,"diagnostics":diagnostics}).to_string(),
+                ExitCode::from(2),
+            )
+        })
+    }
+}
+
+fn fmt_command(arguments: &[String]) -> ExitCode {
+    let check = arguments.first().is_some_and(|arg| arg == "--check");
+    let paths = if check {
+        arguments.get(1..).unwrap_or_default()
+    } else {
+        arguments
+    };
+    if paths
+        .iter()
+        .any(|path| path.starts_with('-') && path != "-")
+        || (check && paths.is_empty())
+    {
+        eprintln!(
+            "{}",
+            json!({"error":{"code":"invalid_input","message":"usage: entail fmt [--check] [FILE ...]; --check requires at least one file"}})
+        );
+        return ExitCode::from(2);
+    }
+    if paths.is_empty() {
+        let mut source = String::new();
+        if let Err(error) = std::io::stdin().read_to_string(&mut source) {
+            eprintln!(
+                "{}",
+                json!({"error":{"code":"invalid_input","message":format!("cannot read stdin: {error}")}})
+            );
+            return ExitCode::from(2);
+        }
+        return match format_text_source(&source, "stdin") {
+            Ok(formatted) => {
+                if let Err(error) = std::io::stdout().write_all(formatted.as_bytes()) {
+                    eprintln!(
+                        "{}",
+                        json!({"error":{"code":"internal_error","message":format!("cannot write stdout: {error}")}})
+                    );
+                    ExitCode::from(3)
+                } else {
+                    ExitCode::SUCCESS
+                }
+            }
+            Err(message) => fmt_error(&message),
+        };
+    }
+    let mut formatted_files = Vec::with_capacity(paths.len());
+    for path in paths {
+        if path == "-" {
+            eprintln!(
+                "{}",
+                json!({"error":{"code":"invalid_input","message":"stdin marker '-' cannot be combined with file paths"}})
+            );
+            return ExitCode::from(2);
+        }
+        let source = match std::fs::read_to_string(path) {
+            Ok(source) => source,
+            Err(error) => return fmt_error(&format!("cannot read {path}: {error}")),
+        };
+        let formatted = match format_text_source(&source, path) {
+            Ok(formatted) => formatted,
+            Err(message) => return fmt_error(&message),
+        };
+        formatted_files.push((path, source, formatted));
+    }
+    let mut differs = false;
+    for (path, source, formatted) in &formatted_files {
+        if check {
+            if formatted != source {
+                eprintln!("{path} needs formatting");
+                differs = true;
+            }
+        } else if let Err(error) = std::fs::write(path, formatted) {
+            return fmt_error(&format!("cannot write {path}: {error}"));
+        }
+    }
+    if differs {
+        ExitCode::from(1)
+    } else {
+        ExitCode::SUCCESS
+    }
+}
+
+fn fmt_error(message: &str) -> ExitCode {
+    eprintln!(
+        "{}",
+        json!({"error":{"code":"invalid_input","message":message}})
+    );
+    ExitCode::from(2)
+}
+
+fn format_text_source(source: &str, label: &str) -> Result<String, String> {
+    let model = parse_text(source)
+        .map_err(|diagnostics| format!("invalid text in {label}: {diagnostics:?}"))?;
+    format_text(&model)
+        .map_err(|diagnostic| format!("cannot format {label}: {}", diagnostic.message))
 }
 
 fn validate_command(arguments: &[String]) -> CliResult {

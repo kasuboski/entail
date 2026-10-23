@@ -1,6 +1,6 @@
 # Entail Author Decision Engine
 
-Entail v0 validates and analyzes an explicitly authored model of one business decision. Input is the versioned JSON AST in [`docs/schema/model-v0.schema.json`](docs/schema/model-v0.schema.json); semantics are specified in [`docs/SPEC.md`](docs/SPEC.md). Start at the [documentation index](docs/README.md) for the worker protocol, examples, benchmarks, and crate APIs.
+Entail v0 validates and analyzes an explicitly authored model of one business decision. Models can use the versioned JSON AST in [`docs/schema/model-v0.schema.json`](docs/schema/model-v0.schema.json) or the readable text syntax in [`docs/SPEC.md`](docs/SPEC.md); both compile to the same typed model.
 
 ## Build and run
 
@@ -18,9 +18,11 @@ Example commands using the included partial-policy fixture:
 nix develop --command target/debug/entail validate docs/examples/models/partial.json
 nix develop --command target/debug/entail analyze docs/examples/models/partial.json --checks coverage
 nix develop --command target/debug/entail evaluate docs/examples/models/unsafe-grant.json docs/examples/scenarios/unsafe-expiry.json
+nix develop --command target/debug/entail validate docs/examples/contractor-access.author
+nix develop --command target/debug/entail fmt --check docs/examples/models/*.author docs/examples/contractor-access.author
 ```
 
-They emit JSON. Validation checks the model; analysis returns typed obligation results, witnesses and unresolved metadata; evaluation applies one concrete typed input scenario. A usable persistent process is available as `entail worker`; its 4-byte big-endian length-prefixed JSON protocol and lifecycle contract are documented in [`docs/WORKER.md`](docs/WORKER.md).
+Validation, analysis, and evaluation emit JSON. They accept either JSON or text models; scenario assignments remain JSON. `entail fmt` canonicalizes text from stdin to stdout, rewrites named text files, or checks them with `--check`. Analysis returns typed obligation results, witnesses and unresolved metadata; evaluation applies one concrete typed input scenario. A usable persistent process is available as `entail worker`; its 4-byte big-endian length-prefixed JSON protocol and lifecycle contract are documented in [`docs/WORKER.md`](docs/WORKER.md).
 
 Black-box checks against the built executable:
 

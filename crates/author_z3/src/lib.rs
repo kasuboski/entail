@@ -462,6 +462,10 @@ fn lower_expr(
             &parse_integer(factor)?,
             &lower_integer(arg)?,
         ]))),
+        Expr::ApplyRate { rate, quantity } => {
+            let quantity = lower_integer(quantity)?;
+            lower_rate_product(rate, &quantity, environment, model, &mut BTreeMap::new(), 0)
+        }
         Expr::If {
             condition,
             then_expr,
@@ -478,6 +482,77 @@ fn lower_expr(
                 _ => Err("conditional branches have different symbolic sorts".to_owned()),
             }
         }
+    }
+}
+
+fn lower_rate_product(
+    rate: &Expr,
+    quantity: &Int,
+    environment: &BTreeMap<String, Term>,
+    model: &CompiledModel,
+    cache: &mut BTreeMap<String, Term>,
+    depth: usize,
+) -> Result<Term, String> {
+    if depth >= 512 {
+        return Err("apply_rate branch nesting exceeds the supported limit".to_owned());
+    }
+    match rate {
+        Expr::Int { value, .. } => Ok(Term::Int(Int::mul(&[&parse_integer(value)?, quantity]))),
+        Expr::If {
+            condition,
+            then_expr,
+            else_expr,
+        } => {
+            let condition = match lower_expr(condition, environment, model)? {
+                Term::Bool(value) => value,
+                Term::Int(_) => return Err("apply_rate condition is not Boolean".to_owned()),
+            };
+            let then_term = lower_rate_product(
+                then_expr,
+                quantity,
+                environment,
+                model,
+                cache,
+                depth.saturating_add(1),
+            )?;
+            let else_term = lower_rate_product(
+                else_expr,
+                quantity,
+                environment,
+                model,
+                cache,
+                depth.saturating_add(1),
+            )?;
+            match (then_term, else_term) {
+                (Term::Int(left), Term::Int(right)) => Ok(Term::Int(condition.ite(&left, &right))),
+                _ => Err("apply_rate branches must be integers".to_owned()),
+            }
+        }
+        Expr::Ref { path } => {
+            let id = path
+                .strip_prefix("derived.")
+                .ok_or_else(|| "apply_rate rate reference must be derived".to_owned())?;
+            let declaration = model
+                .raw()
+                .derived
+                .iter()
+                .find(|declaration| declaration.id == id)
+                .ok_or_else(|| format!("unknown derived rate {id}"))?;
+            if let Some(term) = cache.get(id) {
+                return Ok(term.clone());
+            }
+            let term = lower_rate_product(
+                &declaration.expr,
+                quantity,
+                environment,
+                model,
+                cache,
+                depth.saturating_add(1),
+            )?;
+            cache.insert(id.to_owned(), term.clone());
+            Ok(term)
+        }
+        _ => Err("apply_rate requires fixed rate branches".to_owned()),
     }
 }
 

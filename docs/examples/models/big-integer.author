@@ -1,0 +1,13 @@
+decision ExactInteger
+version "author-model/0.1"
+input amount: Int[count] origin proposal review proposed sources []
+outcome Value(amount: Int[count]) origin proposal review proposed sources []
+rule Double
+  when true
+  conclude Value(amount = scale(2, input.amount))
+  status proposed
+  origin proposal review proposed sources []
+constraint ExactDouble
+  when outcome is Value(amount)
+  require (outcome.amount == scale(2, input.amount))
+  origin proposal review proposed sources []

@@ -1,27 +1,28 @@
 decision ContractorAccess
-
-input sponsor_approval: ApprovalStatus
-input contract_end: Date
-input requested_expiry: Date
-
-outcome Grant(expiry: Date)
-outcome Deny(reason: DenialReason)
-
+version "author-model/0.1"
+source S1 text "A contractor must have sponsor approval before access is granted." locator "policy.section_2"
+source S2 text "Access must expire by the contract end date." locator "policy.section_3"
+type ApprovalStatus = Approved | NotApproved | Unknown origin proposal review proposed sources []
+type DenialReason = PolicyDenied origin proposal review proposed sources [] note "Fixture-only proposed reason vocabulary; real reasons require elicitation."
+input sponsor_approval: ApprovalStatus origin source review proposed sources [S1]
+input contract_end: Date origin source review proposed sources [S2]
+input requested_expiry: Date origin proposal review proposed sources []
+outcome Grant(expiry: Date) origin source review proposed sources [S2]
+outcome Deny(reason: DenialReason) origin proposal review proposed sources [] note "Candidate output; denial policy is not in the source."
+rule GrantApprovedRequest
+  when and((input.sponsor_approval == ApprovalStatus::Approved), (input.requested_expiry <= input.contract_end))
+  conclude Grant(expiry = input.requested_expiry)
+  status proposed
+  origin proposal review proposed sources [] note "Proposed sufficient conditions; not established by S1 and S2."
 constraint ApprovalRequired
   when outcome is Grant(expiry)
-  require sponsor_approval == Approved
+  require (input.sponsor_approval == ApprovalStatus::Approved)
   source policy.section_2
-
+  origin source review proposed sources [S1]
 constraint ExpiryWithinContract
   when outcome is Grant(expiry)
-  require expiry <= contract_end
+  require (outcome.expiry <= input.contract_end)
   source policy.section_3
-
-rule GrantApprovedRequest
-  when sponsor_approval == Approved
-   and requested_expiry <= contract_end
-  conclude Grant(requested_expiry)
-  status proposed
-
-unresolved OtherPrerequisites
+  origin source review proposed sources [S2] note "Snapshot expiry constraint; actual expiry enforcement is not modeled."
+unresolved OtherPrerequisites affects rule_policy sources [S1, S2]
   "Are approval and a valid expiry sufficient to grant access?"

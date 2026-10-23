@@ -5,6 +5,9 @@ use num_bigint::BigInt;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
+mod text;
+pub use text::{compile_text, format_text, parse_text};
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct RawModel {
@@ -180,6 +183,11 @@ pub enum Expr {
     Sub { left: Box<Self>, right: Box<Self> },
     #[serde(rename = "scale")]
     Scale { factor: String, arg: Box<Self> },
+    #[serde(rename = "apply_rate")]
+    ApplyRate {
+        rate: Box<Self>,
+        quantity: Box<Self>,
+    },
     #[serde(rename = "if")]
     If {
         condition: Box<Self>,
@@ -348,6 +356,72 @@ fn valid_identifier(id: &str) -> bool {
     chars.next().is_some_and(|c| c.is_ascii_alphabetic())
         && chars.all(|c| c.is_ascii_alphanumeric() || c == '_')
 }
+fn valid_unit(unit: &str) -> bool {
+    if valid_identifier(unit) {
+        return true;
+    }
+    let mut parts = unit.split('/');
+    parts.next().is_some_and(valid_identifier)
+        && parts.next().is_some_and(valid_identifier)
+        && parts.next().is_none()
+}
+fn rate_dimensions(unit: &str) -> Option<(&str, &str)> {
+    let mut parts = unit.split('/');
+    let numerator = parts.next()?;
+    let denominator = parts.next()?;
+    (parts.next().is_none() && valid_identifier(numerator) && valid_identifier(denominator))
+        .then_some((numerator, denominator))
+}
+fn finite_rate_expression(
+    expression: &Expr,
+    raw: &RawModel,
+    visiting: &mut BTreeSet<String>,
+    cache: &mut BTreeMap<String, bool>,
+    depth: usize,
+) -> bool {
+    if depth >= 512 {
+        return false;
+    }
+    match expression {
+        Expr::Int { unit, .. } => rate_dimensions(unit).is_some(),
+        Expr::Ref { path } => {
+            let Some(id) = path.strip_prefix("derived.") else {
+                return false;
+            };
+            if let Some(is_finite) = cache.get(id) {
+                return *is_finite;
+            }
+            if !visiting.insert(id.to_owned()) {
+                return false;
+            }
+            let valid = raw
+                .derived
+                .iter()
+                .find(|declaration| declaration.id == id)
+                .is_some_and(|declaration| {
+                    finite_rate_expression(
+                        &declaration.expr,
+                        raw,
+                        visiting,
+                        cache,
+                        depth.saturating_add(1),
+                    )
+                });
+            visiting.remove(id);
+            cache.insert(id.to_owned(), valid);
+            valid
+        }
+        Expr::If {
+            then_expr,
+            else_expr,
+            ..
+        } => {
+            finite_rate_expression(then_expr, raw, visiting, cache, depth.saturating_add(1))
+                && finite_rate_expression(else_expr, raw, visiting, cache, depth.saturating_add(1))
+        }
+        _ => false,
+    }
+}
 fn canonical(v: &serde_json::Value) -> serde_json::Value {
     match v {
         serde_json::Value::Object(m) => {
@@ -384,6 +458,10 @@ fn refs(e: &Expr, out: &mut Vec<String>) {
     match e {
         Expr::Ref { path } => out.push(path.clone()),
         Expr::Not { arg } | Expr::Scale { arg, .. } => refs(arg, out),
+        Expr::ApplyRate { rate, quantity } => {
+            refs(rate, out);
+            refs(quantity, out);
+        }
         Expr::And { args } | Expr::Or { args } => {
             for x in args {
                 refs(x, out);
@@ -417,6 +495,10 @@ fn collect_reference_paths(expression: &Expr, pointer: &str, output: &mut Vec<(S
         Expr::Ref { path } => output.push((path.clone(), format!("{pointer}/path"))),
         Expr::Not { arg } | Expr::Scale { arg, .. } => {
             collect_reference_paths(arg, &format!("{pointer}/arg"), output);
+        }
+        Expr::ApplyRate { rate, quantity } => {
+            collect_reference_paths(rate, &format!("{pointer}/rate"), output);
+            collect_reference_paths(quantity, &format!("{pointer}/quantity"), output);
         }
         Expr::And { args } | Expr::Or { args } => {
             for (index, argument) in args.iter().enumerate() {
@@ -519,7 +601,7 @@ fn infer(
     let inferred = match expression {
         Expr::Bool { .. } => Some(Type::Bool),
         Expr::Int { value, unit } => {
-            if !valid_identifier(unit) {
+            if !valid_unit(unit) {
                 diagnostics.push(error("schema_error", format!("invalid unit {unit}")));
             }
             if !canonical_integer(value) {
@@ -657,6 +739,44 @@ fn infer(
                 diagnostics.push(error("type_mismatch", "scale requires integer"));
             }
             left_type
+        }
+        Expr::ApplyRate { rate, quantity } => {
+            let rate_type = child(rate, "/rate", diagnostics);
+            let quantity_type = child(quantity, "/quantity", diagnostics);
+            let dimensions = match rate_type {
+                Some(Type::Int { ref unit }) => rate_dimensions(unit),
+                _ => None,
+            };
+            if dimensions.is_none() {
+                diagnostics.push(error(
+                    "unit_mismatch",
+                    "apply_rate requires a rate unit with one numerator/denominator pair",
+                ));
+            }
+            if let Some((numerator, denominator)) = dimensions {
+                if quantity_type
+                    != Some(Type::Int {
+                        unit: denominator.to_owned(),
+                    })
+                {
+                    diagnostics.push(error(
+                        "unit_mismatch",
+                        "apply_rate denominator must exactly match the quantity unit",
+                    ));
+                }
+                if !finite_rate_expression(rate, raw, &mut BTreeSet::new(), &mut BTreeMap::new(), 0)
+                {
+                    diagnostics.push(error(
+                        "unsupported_nonlinear_operation",
+                        "apply_rate only supports fixed rates and finite conditional selections of fixed rates",
+                    ));
+                }
+                Some(Type::Int {
+                    unit: numerator.to_owned(),
+                })
+            } else {
+                None
+            }
         }
         Expr::If {
             condition,
@@ -868,6 +988,7 @@ fn expression_shape_error(expression: &serde_json::Value, pointer: &str) -> Opti
         "and" | "or" => &["kind", "args"],
         "eq" | "ne" | "lt" | "le" | "gt" | "ge" | "add" | "sub" => &["kind", "left", "right"],
         "scale" => &["kind", "factor", "arg"],
+        "apply_rate" => &["kind", "rate", "quantity"],
         "if" => &["kind", "condition", "then", "else"],
         _ => {
             return Some(
@@ -924,6 +1045,7 @@ fn expression_shape_error(expression: &serde_json::Value, pointer: &str) -> Opti
     }
     let object_fields: &[&str] = match kind {
         "not" | "scale" => &["arg"],
+        "apply_rate" => &["rate", "quantity"],
         "eq" | "ne" | "lt" | "le" | "gt" | "ge" | "add" | "sub" => &["left", "right"],
         "if" => &["condition", "then", "else"],
         _ => &[],
@@ -1656,7 +1778,7 @@ pub fn compile_json(
                     source_ids,
                 ));
             }
-            Type::Int { unit } if !valid_id(unit) => ds.push(contextual_error(
+            Type::Int { unit } if !valid_unit(unit) => ds.push(contextual_error(
                 "schema_error",
                 format!("invalid unit {unit}"),
                 Some(declaration_id),
@@ -2351,6 +2473,22 @@ pub fn eval_expr(
                 unit: left_unit,
             })
         }
+        Expr::ApplyRate { rate, quantity } => {
+            let (rate_value, rate_unit) = int(ev(rate)?)?;
+            let (quantity_value, quantity_unit) = int(ev(quantity)?)?;
+            let (numerator, denominator) = rate_dimensions(&rate_unit)
+                .ok_or_else(|| error("unit_mismatch", "invalid apply_rate unit"))?;
+            if denominator != quantity_unit {
+                return Err(error(
+                    "unit_mismatch",
+                    "apply_rate denominator must exactly match the quantity unit",
+                ));
+            }
+            Ok(Value::Int {
+                value: arbitrary_precision_multiply(&rate_value, &quantity_value).to_string(),
+                unit: numerator.to_owned(),
+            })
+        }
         Expr::If {
             condition,
             then_expr,
@@ -2797,6 +2935,40 @@ mod tests {
             Value::Int {
                 value: "-999999999999999999999999999".into(),
                 unit: "credits".into()
+            }
+        );
+    }
+
+    #[test]
+    fn apply_rate_multiplies_fixed_rates_and_preserves_the_numerator_unit() {
+        let expression = Expr::ApplyRate {
+            rate: Box::new(Expr::If {
+                condition: Box::new(Expr::Bool { value: true }),
+                then_expr: Box::new(Expr::Int {
+                    value: "-2500000000000000000000000000000000000000".to_owned(),
+                    unit: "cents/day".to_owned(),
+                }),
+                else_expr: Box::new(Expr::Int {
+                    value: "100".to_owned(),
+                    unit: "cents/day".to_owned(),
+                }),
+            }),
+            quantity: Box::new(Expr::Int {
+                value: "3".to_owned(),
+                unit: "day".to_owned(),
+            }),
+        };
+        assert_eq!(
+            eval_expr(
+                &expression,
+                &BTreeMap::new(),
+                &BTreeMap::new(),
+                &BTreeMap::new()
+            )
+            .unwrap(),
+            Value::Int {
+                value: "-7500000000000000000000000000000000000000".to_owned(),
+                unit: "cents".to_owned(),
             }
         );
     }

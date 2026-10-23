@@ -99,6 +99,146 @@ fn lowers_every_expression_operator_with_unbounded_integer_witnesses() {
 }
 
 #[test]
+fn apply_rate_lowers_derived_conditional_fixed_rates_as_linear_branches() {
+    let mut value = fixture("big-integer.json");
+    value["derived"] = json!([{
+        "id": "rate",
+        "type": {"kind": "int", "unit": "credits/count"},
+        "expr": {
+            "kind": "if",
+            "condition": {"kind": "ge", "left": {"kind": "ref", "path": "input.amount"}, "right": {"kind": "int", "value": "5", "unit": "count"}},
+            "then": {"kind": "int", "value": "7", "unit": "credits/count"},
+            "else": {"kind": "int", "value": "2", "unit": "credits/count"}
+        },
+        "origin": {"kind": "proposal", "source_ids": [], "review": "proposed"}
+    }]);
+    value["domain"] = json!([{
+        "id": "RateProductIsExact",
+        "expr": {
+            "kind": "eq",
+            "left": {"kind": "apply_rate", "rate": {"kind": "ref", "path": "derived.rate"}, "quantity": {"kind": "ref", "path": "input.amount"}},
+            "right": {"kind": "int", "value": "35", "unit": "credits"}
+        },
+        "origin": {"kind": "proposal", "source_ids": [], "review": "proposed"}
+    }]);
+    let Some(model) = compile(&value) else {
+        return;
+    };
+    let answer = solve(&model, &Obligation::DomainFeasibility, &[]);
+    assert!(
+        matches!(&answer, BackendAnswer::Sat { .. }),
+        "expected SAT, got {answer:?}"
+    );
+    let BackendAnswer::Sat { inputs } = answer else {
+        return;
+    };
+    assert_eq!(
+        inputs.get("amount"),
+        Some(&Value::Int {
+            value: "5".to_owned(),
+            unit: "count".to_owned()
+        })
+    );
+    let evaluation = evaluate(&model, &inputs, &[], None).expect("solver witness must evaluate");
+    assert_eq!(
+        evaluation.derived.get("rate"),
+        Some(&Value::Int {
+            value: "7".to_owned(),
+            unit: "credits/count".to_owned()
+        })
+    );
+}
+
+#[test]
+fn apply_rate_rejects_an_unrestricted_input_rate_with_a_specific_diagnostic() {
+    let mut value = fixture("big-integer.json");
+    value["inputs"]
+        .as_array_mut()
+        .expect("fixture inputs")
+        .push(json!({
+            "id": "rate",
+            "type": {"kind": "int", "unit": "credits/count"},
+            "origin": {"kind": "proposal", "source_ids": [], "review": "proposed"}
+        }));
+    value["outcomes"][0]["fields"][0]["type"] = json!({"kind": "int", "unit": "credits"});
+    value["rules"][0]["then"]["fields"]["amount"] = json!({
+        "kind": "apply_rate",
+        "rate": {"kind": "ref", "path": "input.rate"},
+        "quantity": {"kind": "ref", "path": "input.amount"}
+    });
+    value["constraints"] = json!([]);
+    let diagnostics = compile_json(&value, &ModelLimits::default())
+        .expect_err("unrestricted variable rate must be rejected");
+    assert!(
+        diagnostics
+            .iter()
+            .any(|diagnostic| diagnostic.code == "unsupported_nonlinear_operation"),
+        "expected the nonlinear-rate diagnostic, got {diagnostics:?}"
+    );
+}
+
+#[test]
+fn shared_conditional_rate_references_are_bounded_and_remain_exact() {
+    let mut value = fixture("big-integer.json");
+    value["inputs"]
+        .as_array_mut()
+        .expect("fixture inputs")
+        .push(json!({
+            "id": "flag",
+            "type": {"kind": "bool"},
+            "origin": {"kind": "proposal", "source_ids": [], "review": "proposed"}
+        }));
+    let mut derived = vec![json!({
+        "id": "rate0",
+        "type": {"kind": "int", "unit": "credits/count"},
+        "expr": {"kind": "int", "value": "7", "unit": "credits/count"},
+        "origin": {"kind": "proposal", "source_ids": [], "review": "proposed"}
+    })];
+    for index in 1..=28 {
+        let previous = format!("derived.rate{}", index - 1);
+        derived.push(json!({
+            "id": format!("rate{index}"),
+            "type": {"kind": "int", "unit": "credits/count"},
+            "expr": {
+                "kind": "if",
+                "condition": {"kind": "ref", "path": "input.flag"},
+                "then": {"kind": "ref", "path": previous},
+                "else": {"kind": "ref", "path": previous}
+            },
+            "origin": {"kind": "proposal", "source_ids": [], "review": "proposed"}
+        }));
+    }
+    value["derived"] = JsonValue::Array(derived);
+    value["domain"] = json!([{
+        "id": "SharedRateProductIsExact",
+        "expr": {
+            "kind": "eq",
+            "left": {"kind": "apply_rate", "rate": {"kind": "ref", "path": "derived.rate28"}, "quantity": {"kind": "ref", "path": "input.amount"}},
+            "right": {"kind": "int", "value": "14", "unit": "credits"}
+        },
+        "origin": {"kind": "proposal", "source_ids": [], "review": "proposed"}
+    }]);
+    let Some(model) = compile(&value) else {
+        return;
+    };
+    let answer = solve(&model, &Obligation::DomainFeasibility, &[]);
+    assert!(
+        matches!(&answer, BackendAnswer::Sat { .. }),
+        "expected SAT, got {answer:?}"
+    );
+    let BackendAnswer::Sat { inputs } = answer else {
+        return;
+    };
+    assert_eq!(
+        inputs.get("amount"),
+        Some(&Value::Int {
+            value: "2".to_owned(),
+            unit: "count".to_owned()
+        })
+    );
+}
+
+#[test]
 fn decodes_enum_unknown_and_gregorian_date_bounds_exactly() {
     let mut enum_model = fixture("partial.json");
     enum_model["domain"] = json!([{
