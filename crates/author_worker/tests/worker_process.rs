@@ -103,6 +103,141 @@ fn response_field<'a>(response: &'a Value, field: &str) -> TestResult<&'a Value>
 }
 
 #[test]
+fn text_compile_supports_analysis_evaluation_and_diagnostics_without_leaking_handles()
+-> TestResult<()> {
+    let text = std::fs::read_to_string(
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../docs/examples/models/partial.author"),
+    )?;
+    let (mut child, mut input, mut output) = spawn(2)?;
+    write_request(
+        &mut input,
+        &request("text", "compile", json!({"text":text})),
+        false,
+    )?;
+    let compiled = read_response(&mut output)?;
+    let result = response_field(&compiled, "result")?;
+    assert_eq!(result.get("valid"), Some(&json!(true)));
+    assert_eq!(result.get("readiness"), Some(&json!("ready_for_analysis")));
+    let handle = result
+        .get("handle")
+        .and_then(Value::as_str)
+        .ok_or_else(|| io::Error::other("missing handle"))?
+        .to_owned();
+    write_request(
+        &mut input,
+        &request("analysis", "analyze", json!({"handle":handle})),
+        false,
+    )?;
+    let analysis_response = read_response(&mut output)?;
+    let analysis = response_field(&analysis_response, "result")?;
+    assert_eq!(analysis.get("complete"), Some(&json!(true)));
+    assert_eq!(analysis.get("model_id"), result.get("model_id"));
+    assert_eq!(analysis.get("semantic_hash"), result.get("semantic_hash"));
+    assert!(
+        analysis
+            .get("results")
+            .and_then(Value::as_array)
+            .is_some_and(|items| !items.is_empty())
+    );
+    write_request(
+        &mut input,
+        &request(
+            "evaluation",
+            "evaluate",
+            json!({"handle":handle,"inputs":{
+                "sponsor_approval":{"kind":"enum","enum":"ApprovalStatus","variant":"Approved"},
+                "contract_end":{"kind":"date","value":"2026-12-31"},
+                "requested_expiry":{"kind":"date","value":"2026-11-30"}
+            }}),
+        ),
+        false,
+    )?;
+    let evaluation_response = read_response(&mut output)?;
+    let evaluation = response_field(&evaluation_response, "result")?;
+    assert_eq!(evaluation.get("matched_rule_ids"), Some(&json!([])));
+    assert_eq!(
+        evaluation.get("classification"),
+        Some(&json!("unspecified"))
+    );
+    assert_eq!(evaluation.get("outcomes"), Some(&json!([])));
+    write_request(
+        &mut input,
+        &request("bad-text", "compile", json!({"text":"not valid"})),
+        false,
+    )?;
+    let bad_response = read_response(&mut output)?;
+    let bad = response_field(&bad_response, "result")?;
+    assert_eq!(bad.get("valid"), Some(&json!(false)));
+    assert_eq!(bad.get("handle"), Some(&Value::Null));
+    assert!(
+        bad.get("diagnostics")
+            .and_then(Value::as_array)
+            .is_some_and(|items| !items.is_empty())
+    );
+    // Failed compilation must not consume the remaining slot.
+    write_request(
+        &mut input,
+        &request("json", "compile", json!({"model":model()?})),
+        false,
+    )?;
+    let json_response = read_response(&mut output)?;
+    let json_result = response_field(&json_response, "result")?;
+    assert_eq!(json_result.get("valid"), Some(&json!(true)));
+    for field in ["content_hash", "semantic_hash", "model_id", "readiness"] {
+        assert_eq!(json_result.get(field), result.get(field));
+    }
+    assert_ne!(json_result.get("handle"), result.get("handle"));
+    write_request(
+        &mut input,
+        &request("full", "compile", json!({"text":text})),
+        false,
+    )?;
+    let full_response = read_response(&mut output)?;
+    assert_eq!(
+        response_field(response_field(&full_response, "error")?, "code")?,
+        "capacity_exceeded"
+    );
+    drop(input);
+    assert!(child.wait()?.success());
+    Ok(())
+}
+
+#[test]
+fn text_compile_rejects_invalid_parameter_combinations_without_consuming_capacity() -> TestResult<()>
+{
+    let (mut child, mut input, mut output) = spawn(1)?;
+    for params in [
+        json!({"model":model()?,"text":""}),
+        json!({}),
+        json!({"text":1}),
+        json!({"text":null}),
+        json!({"text":"", "unknown":true}),
+        json!({"unknown":""}),
+    ] {
+        write_request(&mut input, &request("bad-params", "compile", params), false)?;
+        let response = read_response(&mut output)?;
+        assert_eq!(
+            response_field(response_field(&response, "error")?, "code")?,
+            "invalid_params"
+        );
+    }
+    write_request(
+        &mut input,
+        &request("valid", "compile", json!({"model":model()?})),
+        false,
+    )?;
+    let response = read_response(&mut output)?;
+    assert_eq!(
+        response_field(&response, "result")?.get("valid"),
+        Some(&json!(true))
+    );
+    drop(input);
+    assert!(child.wait()?.success());
+    Ok(())
+}
+
+#[test]
 fn omitted_budget_defaults_are_clamped_and_invalid_numeric_values_are_rejected() -> TestResult<()> {
     let (mut child, mut input, mut output) = spawn_with_limits(2, 500, 5)?;
     write_request(

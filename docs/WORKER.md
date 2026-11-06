@@ -1,6 +1,6 @@
 # Entail worker integration contract
 
-`entail worker` is a persistent, serial JSON process intended to be supervised by a Gleam owner. Rust owns model compilation, concrete evaluation and solver-backed analysis. The client owns durable model JSON, request ordering, cancellation policy and restart recovery. Worker handles are process-local capabilities, not durable identifiers.
+`entail worker` is a persistent, serial JSON process intended to be supervised by a Gleam owner. Rust owns model compilation, concrete evaluation and solver-backed analysis. The client owns durable model text or JSON, request ordering, cancellation policy and restart recovery. Worker handles are process-local capabilities, not durable identifiers.
 
 ## Transport-independent contract
 
@@ -15,10 +15,18 @@ Each request is one JSON object with exactly these fields:
 Operations:
 
 - `hello` accepts `{}` and returns language/protocol/engine/solver versions, supported operations/checks, capability flags and configured limits.
-- `compile` accepts `{"model": <author-model/0.1 JSON>}`. A valid model returns an opaque handle, content/semantic hashes, `compile_elapsed_ms` (compile duration only), and readiness (`ready_for_analysis` or `incomplete_model`). Invalid models are a successful protocol response containing diagnostics and no handle; callers should repair and compile again. Handle capacity is checked after validating compile parameters but before compiling the model; full workers return `capacity_exceeded` without evicting live handles.
+- `compile` accepts exactly one of `{"model": <author-model/0.1 JSON>}` or `{"text": <readable Entail model text>}`. Text uses the same shared semantic compiler as the CLI; malformed or semantically invalid text returns diagnostics and no handle. A valid model returns an opaque handle, content/semantic hashes, `compile_elapsed_ms` (compile duration only), and readiness (`ready_for_analysis` or `incomplete_model`). Invalid models are a successful protocol response containing diagnostics and no handle; callers should repair and compile again. Handle capacity is checked after validating compile parameters but before compiling the model; full workers return `capacity_exceeded` without evicting live handles.
 - `analyze` accepts `handle`, optional `checks` (an array of supported names), optional `assumption_ids`, and optional `budget` (`total_timeout_ms`, `per_obligation_timeout_ms`, `max_obligations`, optional nonzero `solver_resource_limit`). Feasibility is mandatory; an empty check list requests no additional checks. Omitted budget fields use the analysis defaults (5,000 ms total, 1,000 ms per obligation, and 10,000 obligations) before being clamped to worker limits. Explicit null, zero, non-integer, overflow, and unknown budget fields are `invalid_params`. Findings and incomplete/inconclusive results are normal responses.
 - `evaluate` accepts `handle`, a complete `inputs` object, optional `assumption_ids`, and optional `expected_outcome`. No solver is used.
 - `release` accepts `handle` and reports whether it existed. Capacity is never recovered by silently evicting another live model.
+
+Text compilation example, also available in [`examples/worker/compile-text.request.json`](examples/worker/compile-text.request.json):
+
+```json
+{"protocol_version":"author-worker/0.1","request_id":"compile-text1","op":"compile","params":{"text":"decision ContractorAccess\nversion \"author-model/0.1\"\n"}}
+```
+
+`text` must be a string. Missing inputs, both inputs, extra parameters, and non-string text return `invalid_params`. The existing JSON form and protocol version are unchanged. Both forms use the same model limits and handle lifecycle. Hashes describe the parsed model and its semantics, not the original text bytes. Equivalent text and JSON models produce the same hashes; recompilation still creates a new handle. The example is a valid draft and returns `incomplete_model`, not a complete decision policy.
 
 Stable protocol failures include `invalid_envelope`, `version_mismatch`, `unknown_operation`, `unknown_handle`, `capacity_exceeded`, `invalid_params`, and `internal_error`. Unknown/expired handles are client state errors. Malformed JSON frames return `malformed_json`; if a `request_id` can be recovered it is echoed, otherwise it is `null`. The worker continues after a complete malformed JSON payload. An invalid or oversized frame length is fatal because the stream cannot safely be resynchronized.
 
@@ -32,6 +40,6 @@ The production client can implement this contract in any typed language without 
 
 There is no in-band cancellation operation in v0. A deadline expiry means the owner must terminate the OS process, wait for its termination, and only then start the replacement. Closing a port/pipe alone is not evidence that the process or native solver has stopped. In particular, always perform the equivalent of `Port.close` **and** an OS process wait/reap; do not launch replacement workers while the old process may still be solving.
 
-After a worker exits, discard every handle. Recompile retained model JSON in the new process before analysis/evaluation; do not persist handles or attempt to reconstruct them. Each process uses a fresh session nonce in handles so stale IDs are not accidentally accepted after restart. If termination or reaping fails, keep the worker slot unavailable and surface a supervision error rather than creating an unbounded orphan process.
+After a worker exits, discard every handle. Recompile retained model text or JSON in the new process before analysis/evaluation; do not persist handles or attempt to reconstruct them. Each process uses a fresh session nonce in handles so stale IDs are not accidentally accepted after restart. If termination or reaping fails, keep the worker slot unavailable and surface a supervision error rather than creating an unbounded orphan process.
 
 One worker is serial. Parallel analyses require separate supervised processes and independent handles. A process kill is the hard-cancellation mechanism and may discard the in-flight response; completed responses before the killed request remain the caller's durable responsibility.

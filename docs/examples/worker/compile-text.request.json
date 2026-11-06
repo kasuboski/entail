@@ -1,0 +1,8 @@
+{
+  "protocol_version": "author-worker/0.1",
+  "request_id": "compile-text1",
+  "op": "compile",
+  "params": {
+    "text": "decision ContractorAccess\nversion \"author-model/0.1\"\n"
+  }
+}

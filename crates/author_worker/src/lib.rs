@@ -96,7 +96,9 @@ use std::fmt::Write as FmtWrite;
 use std::io::{BufReader, BufWriter};
 
 use author_analysis::{AnalysisBudget, AnalysisOptions, Backend, Check, analyze};
-use author_model::{CompiledModel, ModelLimits, OutcomeValue, compile_json, evaluate};
+use author_model::{
+    CompiledModel, ModelLimits, OutcomeValue, compile_json, compile_text, evaluate,
+};
 use author_z3::Z3Backend;
 use serde_json::{Map, json};
 
@@ -373,34 +375,52 @@ fn hello_result(config: &WorkerConfig) -> Value {
     })
 }
 
+enum CompileInput<'a> {
+    Json(&'a Value),
+    Text(&'a str),
+}
+
 fn compile_request(
     request_id: Value,
     params: &Value,
     config: &WorkerConfig,
     state: &mut WorkerState,
 ) -> (Value, Option<(String, CompiledModel)>) {
-    if params
-        .as_object()
-        .is_none_or(|object| object.len() != 1 || !object.contains_key("model"))
-    {
+    let Some(object) = params.as_object() else {
         return (
             failure(
                 request_id,
                 "invalid_params",
-                "compile requires only a model parameter".to_owned(),
+                "compile params must be an object".to_owned(),
+            ),
+            None,
+        );
+    };
+    let model_json = object.get("model");
+    let model_text = object.get("text");
+    if object.len() != 1 || model_json.is_some() == model_text.is_some() {
+        return (
+            failure(
+                request_id,
+                "invalid_params",
+                "compile requires exactly one of model or text".to_owned(),
             ),
             None,
         );
     }
-    let Some(model_json) = params.get("model") else {
-        return (
-            failure(
-                request_id,
-                "invalid_params",
-                "compile requires model".to_owned(),
-            ),
-            None,
-        );
+    let input = match (model_json, model_text.and_then(Value::as_str)) {
+        (Some(model), None) => CompileInput::Json(model),
+        (None, Some(text)) => CompileInput::Text(text),
+        _ => {
+            return (
+                failure(
+                    request_id,
+                    "invalid_params",
+                    "compile text must be a string".to_owned(),
+                ),
+                None,
+            );
+        }
     };
     if state.handles.len() >= config.max_handles {
         return (
@@ -413,7 +433,20 @@ fn compile_request(
         );
     }
     let started = std::time::Instant::now();
-    let model = match compile_json(model_json, &config.model_limits) {
+    let compiled = match input {
+        CompileInput::Json(model) => compile_json(model, &config.model_limits),
+        CompileInput::Text(text) => compile_text(text, &config.model_limits),
+    };
+    compile_model(request_id, state, compiled, started)
+}
+
+fn compile_model(
+    request_id: Value,
+    state: &mut WorkerState,
+    compiled: Result<CompiledModel, Vec<author_model::Diagnostic>>,
+    started: std::time::Instant,
+) -> (Value, Option<(String, CompiledModel)>) {
+    let model = match compiled {
         Ok(model) => model,
         Err(diagnostics) => {
             return (
